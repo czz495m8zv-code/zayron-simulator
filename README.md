@@ -393,3 +393,8 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Added a numeric countdown on the pedestrian signal showing seconds until the next WAIT/WALK phase.
 - Fixed the crossing state so the pedestrian crosses only once per red phase and does not restart at the far kerb before the signal changes.
 - The crossing cycle resets after the main-road signal returns to green/amber.
+
+
+### Vehicle traffic-signal countdown displays
+- Both roadside three-aspect traffic signals now display a numeric countdown to the end of the active green, amber, or red phase.
+- The countdown is driven by the same 16-second junction signal clock used by traffic and player stop-line logic.
