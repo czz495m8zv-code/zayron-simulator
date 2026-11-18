@@ -1,10 +1,24 @@
 extends Node3D
 
-const TRUCK_SCENE: PackedScene = preload("res://scenes/vehicles/prototype_truck.tscn")
-const BUS_SCENE: PackedScene = preload("res://scenes/vehicles/prototype_bus.tscn")
+const FLEET_SCENES: Array[PackedScene] = [
+	preload("res://scenes/vehicles/prototype_truck.tscn"),
+	preload("res://scenes/vehicles/premium_semi.tscn"),
+	preload("res://scenes/vehicles/royal_red_semi.tscn"),
+	preload("res://scenes/vehicles/prototype_bus.tscn"),
+	preload("res://scenes/vehicles/luxury_coach.tscn"),
+	preload("res://scenes/vehicles/vip_silver_coach.tscn")
+]
+const FLEET_NAMES: Array[String] = [
+	"STARTER TRUCK",
+	"PREMIUM BLUE SEMI",
+	"ROYAL RED SEMI",
+	"OMAN CITY BUS",
+	"LUXURY COACH",
+	"VIP SILVER COACH"
+]
 
 var _active_vehicle: Node3D
-var _using_bus: bool = false
+var _selected_vehicle: int = 0
 var _vehicle_button: Button
 var _mission_label: Label
 var _mission_complete: bool = false
@@ -27,11 +41,11 @@ func _process(_delta: float) -> void:
 func _spawn_vehicle() -> void:
 	if is_instance_valid(_active_vehicle):
 		_active_vehicle.queue_free()
-	_active_vehicle = (BUS_SCENE if _using_bus else TRUCK_SCENE).instantiate() as Node3D
+	_active_vehicle = FLEET_SCENES[_selected_vehicle].instantiate() as Node3D
 	_active_vehicle.position = Vector3(0.0, 0.15, 8.0)
 	add_child(_active_vehicle)
 	if is_instance_valid(_vehicle_button):
-		_vehicle_button.text = "BUS" if not _using_bus else "TRUCK"
+		_vehicle_button.text = "NEXT: " + FLEET_NAMES[(_selected_vehicle + 1) % FLEET_NAMES.size()]
 
 func _build_vehicle_selector() -> void:
 	var layer := CanvasLayer.new()
@@ -39,13 +53,13 @@ func _build_vehicle_selector() -> void:
 	add_child(layer)
 	var button := Button.new()
 	button.name = "VehicleSelector"
-	button.text = "BUS"
-	button.custom_minimum_size = Vector2(112.0, 54.0)
+	button.text = "NEXT: PREMIUM BLUE SEMI"
+	button.custom_minimum_size = Vector2(180.0, 54.0)
 	button.anchor_left = 1.0
 	button.anchor_right = 1.0
 	button.anchor_top = 0.0
 	button.anchor_bottom = 0.0
-	button.offset_left = -136.0
+	button.offset_left = -204.0
 	button.offset_right = -20.0
 	button.offset_top = 22.0
 	button.offset_bottom = 76.0
@@ -62,7 +76,7 @@ func _build_vehicle_selector() -> void:
 	_vehicle_button = button
 
 func _on_vehicle_button_pressed() -> void:
-	_using_bus = not _using_bus
+	_selected_vehicle = (_selected_vehicle + 1) % FLEET_SCENES.size()
 	_spawn_vehicle()
 
 func _build_environment() -> void:
