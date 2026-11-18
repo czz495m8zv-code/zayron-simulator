@@ -404,6 +404,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - During the final two seconds of the pedestrian signal's red-traffic interval, the green WALK lamp and WALK text flash at a steady 0.8-second cycle.
 - The numeric countdown remains visible so pedestrians receive a clear indication that the phase is ending.
 
+### Highway speed awareness
+- The driving HUD shows the prototype highway limit of 80 km/h and changes to a caution/overspeed warning above the limit.
+- This is a visual driver-awareness warning only; it does not yet issue fines, enforce speed, or model location-specific speed-limit zones.
+
 ### Engine and fuel behaviour
 - The vehicle dashboard shows an approximate remaining driving range alongside fuel percentage. It is calculated from the prototype's distance-based fuel rate; idling, payload, terrain and driving style can reduce actual range.
 
