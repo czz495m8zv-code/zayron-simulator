@@ -704,6 +704,8 @@ func _initialize_company_records() -> void:
 			bus["vehicle_index"] = 3
 		if not bus.has("assigned_driver_index"):
 			bus["assigned_driver_index"] = -1
+		if not bus.has("condition"):
+			bus["condition"] = 100
 	_company_bus_count = _company_fleet.size()
 	_company_driver_count = _company_drivers.size()
 
@@ -849,6 +851,12 @@ func _build_company_management() -> void:
 	hire_button.pressed.connect(_hire_company_driver)
 	content.add_child(hire_button)
 
+	var service_button := Button.new()
+	service_button.text = "SERVICE SELECTED BUS  |  OMR 1 PER CONDITION POINT"
+	service_button.custom_minimum_size.y = 48
+	service_button.pressed.connect(_service_selected_company_bus)
+	content.add_child(service_button)
+
 	var bus_button := Button.new()
 	bus_button.text = "BUY ADDITIONAL BUS  |  OMR 450"
 	bus_button.custom_minimum_size.y = 48
@@ -900,12 +908,34 @@ func _hire_company_driver() -> void:
 	_save_progress()
 	_refresh_company_panel()
 
+func _service_selected_company_bus() -> void:
+	if _company_config_bus_index < 0 or _company_config_bus_index >= _company_fleet.size():
+		_company_status_label.text = "Select a company bus before servicing."
+		return
+	var bus: Dictionary = _company_fleet[_company_config_bus_index]
+	if str(bus.get("status", "AVAILABLE")) != "AVAILABLE":
+		_company_status_label.text = "A bus must return to the depot before it can be serviced."
+		return
+	var condition := clampi(int(bus.get("condition", 100)), 0, 100)
+	var service_cost := 100 - condition
+	if service_cost <= 0:
+		_company_status_label.text = "This bus is already in full condition."
+		return
+	if _company_funds < service_cost:
+		_company_status_label.text = "Service requires OMR %d. Your company does not have enough funds." % service_cost
+		return
+	_company_funds -= service_cost
+	_company_fleet[_company_config_bus_index]["condition"] = 100
+	_company_status_label.text = "%s serviced to 100%% condition for OMR %d." % [str(bus.get("name", "Company bus")), service_cost]
+	_save_progress()
+	_refresh_company_panel()
+
 func _buy_company_bus() -> void:
 	if _company_funds < 450:
 		_company_status_label.text = "Not enough company funds. You need OMR 450 for another bus."
 		return
 	_company_funds -= 450
-	_company_fleet.append({"name": "Company Bus %03d" % (_company_fleet.size() + 1), "type": FLEET_NAMES[3], "vehicle_index": 3, "status": "AVAILABLE", "route_index": _company_selected_route, "assigned_driver_index": -1})
+	_company_fleet.append({"name": "Company Bus %03d" % (_company_fleet.size() + 1), "type": FLEET_NAMES[3], "vehicle_index": 3, "status": "AVAILABLE", "route_index": _company_selected_route, "assigned_driver_index": -1, "condition": 100})
 	_company_bus_count = _company_fleet.size()
 	_refresh_company_configuration()
 	_company_status_label.text = "Bus purchased and added to your company fleet."
@@ -992,6 +1022,10 @@ func _dispatch_company_driver() -> void:
 	if bus_index < 0:
 		_company_status_label.text = "No available company bus. Purchase a bus first."
 		return
+	var bus_condition := clampi(int(_company_fleet[bus_index].get("condition", 100)), 0, 100)
+	if bus_condition <= 15:
+		_company_status_label.text = "This bus needs servicing before another dispatch. Select it and use SERVICE SELECTED BUS."
+		return
 	var preferred_driver := int(_company_fleet[bus_index].get("assigned_driver_index", -1))
 	if preferred_driver >= 0:
 		if preferred_driver >= _company_drivers.size():
@@ -1035,6 +1069,7 @@ func _on_company_trip_completed(driver_index: int, bus_index: int) -> void:
 		_company_drivers[driver_index]["bus"] = "NO BUS"
 	if bus_index >= 0 and bus_index < _company_fleet.size():
 		_company_fleet[bus_index]["status"] = "AVAILABLE"
+		_company_fleet[bus_index]["condition"] = maxi(int(_company_fleet[bus_index].get("condition", 100)) - 8, 0)
 	_company_completed_trips += 1
 	_company_funds += 85
 	_company_trip_active = false
@@ -1250,7 +1285,9 @@ func _refresh_company_panel() -> void:
 			var assigned_index := int(bus.get("assigned_driver_index", -1))
 			var assigned_name := "AUTO" if assigned_index < 0 or assigned_index >= _company_drivers.size() else str(_company_drivers[assigned_index].get("name", "Driver"))
 			var model_index := clampi(int(bus.get("vehicle_index", 3)), 0, FLEET_NAMES.size() - 1)
-			roster_text += "\n%s  |  %s  |  %s  |  %s  |  DRIVER: %s" % [str(bus.get("name", "Bus")), str(bus.get("status", "AVAILABLE")), FLEET_NAMES[model_index], ROUTE_NAMES[bus_route], assigned_name]
+			var condition := clampi(int(bus.get("condition", 100)), 0, 100)
+			var service_state := "SERVICE DUE" if condition <= 15 else "CONDITION %d%%" % condition
+			roster_text += "\n%s  |  %s  |  %s  |  %s  |  %s  |  DRIVER: %s" % [str(bus.get("name", "Bus")), str(bus.get("status", "AVAILABLE")), FLEET_NAMES[model_index], ROUTE_NAMES[bus_route], service_state, assigned_name]
 		roster_text += "\nDRIVER STAFF"
 		for driver in _company_drivers:
 			roster_text += "\n%s  |  %s" % [str(driver.get("name", "Driver")), str(driver.get("status", "AVAILABLE"))]
