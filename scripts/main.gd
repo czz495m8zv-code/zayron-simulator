@@ -141,6 +141,11 @@ func _process(delta: float) -> void:
 	if _passenger_mode:
 		stage_name = "PICKUP STOP" if not _passenger_pickup_done else "PASSENGER DROP-OFF"
 	_mission_label.text = "%s  |  %s: %d m" % [ROUTE_NAMES[_selected_route], stage_name, int(distance)]
+	# Let the driver open the passenger doors after arriving; the trigger itself
+	# may already have fired while the doors were closed, so poll safely here.
+	if _passenger_mode and _passenger_pickup_done and distance <= 5.0:
+		if _active_vehicle.has_method("can_board_passengers") and _active_vehicle.can_board_passengers():
+			_complete_passenger_dropoff()
 
 func _spawn_vehicle() -> void:
 	_mission_complete = false
@@ -1535,9 +1540,14 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 		if is_instance_valid(_mission_label):
 			_mission_label.text = "CARGO LOADED  |  CONTINUE TO " + ROUTE_NAMES[_selected_route].split(" -> ")[1]
 		return
+	if _passenger_mode and _passenger_pickup_done:
+		if not _active_vehicle.has_method("can_board_passengers") or not _active_vehicle.can_board_passengers():
+			if is_instance_valid(_mission_label):
+				_mission_label.text = "STOP AT THE TERMINAL, APPLY PARK BRAKE AND OPEN PASSENGER DOORS TO UNLOAD"
+			return
+		_complete_passenger_dropoff()
+		return
 	_mission_complete = true
-	if _passenger_mode and is_instance_valid(_passenger_status_label):
-		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
 	if not _passenger_mode and is_instance_valid(_cargo_status_label):
 		_cargo_status_label.text = "CARGO DELIVERED: " + CARGO_NAMES[_selected_cargo]
 	_delivery_count += 1
@@ -1550,6 +1560,23 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 			_mission_label.text = "%s COMPLETE  |  PASSENGERS DELIVERED  |  +%d OMR" % [ROUTE_NAMES[_selected_route], PASSENGER_TRIP_REWARD]
 		else:
 			_mission_label.text = "%s COMPLETE  |  %s  |  +%d OMR" % [ROUTE_NAMES[_selected_route], CARGO_NAMES[_selected_cargo], CARGO_REWARDS[_selected_cargo]]
+
+
+func _complete_passenger_dropoff() -> void:
+	if _mission_complete or not _passenger_mode or not _passenger_pickup_done:
+		return
+	if not is_instance_valid(_active_vehicle) or not _active_vehicle.has_method("can_board_passengers") or not _active_vehicle.can_board_passengers():
+		return
+	_mission_complete = true
+	if is_instance_valid(_passenger_status_label):
+		_passenger_status_label.text = "PASSENGERS DELIVERED: %d" % PASSENGER_GROUP_SIZE
+	_delivery_count += 1
+	_cash_balance += PASSENGER_TRIP_REWARD
+	if is_instance_valid(_cash_label):
+		_cash_label.text = "WALLET  |  OMR %d  |  DELIVERIES %d" % [_cash_balance, _delivery_count]
+	_save_progress()
+	if is_instance_valid(_mission_label):
+		_mission_label.text = "%s COMPLETE  |  PASSENGERS DELIVERED  |  +%d OMR" % [ROUTE_NAMES[_selected_route], PASSENGER_TRIP_REWARD]
 
 
 func _load_progress() -> void:
