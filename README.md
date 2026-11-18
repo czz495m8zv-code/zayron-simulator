@@ -229,3 +229,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 ### Visible seated passengers
 - Passenger-mode pickup now creates a visible seated passenger group inside the active bus/coach, up to the ten available seat positions. The group is cleared after passengers alight and whenever the active vehicle is reset.
 - This is a visual seat-occupancy representation tied to the passenger mission count; individual walking paths through the door, seat reservations, passenger AI, and persistent passenger identities are not simulated yet.
+
+
+### Passenger boarding sequence
+- Passenger seat-occupancy visuals now appear after the exterior boarding animation finishes, rather than immediately when the mission checkpoint is activated.
+- The passenger status changes from BOARDING PASSENGERS to PASSENGERS SEATED after the final boarding figure reaches the bus. This remains a timed visual sequence and does not simulate individual walking through the doorway or seat navigation.
