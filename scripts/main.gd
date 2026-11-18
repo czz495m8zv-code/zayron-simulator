@@ -35,6 +35,7 @@ const ROUTE_TARGETS: Array[Vector3] = [Vector3(0.0, 0.0, -82.0), Vector3(0.0, 0.
 const CARGO_NAMES: Array[String] = ["GENERAL GOODS", "CONSTRUCTION SUPPLIES", "CHILLED GOODS"]
 const CARGO_REWARDS: Array[int] = [25, 40, 35]
 const PASSENGER_TRIP_REWARD: int = 30
+const PASSENGER_GROUP_SIZE: int = 8
 
 var _selected_route: int = 0
 var _route_button: Button
@@ -47,6 +48,7 @@ var _mission_type_button: Button
 var _passenger_pickup_done: bool = false
 var _passenger_pickup_target := Vector3(0.0, 0.0, -37.0)
 var _checkpoint_label: Label3D
+var _passenger_status_label: Label
 
 func _ready() -> void:
 	_load_progress()
@@ -332,6 +334,15 @@ func _build_mission_hud() -> void:
 	_cash_label.add_theme_color_override("font_color", Color(0.55, 0.95, 0.72))
 	layer.add_child(_cash_label)
 
+	_passenger_status_label = Label.new()
+	_passenger_status_label.name = "PassengerManifest"
+	_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
+	_passenger_status_label.position = Vector2(24.0, 222.0)
+	_passenger_status_label.add_theme_font_size_override("font_size", 18)
+	_passenger_status_label.add_theme_color_override("font_color", Color(0.72, 0.88, 1.0))
+	_passenger_status_label.visible = _passenger_mode
+	layer.add_child(_passenger_status_label)
+
 	_mission_label = Label.new()
 	_mission_label.name = "MissionStatus"
 	_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: 000 m"
@@ -395,6 +406,9 @@ func _toggle_passenger_mode() -> void:
 		_mission_type_button.text = "JOB: PASSENGER" if _passenger_mode else "JOB: CARGO"
 	if is_instance_valid(_cargo_button):
 		_cargo_button.visible = not _passenger_mode
+	if is_instance_valid(_passenger_status_label):
+		_passenger_status_label.visible = _passenger_mode
+		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
 	_spawn_vehicle()
 	_save_progress()
 
@@ -409,6 +423,8 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 		return
 	if _passenger_mode and not _passenger_pickup_done:
 		_passenger_pickup_done = true
+		if is_instance_valid(_passenger_status_label):
+			_passenger_status_label.text = "PASSENGERS ON BOARD: %d" % PASSENGER_GROUP_SIZE
 		_mission_target = ROUTE_TARGETS[_selected_route]
 		if is_instance_valid(_checkpoint_area):
 			_checkpoint_area.position = _mission_target
@@ -417,6 +433,8 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 			_mission_label.text = "PASSENGERS ON BOARD  |  CONTINUE TO " + ROUTE_NAMES[_selected_route].split(" -> ")[1]
 		return
 	_mission_complete = true
+	if _passenger_mode and is_instance_valid(_passenger_status_label):
+		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
 	_delivery_count += 1
 	_cash_balance += PASSENGER_TRIP_REWARD if _passenger_mode else CARGO_REWARDS[_selected_cargo]
 	if is_instance_valid(_cash_label):
