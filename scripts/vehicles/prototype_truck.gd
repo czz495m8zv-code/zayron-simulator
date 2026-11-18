@@ -39,6 +39,8 @@ var _headlights_on: bool = true
 var _headlight_lights: Array[SpotLight3D] = []
 var _headlight_meshes: Array[MeshInstance3D] = []
 var _rear_lamp_material: StandardMaterial3D
+var _reverse_lamp_material: StandardMaterial3D
+var _reverse_lamp_meshes: Array[MeshInstance3D] = []
 var _headlight_button: Button
 var _handbrake_on := false
 var _hazard_on := false
@@ -142,6 +144,9 @@ func _physics_process(delta: float) -> void:
 
 	if is_instance_valid(_rear_lamp_material):
 		_rear_lamp_material.emission_energy_multiplier = 0.8 + brake * 2.2
+	for reverse_lamp in _reverse_lamp_meshes:
+		if is_instance_valid(reverse_lamp):
+			reverse_lamp.visible = _engine_running and _gear_mode == "R"
 
 	# A simple torque curve: strongest pull at low speed, tapering near top speed.
 	if _handbrake_on:
@@ -413,6 +418,24 @@ func _build_vehicle_lights() -> void:
 		tail.position = Vector3(x, 1.18, 2.43)
 		tail.material_override = _rear_lamp_material
 		add_child(tail)
+
+
+	_reverse_lamp_material = StandardMaterial3D.new()
+	_reverse_lamp_material.albedo_color = Color(0.92, 0.96, 1.0)
+	_reverse_lamp_material.emission_enabled = true
+	_reverse_lamp_material.emission = Color(0.82, 0.9, 1.0)
+	_reverse_lamp_material.emission_energy_multiplier = 1.5
+	for x in [-0.48, 0.48]:
+		var reverse_lamp := MeshInstance3D.new()
+		reverse_lamp.name = "ReverseLamp"
+		var reverse_mesh := BoxMesh.new()
+		reverse_mesh.size = Vector3(0.22, 0.16, 0.07)
+		reverse_lamp.mesh = reverse_mesh
+		reverse_lamp.position = Vector3(x, 1.12, 2.49)
+		reverse_lamp.material_override = _reverse_lamp_material
+		reverse_lamp.visible = false
+		add_child(reverse_lamp)
+		_reverse_lamp_meshes.append(reverse_lamp)
 
 func _toggle_headlights() -> void:
 	_headlights_on = not _headlights_on
