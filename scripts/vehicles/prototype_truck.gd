@@ -24,6 +24,8 @@ var _speed_label: Label
 var _gear_label: Label
 var _rpm_label: Label
 var _vehicle_status_label: Label
+var _fuel_label: Label
+var _fuel_level := 100.0
 var _engine_temperature := 22.0
 var _cargo_loaded := false
 var _cargo_secured := false
@@ -142,7 +144,7 @@ func _physics_process(delta: float) -> void:
 	var trailer_ready := not (supports_trailer and ((_trailer_attached and _trailer_legs_down) or _trailer_doors_open))
 	var passenger_door_ready := not (supports_passenger_doors and _passenger_doors_open)
 	var cargo_ready := not _cargo_loaded or _cargo_secured
-	var drive_ready := _engine_running and trailer_ready and passenger_door_ready and cargo_ready
+	var drive_ready := _engine_running and _fuel_level > 0.0 and trailer_ready and passenger_door_ready and cargo_ready
 	var throttle := _throttle_input if drive_ready and _gear_mode == "D" else 0.0
 	var brake := _brake_input
 	var reverse := _reverse_input if drive_ready and _gear_mode == "R" else 0.0
@@ -202,6 +204,9 @@ func _physics_process(delta: float) -> void:
 	lateral_velocity = lateral_velocity.move_toward(Vector3.ZERO, lateral_grip * delta)
 	velocity = forward * _speed + lateral_velocity
 	move_and_slide()
+	# Approximate fuel use from distance travelled plus a small engine-load cost.
+	var distance_moved := absf(_speed) * delta
+	_fuel_level = maxf(0.0, _fuel_level - distance_moved * 0.0008 - throttle * delta * 0.00002)
 
 	if is_instance_valid(_speed_label):
 		_speed_label.text = "%03d km/h" % int(absf(_speed) * 3.6)
@@ -215,8 +220,15 @@ func _physics_process(delta: float) -> void:
 		_engine_temperature = move_toward(_engine_temperature, 22.0, delta * 0.45)
 	if is_instance_valid(_rpm_label):
 		_rpm_label.text = "RPM  %04d    TEMP  %02d°C" % [int(minf(rpm_value, 2800.0)), int(_engine_temperature)]
+	if is_instance_valid(_fuel_label):
+		_fuel_label.text = "FUEL  %02d%%" % int(ceil(_fuel_level))
+		_fuel_label.add_theme_color_override("font_color", Color(1.0, 0.34, 0.22) if _fuel_level <= 15.0 else Color(0.55, 0.9, 1.0))
 	if is_instance_valid(_vehicle_status_label):
 		var status_parts: Array[String] = []
+		if _fuel_level <= 0.0:
+			status_parts.append("OUT OF FUEL")
+		elif _fuel_level <= 15.0:
+			status_parts.append("LOW FUEL")
 		if _handbrake_on:
 			status_parts.append("PARK BRAKE")
 		if supports_passenger_doors and _passenger_doors_open:
@@ -538,6 +550,14 @@ func _build_mobile_controls() -> void:
 	_vehicle_status_label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	ui.add_child(_vehicle_status_label)
 
+	_fuel_label = Label.new()
+	_fuel_label.text = "FUEL  100%"
+	_fuel_label.position = Vector2(28.0, 136.0)
+	_fuel_label.add_theme_font_size_override("font_size", 14)
+	_fuel_label.add_theme_color_override("font_color", Color(0.55, 0.9, 1.0))
+	_fuel_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	ui.add_child(_fuel_label)
+
 	_add_hold_button(ui, "◀", true, 24.0, -124.0, 112.0, -24.0, "steer_left")
 	_add_hold_button(ui, "▶", true, 132.0, -124.0, 220.0, -24.0, "steer_right")
 	_add_hold_button(ui, "BRAKE", false, -224.0, -124.0, -124.0, -24.0, "brake")
@@ -545,6 +565,7 @@ func _build_mobile_controls() -> void:
 	_add_hold_button(ui, "R", false, -112.0, -224.0, -12.0, -136.0, "reverse")
 	_add_camera_button(ui)
 	_add_headlight_button(ui)
+	_add_action_button(ui, "REFUEL", -36.0, 548.0, "refuel")
 	_add_action_button(ui, "REAR CAM", -180.0, 456.0, "rear_camera")
 	_add_action_button(ui, "HORN", -210.0, 180.0, "horn")
 	_add_action_button(ui, "LEFT", -132.0, 180.0, "left")
@@ -650,6 +671,14 @@ func _add_action_button(parent: Control, label: String, x: float, y: float, acti
 
 func _on_vehicle_action(action: String, button: Button) -> void:
 	match action:
+		"refuel":
+			if absf(_speed) > 0.15 or not _handbrake_on:
+				button.text = "STOP + PARK FIRST"
+				return
+			_fuel_level = 100.0
+			button.text = "FUEL: FULL"
+			if is_instance_valid(_fuel_label):
+				_fuel_label.text = "FUEL  100%"
 		"horn":
 			_horn_frames_left = 6600
 			_horn_phase = 0.0
