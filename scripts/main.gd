@@ -27,16 +27,24 @@ var _delivery_count: int = 0
 var _cash_balance: int = 0
 var _cash_label: Label
 var _restart_button: Button
+var _traffic_car: Node3D
+var _traffic_speed: float = 7.5
 
 func _ready() -> void:
 	_build_environment()
 	_build_oman_test_road()
+	_build_roadside_signs()
+	_build_traffic_vehicle()
 	_build_mission()
 	_spawn_vehicle()
 	_build_vehicle_selector()
 	_build_mission_hud()
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if is_instance_valid(_traffic_car):
+		_traffic_car.position.z += _traffic_speed * delta
+		if _traffic_car.position.z > 24.0:
+			_traffic_car.position.z = -118.0
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
 		return
 	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
@@ -158,6 +166,49 @@ func _build_oman_test_road() -> void:
 		var side := -1.0 if i % 2 == 0 else 1.0
 		var marker := _make_box("RoadMarker_%02d" % i, Vector3(0.18, 0.8, 0.18), Vector3(side * 6.0, 0.4, 12.0 - float(i) * 11.0), Color(0.88, 0.84, 0.72))
 		add_child(marker)
+
+
+func _build_roadside_signs() -> void:
+	for i in range(3):
+		var z_pos := -18.0 - float(i) * 34.0
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var post := _make_box("RoadSignPost_%d" % i, Vector3(0.16, 2.7, 0.16), Vector3(side * 6.8, 1.35, z_pos), Color(0.72, 0.74, 0.76))
+		add_child(post)
+		var panel := _make_box("RoadSignPanel_%d" % i, Vector3(1.9, 1.0, 0.12), Vector3(side * 6.8, 2.55, z_pos), Color(0.03, 0.30, 0.22))
+		add_child(panel)
+		var sign_text := Label3D.new()
+		sign_text.name = "RoadSignText_%d" % i
+		sign_text.text = "OMAN\n" + ("MUSCAT" if i == 0 else ("NIZWA" if i == 1 else "SUR"))
+		sign_text.position = Vector3(side * 6.8, 2.55, z_pos + 0.08)
+		sign_text.font_size = 32
+		sign_text.pixel_size = 0.012
+		sign_text.modulate = Color.WHITE
+		sign_text.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		add_child(sign_text)
+
+func _build_traffic_vehicle() -> void:
+	_traffic_car = Node3D.new()
+	_traffic_car.name = "OppositeDirectionTraffic"
+	_traffic_car.position = Vector3(2.35, 0.0, -105.0)
+	add_child(_traffic_car)
+	var body := _make_box("TrafficSedanBody", Vector3(1.75, 0.72, 3.6), Vector3(0.0, 0.72, 0.0), Color(0.72, 0.12, 0.08))
+	_traffic_car.add_child(body)
+	var cabin := _make_box("TrafficSedanCabin", Vector3(1.48, 0.72, 1.75), Vector3(0.0, 1.38, -0.18), Color(0.12, 0.22, 0.29))
+	_traffic_car.add_child(cabin)
+	var tire_material := StandardMaterial3D.new()
+	tire_material.albedo_color = Color(0.025, 0.025, 0.03)
+	for x in [-0.9, 0.9]:
+		for z in [-1.15, 1.15]:
+			var tire := MeshInstance3D.new()
+			var tire_mesh := CylinderMesh.new()
+			tire_mesh.top_radius = 0.32
+			tire_mesh.bottom_radius = 0.32
+			tire_mesh.height = 0.18
+			tire.mesh = tire_mesh
+			tire.rotation_degrees.z = 90.0
+			tire.position = Vector3(x, 0.38, z)
+			tire.material_override = tire_material
+			_traffic_car.add_child(tire)
 
 func _make_box(node_name: String, dimensions: Vector3, location: Vector3, tint: Color) -> MeshInstance3D:
 	var mesh_instance := MeshInstance3D.new()
