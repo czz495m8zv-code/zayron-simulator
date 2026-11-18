@@ -89,6 +89,7 @@ func _spawn_vehicle() -> void:
 		_cargo_status_label.text = "CARGO STATUS: WAITING FOR LOAD"
 	if is_instance_valid(_cargo_depot):
 		_cargo_depot.visible = not _passenger_mode
+		_cargo_depot.position.z = (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5
 	if is_instance_valid(_passenger_status_label):
 		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
 	if _passenger_mode or not _cargo_pickup_done:
