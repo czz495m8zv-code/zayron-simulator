@@ -22,7 +22,9 @@ var _cockpit_camera: Camera3D
 var _camera_button: Button
 var _camera_mode: int = 0
 var _headlights_on: bool = true
-var _headlight_lights: Array[OmniLight3D] = []
+var _headlight_lights: Array[SpotLight3D] = []
+var _headlight_meshes: Array[MeshInstance3D] = []
+var _rear_lamp_material: StandardMaterial3D
 var _headlight_button: Button
 @export var cockpit_camera_position: Vector3 = Vector3(0.0, 2.45, -1.35)
 var _engine_playback: AudioStreamGeneratorPlayback
@@ -72,6 +74,9 @@ func _physics_process(delta: float) -> void:
 		brake = Input.get_action_strength("ui_down")
 		steering = Input.get_axis("ui_left", "ui_right")
 		reverse = 0.0
+
+	if is_instance_valid(_rear_lamp_material):
+		_rear_lamp_material.emission_energy_multiplier = 0.8 + brake * 2.2
 
 	if brake > 0.0:
 		_speed = move_toward(_speed, 0.0, service_brake * brake * delta)
@@ -259,20 +264,22 @@ func _build_vehicle_lights() -> void:
 		lamp.position = Vector3(x, 1.25, -2.43)
 		lamp.material_override = lamp_material
 		add_child(lamp)
-		var beam := OmniLight3D.new()
+		_headlight_meshes.append(lamp)
+		var beam := SpotLight3D.new()
 		beam.name = "HeadlightBeam"
 		beam.position = Vector3(x, 1.28, -2.52)
 		beam.light_color = Color(1.0, 0.9, 0.72)
 		beam.light_energy = 1.15
-		beam.omni_range = 25.0
+		beam.spot_range = 25.0
+		beam.spot_angle = 38.0
 		beam.shadow_enabled = false
 		add_child(beam)
 		_headlight_lights.append(beam)
-	var tail_material := StandardMaterial3D.new()
-	tail_material.albedo_color = Color(0.55, 0.025, 0.018)
-	tail_material.emission_enabled = true
-	tail_material.emission = Color(0.8, 0.025, 0.012)
-	tail_material.emission_energy_multiplier = 0.8
+	_rear_lamp_material = StandardMaterial3D.new()
+	_rear_lamp_material.albedo_color = Color(0.55, 0.025, 0.018)
+	_rear_lamp_material.emission_enabled = true
+	_rear_lamp_material.emission = Color(0.8, 0.025, 0.012)
+	_rear_lamp_material.emission_energy_multiplier = 0.8
 	for x in [-0.78, 0.78]:
 		var tail := MeshInstance3D.new()
 		tail.name = "RearTailLamp"
@@ -280,7 +287,7 @@ func _build_vehicle_lights() -> void:
 		tail_mesh.size = Vector3(0.24, 0.28, 0.08)
 		tail.mesh = tail_mesh
 		tail.position = Vector3(x, 1.18, 2.43)
-		tail.material_override = tail_material
+		tail.material_override = _rear_lamp_material
 		add_child(tail)
 
 func _toggle_headlights() -> void:
@@ -288,6 +295,9 @@ func _toggle_headlights() -> void:
 	for beam in _headlight_lights:
 		if is_instance_valid(beam):
 			beam.visible = _headlights_on
+	for lamp in _headlight_meshes:
+		if is_instance_valid(lamp):
+			lamp.visible = _headlights_on
 	if is_instance_valid(_headlight_button):
 		_headlight_button.text = "LIGHTS: ON" if _headlights_on else "LIGHTS: OFF"
 
