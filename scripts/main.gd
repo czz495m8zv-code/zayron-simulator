@@ -1997,11 +1997,9 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 				_mission_label.text = "STOP THE BUS AND OPEN PASSENGER DOORS TO BOARD"
 			return
 		_passenger_pickup_done = true
-		if _active_vehicle.has_method("set_visible_passenger_manifest"):
-			_active_vehicle.set_visible_passenger_manifest(PASSENGER_GROUP_SIZE)
 		_animate_passenger_boarding()
 		if is_instance_valid(_passenger_status_label):
-			_passenger_status_label.text = "PASSENGERS ON BOARD: %d" % PASSENGER_GROUP_SIZE
+			_passenger_status_label.text = "BOARDING PASSENGERS: %d" % PASSENGER_GROUP_SIZE
 		_mission_target = ROUTE_TARGETS[_selected_route]
 		if is_instance_valid(_checkpoint_area):
 			_checkpoint_area.position = _mission_target
@@ -2059,8 +2057,16 @@ func _animate_passenger_boarding() -> void:
 		var tween := create_tween()
 		tween.set_trans(Tween.TRANS_QUAD)
 		tween.set_ease(Tween.EASE_IN_OUT)
+		var current_index := passenger_index
 		tween.tween_property(person, "global_position", target, 0.65 + float(passenger_index % 3) * 0.12)
-		tween.tween_callback(func(): person.visible = false)
+		tween.tween_callback(func():
+			person.visible = false
+			if current_index == PASSENGER_GROUP_SIZE - 1 and is_instance_valid(_active_vehicle):
+				if _active_vehicle.has_method("set_visible_passenger_manifest"):
+					_active_vehicle.set_visible_passenger_manifest(PASSENGER_GROUP_SIZE)
+				if is_instance_valid(_passenger_status_label):
+					_passenger_status_label.text = "PASSENGERS SEATED: %d" % PASSENGER_GROUP_SIZE
+		)
 		passenger_index += 1
 
 
