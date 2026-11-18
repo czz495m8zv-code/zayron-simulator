@@ -178,9 +178,12 @@ func _process(delta: float) -> void:
 		var signal_is_green := _traffic_signal_clock < 8.0
 		var stop_line_z := -52.0
 		var distance_to_stop_line := stop_line_z - traffic_vehicle.position.z
-		if not signal_is_green and distance_to_stop_line > 0.0 and distance_to_stop_line < 18.0:
-			var safe_approach_speed := sqrt(2.0 * 4.0 * distance_to_stop_line)
-			target_speed = minf(target_speed, safe_approach_speed)
+		if not signal_is_green and distance_to_stop_line < 18.0:
+			if distance_to_stop_line <= 0.75:
+				target_speed = 0.0
+			elif distance_to_stop_line > 0.0:
+				var safe_approach_speed := sqrt(2.0 * 4.0 * distance_to_stop_line)
+				target_speed = minf(target_speed, safe_approach_speed)
 		_traffic_current_speeds[traffic_index] = move_toward(_traffic_current_speeds[traffic_index], target_speed, 4.0 * delta)
 		traffic_vehicle.position.z += _traffic_current_speeds[traffic_index] * delta
 		if traffic_vehicle.position.z > 24.0:
@@ -640,10 +643,10 @@ func _update_player_signal_rule() -> void:
 	var signal_is_green := _traffic_signal_clock < 8.0
 	var distance_to_stop_line := _active_vehicle.global_position.z + 52.0
 	var brake_amount := 0.0
-	if not signal_is_green and distance_to_stop_line > 0.0 and distance_to_stop_line < 22.0:
+	if not signal_is_green and distance_to_stop_line < 22.0:
 		if distance_to_stop_line <= 1.0:
 			brake_amount = 1.0
-		else:
+		elif distance_to_stop_line > 0.0:
 			var safe_speed := sqrt(2.0 * 5.0 * distance_to_stop_line)
 			var current_speed := float(_active_vehicle.get("_speed"))
 			if current_speed > safe_speed:
@@ -657,7 +660,7 @@ func _build_test_intersection() -> void:
 	add_child(junction_road)
 	var junction_surface := _make_box("JunctionAsphaltSurface", Vector3(20.0, 0.025, 8.0), Vector3(10.5, 0.105, -48.0), Color(0.29, 0.30, 0.31))
 	add_child(junction_surface)
-	var stop_bar := _make_box("JunctionStopLine", Vector3(4.4, 0.035, 0.38), Vector3(2.35, 0.13, -52.0), Color(0.95, 0.94, 0.88))
+	var stop_bar := _make_box("JunctionStopLine", Vector3(8.3, 0.035, 0.38), Vector3(0.0, 0.13, -52.0), Color(0.95, 0.94, 0.88))
 	add_child(stop_bar)
 	for pole_index in range(2):
 		var side := -1.0 if pole_index == 0 else 1.0
