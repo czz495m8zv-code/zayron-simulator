@@ -88,6 +88,8 @@ var _company_ai_bus_stop_time: float = 0.0
 var _company_ai_bus_start := Vector3(-2.0, 0.15, 8.0)
 var _company_ai_bus_destination := Vector3(-2.0, 0.15, -82.0)
 var _company_ai_bus_speed: float = 7.0
+var _company_ai_bus_current_speed: float = 0.0
+var _company_ai_bus_acceleration: float = 2.8
 
 func _ready() -> void:
 	_load_progress()
@@ -118,8 +120,6 @@ func _process(delta: float) -> void:
 		_forklift_carriage.position.y = 0.48 + (sin(_forklift_animation_time * 1.35) + 1.0) * 0.22
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
-	if _company_trip_active and is_instance_valid(_company_status_label) and is_instance_valid(_company_trip_timer):
-		_company_status_label.text = "COMPANY BUS ON ROAD  |  %d SEC LEFT" % ceili(_company_trip_timer.time_left)
 	_update_company_ai_bus(delta)
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
 		return
@@ -899,6 +899,7 @@ func _spawn_company_ai_bus() -> void:
 	_company_ai_bus.set_physics_process(false)
 	_company_ai_bus_phase = 0
 	_company_ai_bus_stop_time = 0.0
+	_company_ai_bus_current_speed = 0.0
 	_company_ai_bus_destination = Vector3(-2.0, 0.15, ROUTE_TARGETS[_company_selected_route].z)
 	var route_marker := Label3D.new()
 	route_marker.name = "CompanyBusRouteMarker"
@@ -911,35 +912,45 @@ func _spawn_company_ai_bus() -> void:
 	_company_ai_bus.add_child(route_marker)
 
 
+func _move_company_bus_toward(target: Vector3, delta: float) -> bool:
+	var offset := target - _company_ai_bus.position
+	var distance := offset.length()
+	if distance <= 0.12:
+		_company_ai_bus.position = target
+		_company_ai_bus_current_speed = 0.0
+		return true
+	var direction := offset / distance
+	var old_rotation := _company_ai_bus.rotation
+	_company_ai_bus.look_at(_company_ai_bus.position + direction, Vector3.UP)
+	var desired_yaw := _company_ai_bus.rotation.y
+	_company_ai_bus.rotation = old_rotation
+	_company_ai_bus.rotation.y = lerp_angle(_company_ai_bus.rotation.y, desired_yaw, minf(delta * 2.8, 1.0))
+	_company_ai_bus_current_speed = move_toward(_company_ai_bus_current_speed, _company_ai_bus_speed, _company_ai_bus_acceleration * delta)
+	var step_distance := minf(distance, _company_ai_bus_current_speed * delta)
+	_company_ai_bus.position += direction * step_distance
+	return _company_ai_bus.position.distance_to(target) <= 0.12
+
+
 func _update_company_ai_bus(delta: float) -> void:
 	if not _company_trip_active or not is_instance_valid(_company_ai_bus):
 		return
 
-	# Face the direction of travel so the bus model visibly turns at the stop.
 	if _company_ai_bus_phase == 0:
-		var outbound_direction := (_company_ai_bus_destination - _company_ai_bus.position).normalized()
-		if outbound_direction.length_squared() > 0.001:
-			_company_ai_bus.look_at(_company_ai_bus.position + outbound_direction, Vector3.UP)
-		_company_ai_bus.position = _company_ai_bus.position.move_toward(_company_ai_bus_destination, _company_ai_bus_speed * delta)
-		if _company_ai_bus.position.distance_to(_company_ai_bus_destination) < 0.12:
-			_company_ai_bus.position = _company_ai_bus_destination
+		if _move_company_bus_toward(_company_ai_bus_destination, delta):
 			_company_ai_bus_phase = 1
 			_company_ai_bus_stop_time = 3.0
+			_company_ai_bus_current_speed = 0.0
 			if is_instance_valid(_company_status_label):
 				_company_status_label.text = "Company bus reached %s and is waiting at the stop." % ROUTE_NAMES[_company_selected_route].split(" -> ")[1]
 	elif _company_ai_bus_phase == 1:
+		_company_ai_bus_current_speed = move_toward(_company_ai_bus_current_speed, 0.0, _company_ai_bus_acceleration * delta)
 		_company_ai_bus_stop_time -= delta
 		if _company_ai_bus_stop_time <= 0.0:
 			_company_ai_bus_phase = 2
 			if is_instance_valid(_company_status_label):
 				_company_status_label.text = "Company bus leaving the stop and returning to depot."
 	elif _company_ai_bus_phase == 2:
-		var return_direction := (_company_ai_bus_start - _company_ai_bus.position).normalized()
-		if return_direction.length_squared() > 0.001:
-			_company_ai_bus.look_at(_company_ai_bus.position + return_direction, Vector3.UP)
-		_company_ai_bus.position = _company_ai_bus.position.move_toward(_company_ai_bus_start, _company_ai_bus_speed * delta)
-		if _company_ai_bus.position.distance_to(_company_ai_bus_start) < 0.12:
-			_company_ai_bus.position = _company_ai_bus_start
+		if _move_company_bus_toward(_company_ai_bus_start, delta):
 			if is_instance_valid(_company_trip_timer):
 				_company_trip_timer.stop()
 			_on_company_driver_trip_completed()
