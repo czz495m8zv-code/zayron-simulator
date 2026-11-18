@@ -104,10 +104,19 @@ func _spawn_vehicle() -> void:
 	_active_vehicle = FLEET_SCENES[_selected_vehicle].instantiate() as Node3D
 	_active_vehicle.position = Vector3(0.0, 0.15, 8.0)
 	add_child(_active_vehicle)
+	_sync_vehicle_cargo_payload()
 	if is_instance_valid(_vehicle_button):
 		_vehicle_button.text = "NEXT: " + FLEET_NAMES[(_selected_vehicle + 1) % FLEET_NAMES.size()]
 	if is_instance_valid(_mission_label):
 		_mission_label.text = "%s  |  CHECKPOINT: 000 m" % ROUTE_NAMES[_selected_route]
+
+
+func _sync_vehicle_cargo_payload() -> void:
+	if not is_instance_valid(_active_vehicle) or not _active_vehicle.has_method("set_cargo_payload"):
+		return
+	var show_payload := _selected_vehicle == 0 and not _passenger_mode and _cargo_pickup_done
+	_active_vehicle.set_cargo_payload(_selected_cargo, show_payload)
+
 
 func _build_vehicle_selector() -> void:
 	var layer := CanvasLayer.new()
@@ -542,6 +551,7 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 		return
 	if not _passenger_mode and not _cargo_pickup_done:
 		_cargo_pickup_done = true
+		_sync_vehicle_cargo_payload()
 		if is_instance_valid(_cargo_status_label):
 			_cargo_status_label.text = "CARGO LOADED: " + CARGO_NAMES[_selected_cargo]
 		if is_instance_valid(_cargo_depot):
