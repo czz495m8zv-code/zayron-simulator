@@ -120,7 +120,7 @@ func _process(delta: float) -> void:
 	var stage_name := "LOAD CARGO" if not _cargo_pickup_done else "DELIVER CARGO"
 	if _passenger_mode:
 		stage_name = "PICKUP STOP" if not _passenger_pickup_done else "PASSENGER DROP-OFF"
-	_mission_label.text = "%s  |  %s: %d m" % [ROUTE_NAMES[_company_selected_route], stage_name, int(distance)]
+	_mission_label.text = "%s  |  %s: %d m" % [ROUTE_NAMES[_selected_route], stage_name, int(distance)]
 
 func _spawn_vehicle() -> void:
 	_mission_complete = false
@@ -865,12 +865,12 @@ func _dispatch_company_driver() -> void:
 	_company_trip_driver_index = driver_index
 	_company_trip_bus_index = bus_index
 	_company_drivers[driver_index]["status"] = "ON ROUTE"
-	_company_drivers[driver_index]["route"] = ROUTE_NAMES[_selected_route]
+	_company_drivers[driver_index]["route"] = ROUTE_NAMES[_company_selected_route]
 	_company_drivers[driver_index]["bus"] = str(_company_fleet[bus_index].get("name", "Company Bus"))
 	_company_fleet[bus_index]["status"] = "ON ROUTE"
 	_company_trip_active = true
 	_company_trip_timer.start()
-	_company_status_label.text = "%s dispatched in %s on %s. You can keep driving." % [_company_drivers[driver_index]["name"], _company_fleet[bus_index]["name"], ROUTE_NAMES[_selected_route]]
+	_company_status_label.text = "%s dispatched in %s on %s. You can keep driving." % [_company_drivers[driver_index]["name"], _company_fleet[bus_index]["name"], ROUTE_NAMES[_company_selected_route]]
 	_refresh_company_panel()
 	_save_progress()
 
