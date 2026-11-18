@@ -83,6 +83,7 @@ var _company_trip_bus_index: int = -1
 
 func _ready() -> void:
 	_load_progress()
+	_initialize_company_records()
 	_mission_target = ROUTE_TARGETS[_selected_route]
 	_passenger_pickup_target = Vector3(0.0, 0.0, (8.0 + _mission_target.z) * 0.5)
 	_mission_target = _passenger_pickup_target
@@ -661,6 +662,24 @@ func _build_mission_hud() -> void:
 	layer.add_child(_restart_button)
 
 
+func _initialize_company_records() -> void:
+	if _company_fleet.is_empty():
+		for bus_index in range(maxi(_company_bus_count, 1)):
+			_company_fleet.append({"name": "Company Bus %03d" % (bus_index + 1), "type": "INTERCITY COACH", "status": "AVAILABLE"})
+	if _company_drivers.is_empty():
+		for driver_index in range(_company_driver_count):
+			_company_drivers.append({"name": "Driver %03d" % (driver_index + 1), "status": "AVAILABLE", "route": "UNASSIGNED", "bus": "NO BUS"})
+	# A simulated trip is not yet persisted across app restarts; release any
+	# vehicles and employees that were marked ON ROUTE in the previous session.
+	for bus in _company_fleet:
+		bus["status"] = "AVAILABLE"
+	for driver in _company_drivers:
+		driver["status"] = "AVAILABLE"
+		driver["route"] = "UNASSIGNED"
+		driver["bus"] = "NO BUS"
+	_company_bus_count = _company_fleet.size()
+	_company_driver_count = _company_drivers.size()
+
 func _build_company_management() -> void:
 	_company_trip_timer = Timer.new()
 	_company_trip_timer.name = "CompanyDriverTripTimer"
@@ -690,9 +709,9 @@ func _build_company_management() -> void:
 	panel.anchor_right = 0.5
 	panel.anchor_bottom = 0.5
 	panel.offset_left = -260.0
-	panel.offset_top = -245.0
+	panel.offset_top = -315.0
 	panel.offset_right = 260.0
-	panel.offset_bottom = 245.0
+	panel.offset_bottom = 315.0
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.035, 0.075, 0.11, 1.0)
 	panel_style.border_color = Color(0.12, 0.58, 0.78, 1.0)
