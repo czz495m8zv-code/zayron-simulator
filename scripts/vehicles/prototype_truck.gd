@@ -138,10 +138,12 @@ func _build_engine_audio() -> void:
 
 func _physics_process(delta: float) -> void:
 	var trailer_ready := not (supports_trailer and ((_trailer_attached and _trailer_legs_down) or _trailer_doors_open))
+	var passenger_door_ready := not (supports_passenger_doors and _passenger_doors_open)
 	var cargo_ready := not _cargo_loaded or _cargo_secured
-	var throttle := _throttle_input if _engine_running and _gear_mode == "D" and trailer_ready and cargo_ready else 0.0
+	var drive_ready := _engine_running and trailer_ready and passenger_door_ready and cargo_ready
+	var throttle := _throttle_input if drive_ready and _gear_mode == "D" else 0.0
 	var brake := _brake_input
-	var reverse := _reverse_input if _engine_running and _gear_mode == "R" and trailer_ready and cargo_ready else 0.0
+	var reverse := _reverse_input if drive_ready and _gear_mode == "R" else 0.0
 	var steering := _steering_input
 
 	if not OS.has_feature("android"):
@@ -214,6 +216,12 @@ func _physics_process(delta: float) -> void:
 		var status_parts: Array[String] = []
 		if _handbrake_on:
 			status_parts.append("PARK BRAKE")
+		if supports_passenger_doors and _passenger_doors_open:
+			status_parts.append("CLOSE PASSENGER DOORS")
+		if supports_trailer and _trailer_doors_open:
+			status_parts.append("CLOSE TRAILER DOORS")
+		if _cargo_loaded and not _cargo_secured:
+			status_parts.append("SECURE CARGO")
 		if absf(_speed) > 0.5 and not _seatbelt_fastened:
 			status_parts.append("SEAT BELT WARNING")
 		if _headlights_on:
