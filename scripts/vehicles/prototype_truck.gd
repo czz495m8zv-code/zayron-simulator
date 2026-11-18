@@ -12,6 +12,8 @@ var _throttle_input: float = 0.0
 var _brake_input: float = 0.0
 var _reverse_input: float = 0.0
 var _steering_input: float = 0.0
+var _steer_left_held: bool = false
+var _steer_right_held: bool = false
 var _speed_label: Label
 var _gear_label: Label
 var _exterior_camera: Camera3D
@@ -284,9 +286,9 @@ func _add_camera_button(parent: Control) -> void:
 	button.anchor_right = 0.5
 	button.anchor_top = 0.0
 	button.anchor_bottom = 0.0
-	button.offset_left = -48.0
+	button.offset_left = -82.0
 	button.offset_top = 22.0
-	button.offset_right = 48.0
+	button.offset_right = 82.0
 	button.offset_bottom = 68.0
 	button.add_theme_font_size_override("font_size", 17)
 	button.add_theme_color_override("font_color", Color.WHITE)
@@ -339,9 +341,11 @@ func _on_control_down(control_name: String) -> void:
 		"reverse":
 			_reverse_input = 1.0
 		"steer_left":
-			_steering_input = -1.0
+			_steer_left_held = true
+			_update_steering_input()
 		"steer_right":
-			_steering_input = 1.0
+			_steer_right_held = true
+			_update_steering_input()
 
 func _on_control_up(control_name: String) -> void:
 	match control_name:
@@ -351,8 +355,15 @@ func _on_control_up(control_name: String) -> void:
 			_brake_input = 0.0
 		"reverse":
 			_reverse_input = 0.0
-		"steer_left", "steer_right":
-			_steering_input = 0.0
+		"steer_left":
+			_steer_left_held = false
+			_update_steering_input()
+		"steer_right":
+			_steer_right_held = false
+			_update_steering_input()
+
+func _update_steering_input() -> void:
+	_steering_input = float(int(_steer_right_held) - int(_steer_left_held))
 
 func _add_cockpit_steering_wheel(location: Vector3) -> void:
 	var wheel := MeshInstance3D.new()
