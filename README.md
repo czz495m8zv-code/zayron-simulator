@@ -329,3 +329,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Added a give-way bar and painted triangular yield markings at the junction mouth.
 - Added a roadside GIVE WAY sign for vehicles approaching from the side access road.
 - These markings are visual guidance only; side-road cross-traffic and yield enforcement are not simulated yet.
+
+
+### Signal-coordinated side-road traffic
+- Added an independently animated vehicle on the T-junction access road.
+- It approaches and waits at the give-way line while the main road has green.
+- It crosses the highway during the main road's red/amber phase, then loops back for another approach.
+- This is a scripted traffic demonstration, not yet collision-aware gap acceptance or a full junction AI system.
