@@ -245,3 +245,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Player vehicles consume fuel based on distance travelled and engine load, show a cockpit fuel percentage, and display LOW FUEL / OUT OF FUEL warnings.
 - At zero fuel, throttle and reverse are inhibited. The REFUEL control restores the tank only while the vehicle is stopped and the parking brake is engaged.
 - This is an initial vehicle-level fuel prototype: refuelling is currently free and available from the control anywhere while parked. Fuel stations, fuel prices, tank-size differences and persistent fuel storage remain future work.
+
+
+### Oman depot fuel station
+- Added a visible diesel/petrol dispenser and canopy beside the logistics depot.
+- The vehicle REFUEL control is enabled only when the player vehicle is within 6 metres of the station, and refuelling still requires the vehicle to be stopped with the parking brake engaged.
+- Fueling is currently free; economy integration, separate diesel/petrol compatibility, fuel quantities and station network expansion remain future work.
