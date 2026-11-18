@@ -18,6 +18,8 @@ const FLEET_NAMES: Array[String] = [
 ]
 
 var _active_vehicle: Node3D
+var _active_vehicle_index: int = -1
+var _vehicle_fuel_levels: Array[float] = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0]
 var _selected_vehicle: int = 0
 var _vehicle_button: Button
 var _mission_label: Label
@@ -213,8 +215,12 @@ func _spawn_vehicle() -> void:
 		_checkpoint_area.position = _mission_target
 	_move_checkpoint_gate()
 	if is_instance_valid(_active_vehicle):
+		_store_active_vehicle_fuel()
 		_active_vehicle.queue_free()
 	_active_vehicle = FLEET_SCENES[_selected_vehicle].instantiate() as Node3D
+	_active_vehicle_index = _selected_vehicle
+	if _active_vehicle.has_method("set_fuel_level"):
+		_active_vehicle.set_fuel_level(_vehicle_fuel_levels[_selected_vehicle])
 	_active_vehicle.position = Vector3(0.0, 0.15, 8.0)
 	add_child(_active_vehicle)
 	if _active_vehicle.has_signal("refuel_requested"):
@@ -2200,13 +2206,25 @@ func _load_progress() -> void:
 			_company_drivers.append({"name": "Driver %03d" % (driver_index + 1), "status": "AVAILABLE", "route": "UNASSIGNED", "bus": "NO BUS"})
 	_company_bus_count = _company_fleet.size()
 	_company_driver_count = _company_drivers.size()
+	var saved_fuel: Variant = progress.get_value("career", "vehicle_fuel_levels", _vehicle_fuel_levels)
+	if saved_fuel is Array:
+		for fuel_index in range(mini(saved_fuel.size(), _vehicle_fuel_levels.size())):
+			_vehicle_fuel_levels[fuel_index] = clampf(float(saved_fuel[fuel_index]), 0.0, 100.0)
 	_steering_sensitivity = clampf(float(progress.get_value("settings", "steering_sensitivity", 1.0)), 0.5, 1.8)
 	_master_volume = clampf(float(progress.get_value("settings", "master_volume", 1.0)), 0.0, 1.0)
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(_master_volume, 0.001)))
 	if _passenger_mode and _selected_vehicle < 3:
 		_selected_vehicle = 3
 
+func _store_active_vehicle_fuel() -> void:
+	if not is_instance_valid(_active_vehicle) or _active_vehicle_index < 0 or _active_vehicle_index >= _vehicle_fuel_levels.size():
+		return
+	if _active_vehicle.has_method("get_fuel_level"):
+		_vehicle_fuel_levels[_active_vehicle_index] = clampf(float(_active_vehicle.get_fuel_level()), 0.0, 100.0)
+
+
 func _save_progress() -> void:
+	_store_active_vehicle_fuel()
 	var progress := ConfigFile.new()
 	progress.set_value("career", "deliveries", _delivery_count)
 	progress.set_value("career", "wallet_omr", _cash_balance)
@@ -2214,6 +2232,7 @@ func _save_progress() -> void:
 	progress.set_value("career", "selected_route", _selected_route)
 	progress.set_value("career", "selected_cargo", _selected_cargo)
 	progress.set_value("career", "passenger_mode", _passenger_mode)
+	progress.set_value("career", "vehicle_fuel_levels", _vehicle_fuel_levels)
 	progress.set_value("company", "name", _company_name)
 	progress.set_value("company", "funds_omr", _company_funds)
 	progress.set_value("company", "buses", _company_bus_count)
