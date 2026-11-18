@@ -17,11 +17,13 @@ var _current_speed := 0.0
 var _stop_time := 0.0
 var _passenger_group: Node3D
 var _boarded_passengers := 0
+var _departure_delay := 0.0
 
-func configure(vehicle_scene: PackedScene, start: Vector3, destination: Vector3, route_name: String, driver_index: int, bus_index: int) -> void:
+func configure(vehicle_scene: PackedScene, start: Vector3, destination: Vector3, route_name: String, driver_index: int, bus_index: int, departure_delay: int = 0) -> void:
 	_driver_index = driver_index
 	_bus_index = bus_index
 	_route_name = route_name
+	_departure_delay = maxf(float(departure_delay), 0.0)
 	_bus = vehicle_scene.instantiate() as Node3D
 	_bus.name = "CompanyBus_%03d" % (bus_index + 1)
 	_bus.position = start
@@ -46,6 +48,9 @@ func configure(vehicle_scene: PackedScene, start: Vector3, destination: Vector3,
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(_bus):
+		return
+	if _departure_delay > 0.0:
+		_departure_delay = maxf(_departure_delay - delta, 0.0)
 		return
 	if _phase == 0:
 		if _move_toward(_route_points[_waypoint_index], delta):
