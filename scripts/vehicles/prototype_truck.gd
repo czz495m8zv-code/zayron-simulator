@@ -48,6 +48,7 @@ var _hazard_on := false
 var _left_indicator_on := false
 var _right_indicator_on := false
 var _indicator_clock := 0.0
+var _indicator_elapsed := 0.0
 var _indicator_visible := true
 var _indicator_lights: Array[MeshInstance3D] = []
 var _wipers_on := false
@@ -106,6 +107,14 @@ func _process(delta: float) -> void:
 			_horn_frames_left -= 1
 	if _left_indicator_on or _right_indicator_on or _hazard_on:
 		_indicator_clock += delta
+		if not _hazard_on and (_left_indicator_on or _right_indicator_on):
+			_indicator_elapsed += delta
+			if _indicator_elapsed >= 5.0:
+				_left_indicator_on = false
+				_right_indicator_on = false
+				_indicator_elapsed = 0.0
+		else:
+			_indicator_elapsed = 0.0
 		if _indicator_clock >= 0.45:
 			_indicator_clock = 0.0
 			_indicator_visible = not _indicator_visible
@@ -625,16 +634,19 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			_toggle_trailer_doors(button)
 		"left":
 			_left_indicator_on = not _left_indicator_on
+			_indicator_elapsed = 0.0
 			if _left_indicator_on:
 				_right_indicator_on = false
 				_hazard_on = false
 		"right":
 			_right_indicator_on = not _right_indicator_on
+			_indicator_elapsed = 0.0
 			if _right_indicator_on:
 				_left_indicator_on = false
 				_hazard_on = false
 		"hazard":
 			_hazard_on = not _hazard_on
+			_indicator_elapsed = 0.0
 			if _hazard_on:
 				_left_indicator_on = false
 				_right_indicator_on = false
