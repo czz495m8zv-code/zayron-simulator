@@ -144,6 +144,9 @@ func _physics_process(delta: float) -> void:
 
 	if is_instance_valid(_rear_lamp_material):
 		_rear_lamp_material.emission_energy_multiplier = 0.8 + brake * 2.2
+	for tail_lamp in get_children():
+		if tail_lamp is MeshInstance3D and String(tail_lamp.name) == "RearTailLamp":
+			tail_lamp.visible = _parking_lights_on or brake > 0.01
 	for reverse_lamp in _reverse_lamp_meshes:
 		if is_instance_valid(reverse_lamp):
 			reverse_lamp.visible = _engine_running and _gear_mode == "R"
