@@ -669,10 +669,19 @@ func _build_test_intersection() -> void:
 	add_child(junction_road)
 	var junction_surface := _make_box("JunctionAsphaltSurface", Vector3(20.0, 0.025, 8.0), Vector3(10.5, 0.105, -48.0), Color(0.29, 0.30, 0.31))
 	add_child(junction_surface)
+	# Extend the access road across the highway so crossing traffic has a
+	# visible exit lane instead of being reset immediately at the carriageway.
+	var west_exit_road := _make_box("OmanJunctionWestExitRoad", Vector3(20.0, 0.12, 8.0), Vector3(-9.5, 0.035, -48.0), Color(0.12, 0.13, 0.14))
+	add_child(west_exit_road)
+	var west_exit_surface := _make_box("JunctionWestExitAsphalt", Vector3(20.0, 0.025, 8.0), Vector3(-9.5, 0.105, -48.0), Color(0.29, 0.30, 0.31))
+	add_child(west_exit_surface)
 	var junction_center_dash_material := Color(0.92, 0.91, 0.84)
 	for dash_index in range(6):
 		var dash := _make_box("JunctionCentreDash_%d" % dash_index, Vector3(1.45, 0.025, 0.12), Vector3(4.0 + float(dash_index) * 2.45, 0.13, -48.0), junction_center_dash_material)
 		add_child(dash)
+	for dash_index in range(7):
+		var west_dash := _make_box("JunctionWestCentreDash_%d" % dash_index, Vector3(1.45, 0.025, 0.12), Vector3(-2.0 - float(dash_index) * 2.35, 0.13, -48.0), junction_center_dash_material)
+		add_child(west_dash)
 	# Side-road traffic receives a clear give-way marking before joining the highway.
 	var give_way_bar := _make_box("JunctionGiveWayBar", Vector3(0.34, 0.035, 7.0), Vector3(2.1, 0.14, -48.0), Color(0.96, 0.94, 0.87))
 	add_child(give_way_bar)
@@ -804,7 +813,8 @@ func _update_side_road_traffic(delta: float) -> void:
 			target_speed = 7.5
 	_side_road_traffic_speed = move_toward(_side_road_traffic_speed, target_speed, 3.8 * delta)
 	_side_road_traffic_vehicle.position.x -= _side_road_traffic_speed * delta
-	if _side_road_traffic_vehicle.position.x <= -5.5:
+	if _side_road_traffic_vehicle.position.x <= -18.0:
+		# Complete the full crossing and clear the west exit before recycling.
 		_side_road_traffic_vehicle.position.x = 18.0
 		_side_road_traffic_speed = 0.0
 
