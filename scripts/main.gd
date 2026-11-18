@@ -209,7 +209,7 @@ func _process(delta: float) -> void:
 			# Keep every respawn inside the same 142 m loop and preserve the
 			# original traffic order; offsets outside the loop caused phase overlap.
 			traffic_vehicle.position.z = -118.0 + float(traffic_index) * 46.0
-	_traffic_signal_clock = fposmod(_traffic_signal_clock + delta, 16.0)
+	_traffic_signal_clock = fposmod(_traffic_signal_clock + delta, 26.0)
 	_update_junction_pedestrian(delta)
 	_update_side_road_traffic(delta)
 	_update_player_signal_rule()
@@ -219,11 +219,11 @@ func _process(delta: float) -> void:
 		var lamp_on := lamp_index % 3 == active_signal
 		lamp_material.emission_energy_multiplier = 1.8 if lamp_on else 0.08
 		_traffic_signal_lamps[lamp_index].visible = true
-	var signal_phase_end := 8.0 if _traffic_signal_clock < 8.0 else (10.0 if _traffic_signal_clock < 10.0 else 16.0)
+	var signal_phase_end := 8.0 if _traffic_signal_clock < 8.0 else (10.0 if _traffic_signal_clock < 10.0 else 26.0)
 	var signal_seconds_left := maxi(0, ceili(signal_phase_end - _traffic_signal_clock))
 	for countdown_label in _traffic_signal_countdown_labels:
 		countdown_label.text = "%02d" % signal_seconds_left
-	var pedestrian_walk_allowed := _traffic_signal_clock >= 10.0
+	var pedestrian_walk_allowed := _traffic_signal_clock >= 10.0 and _traffic_signal_clock < 16.0
 	# Flash WALK during the final two seconds as a clearance warning before WAIT.
 	_pedestrian_signal_flash_clock += delta
 	var pedestrian_clearance_warning := pedestrian_walk_allowed and _traffic_signal_clock >= 14.0
@@ -236,7 +236,7 @@ func _process(delta: float) -> void:
 	if is_instance_valid(_pedestrian_walk_label):
 		_pedestrian_walk_label.visible = pedestrian_walk_lit
 	if is_instance_valid(_pedestrian_countdown_label):
-		var seconds_to_change := 16.0 - _traffic_signal_clock if pedestrian_walk_allowed else 10.0 - _traffic_signal_clock
+		var seconds_to_change := 10.0 - _traffic_signal_clock if _traffic_signal_clock < 10.0 else (16.0 - _traffic_signal_clock if _traffic_signal_clock < 16.0 else 36.0 - _traffic_signal_clock)
 		_pedestrian_countdown_label.text = "%02d" % maxi(0, ceili(seconds_to_change))
 	_forklift_animation_time += delta
 	if is_instance_valid(_forklift_beacon):
@@ -927,9 +927,11 @@ func _update_junction_pedestrian(delta: float) -> void:
 func _update_side_road_traffic(delta: float) -> void:
 	if not is_instance_valid(_side_road_traffic_vehicle):
 		return
-	# Green, amber, and the first two seconds of red keep side traffic waiting.
-	# The final two seconds of red provide an all-red clearance interval.
-	var main_road_has_priority := _traffic_signal_clock < 12.0
+	# Main road: green 0-8 s, amber 8-10 s, then red.
+	# Pedestrians cross 10-16 s; 16-18 s is all-red clearance.
+	# Side-road traffic receives a protected 18-24 s crossing window,
+	# followed by 2 s all-red clearance before the next main-road green.
+	var side_road_has_priority := _traffic_signal_clock >= 18.0 and _traffic_signal_clock < 24.0
 	var junction_occupied := false
 	# Do not enter the conflict zone while a main-road vehicle or the player
 	# is physically passing through it. A vehicle already crossing is allowed
@@ -941,17 +943,22 @@ func _update_side_road_traffic(delta: float) -> void:
 	if is_instance_valid(_active_vehicle) and absf(_active_vehicle.global_position.z + 48.0) < 4.0:
 		junction_occupied = true
 	var target_speed := 0.0
-	# Give pedestrians the marked crossing before allowing side-road cars through.
+	var vehicle_committed_to_crossing := _side_road_traffic_vehicle.position.x <= 2.8
+	# Give pedestrians the entire WALK interval and its clearance before
+	# side-road traffic is permitted to enter the crossing.
 	var pedestrian_conflict := _junction_pedestrian_crossing and _side_road_traffic_vehicle.position.x > 3.8 and _side_road_traffic_vehicle.position.x < 11.5
 	if pedestrian_conflict:
 		target_speed = 0.0
-	elif main_road_has_priority and _side_road_traffic_vehicle.position.x > 2.8:
-		# Approach slowly, then wait just behind the give-way markings.
-		target_speed = 3.8
-	elif not main_road_has_priority and _side_road_traffic_vehicle.position.x > -5.5:
-		# Wait for a clear physical gap unless already committed to crossing.
-		if not junction_occupied or _side_road_traffic_vehicle.position.x <= 2.8:
+	elif vehicle_committed_to_crossing:
+		# Once beyond the give-way line, clear the junction even as the phase ends.
+		target_speed = 7.5
+	elif side_road_has_priority and _side_road_traffic_vehicle.position.x > -5.5:
+		# Enter only in the dedicated side-road window and when the junction is clear.
+		if not junction_occupied:
 			target_speed = 7.5
+	elif _traffic_signal_clock < 18.0 and _side_road_traffic_vehicle.position.x > 2.8:
+		# Approach slowly, then wait behind the give-way markings.
+		target_speed = 3.8
 	_side_road_traffic_speed = move_toward(_side_road_traffic_speed, target_speed, 3.8 * delta)
 	_side_road_traffic_vehicle.position.x -= _side_road_traffic_speed * delta
 	if _side_road_traffic_vehicle.position.x <= -18.0:
