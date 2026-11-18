@@ -76,6 +76,11 @@ func _process(delta: float) -> void:
 		_traffic_car.position.z += _traffic_speed * delta
 		if _traffic_car.position.z > 24.0:
 			_traffic_car.position.z = -118.0
+	if is_instance_valid(_forklift_carriage):
+		_forklift_animation_time += delta
+		_forklift_carriage.position.y = 0.48 + (sin(_forklift_animation_time * 1.35) + 1.0) * 0.22
+	if is_instance_valid(_forklift_beacon):
+		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
 		return
 	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
@@ -83,11 +88,6 @@ func _process(delta: float) -> void:
 	if _passenger_mode:
 		stage_name = "PICKUP STOP" if not _passenger_pickup_done else "PASSENGER DROP-OFF"
 	_mission_label.text = "%s  |  %s: %d m" % [ROUTE_NAMES[_selected_route], stage_name, int(distance)]
-	if is_instance_valid(_forklift_carriage):
-		_forklift_animation_time += delta
-		_forklift_carriage.position.y = 0.48 + (sin(_forklift_animation_time * 1.35) + 1.0) * 0.22
-	if is_instance_valid(_forklift_beacon):
-		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
 
 func _spawn_vehicle() -> void:
 	_mission_complete = false
