@@ -98,3 +98,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 ### Brake and tail lamp behaviour
 - Rear red tail lamps illuminate with parking lights and automatically while the service brake is pressed, even if parking lights are off.
 - Brake application increases rear lamp emission intensity; releasing the brake returns them to the parking-light state.
+
+
+### Seat-belt reminder
+- The shared player vehicle controls now include a SEAT BELT toggle.
+- The instrument status display shows a seat-belt warning while the vehicle is moving and the belt is unfastened.
+- This is a gameplay reminder only; no crash restraint or occupant injury simulation is implemented yet.
