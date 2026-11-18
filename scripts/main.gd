@@ -93,6 +93,7 @@ var _company_ai_bus_acceleration: float = 2.8
 var _company_ai_route_points: Array[Vector3] = []
 var _company_ai_waypoint_index: int = 0
 var _company_ai_stop_passengers: Node3D
+var _company_ai_boarded_passengers: int = 0
 
 func _ready() -> void:
 	_load_progress()
@@ -905,6 +906,7 @@ func _spawn_company_ai_bus() -> void:
 		_company_ai_stop_passengers.queue_free()
 	_company_ai_stop_passengers = null
 	_company_ai_bus_stop_time = 0.0
+	_company_ai_boarded_passengers = 0
 	_company_ai_bus_current_speed = 0.0
 	_company_ai_bus_destination = Vector3(-2.0, 0.15, ROUTE_TARGETS[_company_selected_route].z)
 	# Follow a sequence of road-centre waypoints instead of cutting directly to the endpoint.
@@ -977,6 +979,24 @@ func _spawn_company_stop_passengers() -> void:
 	stop_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_company_ai_stop_passengers.add_child(stop_sign)
 
+	# Stagger each passenger's walk toward the bus entrance, then remove the
+	# simple placeholder figure to represent boarding. This is not seat/door logic.
+	for passenger_index in range(PASSENGER_GROUP_SIZE):
+		var passenger := _company_ai_stop_passengers.get_node_or_null("WaitingPassenger_%02d" % (passenger_index + 1)) as Node3D
+		if passenger == null:
+			continue
+		var boarding_tween := passenger.create_tween()
+		boarding_tween.tween_interval(float(passenger_index) * 0.55)
+		boarding_tween.tween_property(passenger, "position", Vector3(1.25, 0.0, 3.0), 0.8)
+		boarding_tween.tween_property(passenger, "scale", Vector3.ZERO, 0.2)
+		boarding_tween.tween_callback(_update_company_boarding_status.bind(passenger_index + 1))
+
+
+func _update_company_boarding_status(boarded_count: int) -> void:
+	_company_ai_boarded_passengers = maxi(_company_ai_boarded_passengers, boarded_count)
+	if is_instance_valid(_company_status_label):
+		_company_status_label.text = "Company bus boarding passengers: %d / %d" % [_company_ai_boarded_passengers, PASSENGER_GROUP_SIZE]
+
 
 func _move_company_bus_toward(target: Vector3, delta: float) -> bool:
 	var offset := target - _company_ai_bus.position
@@ -1011,7 +1031,7 @@ func _update_company_ai_bus(delta: float) -> void:
 		if _move_company_bus_toward(outbound_target, delta):
 			if _advance_company_ai_waypoint():
 				_company_ai_bus_phase = 1
-				_company_ai_bus_stop_time = 3.0
+				_company_ai_bus_stop_time = 6.5
 				_company_ai_bus_current_speed = 0.0
 				_spawn_company_stop_passengers()
 				if is_instance_valid(_company_status_label):
@@ -1020,6 +1040,7 @@ func _update_company_ai_bus(delta: float) -> void:
 		_company_ai_bus_current_speed = move_toward(_company_ai_bus_current_speed, 0.0, _company_ai_bus_acceleration * delta)
 		_company_ai_bus_stop_time -= delta
 		if _company_ai_bus_stop_time <= 0.0:
+			_company_ai_boarded_passengers = PASSENGER_GROUP_SIZE
 			if is_instance_valid(_company_ai_stop_passengers):
 				_company_ai_stop_passengers.queue_free()
 			_company_ai_stop_passengers = null
@@ -1027,7 +1048,7 @@ func _update_company_ai_bus(delta: float) -> void:
 			_company_ai_route_points.reverse()
 			_company_ai_waypoint_index = 1
 			if is_instance_valid(_company_status_label):
-				_company_status_label.text = "8 passengers boarded. Company bus returning to depot."
+				_company_status_label.text = "%d passengers boarded. Company bus returning to depot." % _company_ai_boarded_passengers
 	elif _company_ai_bus_phase == 2:
 		var return_target: Vector3 = _company_ai_route_points[_company_ai_waypoint_index]
 		if _move_company_bus_toward(return_target, delta):
