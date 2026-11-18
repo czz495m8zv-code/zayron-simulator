@@ -1211,13 +1211,16 @@ func _on_company_driver_trip_completed() -> void:
 	_save_progress()
 
 func _refresh_company_panel() -> void:
+	_refresh_company_configuration()
 	if is_instance_valid(_company_summary_label):
 		_company_summary_label.text = "%s\nCOMPANY FUNDS: OMR %d\nBUSES: %d     DRIVERS: %d\nCOMPLETED COMPANY TRIPS: %d" % [_company_name, _company_funds, _company_bus_count, _company_driver_count, _company_completed_trips]
 	if is_instance_valid(_company_roster_label):
 		var roster_text := "FLEET"
 		for bus in _company_fleet:
 			var bus_route := clampi(int(bus.get("route_index", _company_selected_route)), 0, ROUTE_NAMES.size() - 1)
-			roster_text += "\n%s  |  %s  |  %s" % [str(bus.get("name", "Bus")), str(bus.get("status", "AVAILABLE")), ROUTE_NAMES[bus_route]]
+			var assigned_index := int(bus.get("assigned_driver_index", -1))
+			var assigned_name := "AUTO" if assigned_index < 0 or assigned_index >= _company_drivers.size() else str(_company_drivers[assigned_index].get("name", "Driver"))
+			roster_text += "\n%s  |  %s  |  %s  |  DRIVER: %s" % [str(bus.get("name", "Bus")), str(bus.get("status", "AVAILABLE")), ROUTE_NAMES[bus_route], assigned_name]
 		roster_text += "\nDRIVER STAFF"
 		for driver in _company_drivers:
 			roster_text += "\n%s  |  %s" % [str(driver.get("name", "Driver")), str(driver.get("status", "AVAILABLE"))]
