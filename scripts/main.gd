@@ -173,7 +173,7 @@ func _spawn_vehicle() -> void:
 		for crate_index in range(_depot_crates.size()):
 			var depot_crate := _depot_crates[crate_index]
 			if is_instance_valid(depot_crate):
-				depot_crate.global_position = _depot_crate_home_positions[crate_index]
+				depot_crate.position = _depot_crate_home_positions[crate_index]
 				depot_crate.scale = Vector3.ONE
 				depot_crate.visible = true
 	if is_instance_valid(_passenger_status_label):
@@ -509,7 +509,7 @@ func _build_cargo_depot() -> void:
 			var crate := _make_box("CargoCrate_%d_%d" % [pallet_index, layer_index], Vector3(1.3, 0.72, 1.12), Vector3(0.0, 0.44 + float(layer_index) * 0.74, 0.0), crate_color)
 			pallet_root.add_child(crate)
 			_depot_crates.append(crate)
-			_depot_crate_home_positions.append(crate.global_position)
+			_depot_crate_home_positions.append(crate.position)
 	var loading_marker := _make_box("DepotLoadingMarker", Vector3(5.5, 0.025, 2.2), Vector3(0.0, 0.07, 3.1), Color(0.9, 0.65, 0.12))
 	_cargo_depot.add_child(loading_marker)
 	_build_depot_forklift()
@@ -534,7 +534,7 @@ func _animate_depot_cargo(loading: bool) -> void:
 			crate.visible = true
 			crate.scale = Vector3.ZERO
 			crate.global_position = _cargo_depot.to_global(Vector3(0.0, 1.0 + float(crate_index % 2) * 0.08, 2.2))
-			tween.tween_property(crate, "global_position", _depot_crate_home_positions[crate_index], 0.45 + float(crate_index) * 0.08)
+			tween.tween_property(crate, "global_position", crate.get_parent().to_global(_depot_crate_home_positions[crate_index]), 0.45 + float(crate_index) * 0.08)
 			tween.parallel().tween_property(crate, "scale", Vector3.ONE, 0.55)
 
 
@@ -700,9 +700,14 @@ func _move_forklift_local(offset: Vector3) -> void:
 
 func _toggle_forklift_crate() -> void:
 	if is_instance_valid(_forklift_held_pallet):
+		if _forklift_lift_level > 0.42:
+			_forklift_cargo_label.text = "LOWER FORKS TO SET PALLET DOWN"
+			return
 		_forklift_held_pallet.reparent(_cargo_depot, true)
+		_forklift_held_pallet.position.y = 0.18
 		_forklift_held_pallet = null
-		_forklift_cargo_label.text = "LOAD: EMPTY"
+		_set_forklift_tilt(0.0)
+		_forklift_cargo_label.text = "PALLET SET DOWN"
 		return
 	if not is_instance_valid(_forklift_root) or not is_instance_valid(_forklift_carriage):
 		return
@@ -710,17 +715,26 @@ func _toggle_forklift_crate() -> void:
 		_forklift_cargo_label.text = "LOWER FORKS TO GRAB"
 		return
 	var fork_tip := _forklift_root.to_global(Vector3(0.0, _forklift_lift_level - 0.12, -1.55))
+	var forklift_forward := -_forklift_root.global_basis.z.normalized()
+	var forklift_right := _forklift_root.global_basis.x.normalized()
 	var nearest_pallet: Node3D
-	var nearest_distance := 2.0
+	var nearest_distance := 1.35
 	for pallet in _depot_pallets:
 		if not is_instance_valid(pallet) or not pallet.visible:
 			continue
-		var distance := pallet.global_position.distance_to(fork_tip)
-		if distance < nearest_distance:
-			nearest_distance = distance
-			nearest_pallet = pallet
+		var to_pallet := pallet.global_position - fork_tip
+		var distance := to_pallet.length()
+		if distance >= nearest_distance:
+			continue
+		var direction := to_pallet.normalized()
+		var forward_alignment := forklift_forward.dot(direction)
+		var side_offset := absf(forklift_right.dot(direction))
+		if forward_alignment < 0.78 or side_offset > 0.42:
+			continue
+		nearest_distance = distance
+		nearest_pallet = pallet
 	if not is_instance_valid(nearest_pallet):
-		_forklift_cargo_label.text = "NO PALLET IN REACH"
+		_forklift_cargo_label.text = "ALIGN FORKS WITH PALLET"
 		return
 	_forklift_held_pallet = nearest_pallet
 	_forklift_held_pallet.reparent(_forklift_carriage, true)
@@ -729,8 +743,7 @@ func _toggle_forklift_crate() -> void:
 	for crate in _depot_crates:
 		if is_instance_valid(crate) and crate.get_parent() == _forklift_held_pallet:
 			crate_count += 1
-	_forklift_cargo_label.text = "PALLET: %d CRATES" % crate_count
-
+	_forklift_cargo_label.text = "PALLET SECURED: %d CRATES" % crate_count
 
 func _release_forklift_load_for_mission() -> void:
 	if not is_instance_valid(_forklift_held_pallet):
@@ -741,7 +754,7 @@ func _release_forklift_load_for_mission() -> void:
 		_forklift_held_pallet.position = Vector3(-2.1, 0.18, 3.0 + float(pallet_index) * 1.8)
 		for crate_index in range(_depot_crates.size()):
 			if _depot_crates[crate_index].get_parent() == _forklift_held_pallet:
-				_depot_crates[crate_index].global_position = _depot_crate_home_positions[crate_index]
+				_depot_crates[crate_index].position = _depot_crate_home_positions[crate_index]
 	_forklift_held_pallet = null
 	if is_instance_valid(_forklift_cargo_label):
 		_forklift_cargo_label.text = "LOAD: EMPTY"
