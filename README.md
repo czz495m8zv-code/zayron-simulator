@@ -143,3 +143,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Crates animate from their pallet positions toward the loading bay and disappear as a simplified loading sequence; at delivery they reappear and animate back onto the depot pallets.
 - Starting a new vehicle/mission resets the crate positions and visibility.
 - This is a visual gameplay sequence, not yet physical forklift fork contact, pallet collision, cargo mass simulation, or player-operated loading machinery.
+
+### Player-controlled depot forklift mast
+- The depot forklift now has on-screen FORKS UP and FORKS DOWN controls. Each tap raises or lowers the fork carriage in bounded increments, with a short movement tween and a live height readout.
+- The previous automatic up/down oscillation has been removed; the mast stays at the selected height until the player changes it.
+- This controls mast height only. The forklift is still a stationary depot prop: driving, steering, fork tilt, pallet pickup/attachment, load stability and collision-based handling are not implemented yet.
