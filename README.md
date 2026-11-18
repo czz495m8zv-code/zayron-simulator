@@ -316,3 +316,9 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Corrected the player's approach-distance calculation for travel toward decreasing Z coordinates. The earlier sign was reversed, so player-side braking could fail to engage.
 - Added a firm low-speed stop hold within 1 m of the stop line during red/amber.
 - Highway traffic uses the same green phase as the visible signal.
+
+
+### Junction stop-line refinement
+- Extended the stop bar across the full highway carriageway so it is visible from both the centre player lane and the traffic lane.
+- Added a low-speed stop hold for AI traffic at the line during red/amber.
+- Player braking assist now continues holding the vehicle if it reaches or slightly passes the stop-line coordinate while the signal remains red/amber, rather than releasing immediately after crossing the coordinate.
