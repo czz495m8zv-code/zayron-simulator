@@ -67,6 +67,12 @@ var _forklift_root: Node3D
 var _forklift_held_crate: Node3D
 var _forklift_held_pallet: Node3D
 var _depot_pallets: Array[Node3D] = []
+var _depot_staging_positions: Array[Vector3] = [
+	Vector3(0.0, 0.18, 2.4),
+	Vector3(0.0, 0.18, 4.1),
+	Vector3(0.0, 0.18, 5.8)
+]
+var _depot_pallet_staging_slots: Array[int] = []
 var _forklift_cargo_label: Label
 var _forklift_wheel_nodes: Array[MeshInstance3D] = []
 var _pause_button: Button
@@ -510,8 +516,22 @@ func _build_cargo_depot() -> void:
 			pallet_root.add_child(crate)
 			_depot_crates.append(crate)
 			_depot_crate_home_positions.append(crate.position)
-	var loading_marker := _make_box("DepotLoadingMarker", Vector3(5.5, 0.025, 2.2), Vector3(0.0, 0.07, 3.1), Color(0.9, 0.65, 0.12))
-	_cargo_depot.add_child(loading_marker)
+	for slot_index in range(_depot_staging_positions.size()):
+		var slot_position := _depot_staging_positions[slot_index]
+		var staging_pad := _make_box("PalletStagingBay_%02d" % (slot_index + 1), Vector3(1.9, 0.035, 1.48), Vector3(slot_position.x, 0.075, slot_position.z), Color(0.9, 0.65, 0.12))
+		_cargo_depot.add_child(staging_pad)
+		var bay_label := Label3D.new()
+		bay_label.name = "PalletBayLabel_%02d" % (slot_index + 1)
+		bay_label.text = "STAGING BAY %02d" % (slot_index + 1)
+		bay_label.position = Vector3(slot_position.x, 0.12, slot_position.z - 0.72)
+		bay_label.font_size = 18
+		bay_label.pixel_size = 0.009
+		bay_label.modulate = Color(1.0, 0.88, 0.48)
+		bay_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_cargo_depot.add_child(bay_label)
+	_depot_pallet_staging_slots.clear()
+	for pallet_index in range(_depot_pallets.size()):
+		_depot_pallet_staging_slots.append(-1)
 	_build_depot_forklift()
 
 
@@ -703,11 +723,27 @@ func _toggle_forklift_crate() -> void:
 		if _forklift_lift_level > 0.42:
 			_forklift_cargo_label.text = "LOWER FORKS TO SET PALLET DOWN"
 			return
+		var pallet_index := _depot_pallets.find(_forklift_held_pallet)
+		var nearest_slot := -1
+		var nearest_slot_distance := 1.25
+		for slot_index in range(_depot_staging_positions.size()):
+			if slot_index < _depot_pallet_staging_slots.size() and _depot_pallet_staging_slots[slot_index] != -1:
+				continue
+			var slot_world := _cargo_depot.to_global(_depot_staging_positions[slot_index])
+			var distance := _forklift_held_pallet.global_position.distance_to(slot_world)
+			if distance < nearest_slot_distance:
+				nearest_slot_distance = distance
+				nearest_slot = slot_index
 		_forklift_held_pallet.reparent(_cargo_depot, true)
-		_forklift_held_pallet.position.y = 0.18
+		if nearest_slot >= 0:
+			_forklift_held_pallet.position = _depot_staging_positions[nearest_slot]
+			if pallet_index >= 0:
+				_depot_pallet_staging_slots[nearest_slot] = pallet_index
+			_forklift_cargo_label.text = "PALLET STAGED: BAY %02d" % (nearest_slot + 1)
+		else:
+			_forklift_cargo_label.text = "PALLET PARKED - ALIGN WITH A STAGING BAY"
 		_forklift_held_pallet = null
 		_set_forklift_tilt(0.0)
-		_forklift_cargo_label.text = "PALLET SET DOWN"
 		return
 	if not is_instance_valid(_forklift_root) or not is_instance_valid(_forklift_carriage):
 		return
@@ -736,6 +772,11 @@ func _toggle_forklift_crate() -> void:
 	if not is_instance_valid(nearest_pallet):
 		_forklift_cargo_label.text = "ALIGN FORKS WITH PALLET"
 		return
+	var picked_index := _depot_pallets.find(nearest_pallet)
+	if picked_index >= 0:
+		for slot_index in range(_depot_pallet_staging_slots.size()):
+			if _depot_pallet_staging_slots[slot_index] == picked_index:
+				_depot_pallet_staging_slots[slot_index] = -1
 	_forklift_held_pallet = nearest_pallet
 	_forklift_held_pallet.reparent(_forklift_carriage, true)
 	_forklift_held_pallet.position = Vector3(0.0, 0.34, -0.92)
@@ -752,6 +793,9 @@ func _release_forklift_load_for_mission() -> void:
 	var pallet_index := _depot_pallets.find(_forklift_held_pallet)
 	if pallet_index >= 0:
 		_forklift_held_pallet.position = Vector3(-2.1, 0.18, 3.0 + float(pallet_index) * 1.8)
+		for slot_index in range(_depot_pallet_staging_slots.size()):
+			if _depot_pallet_staging_slots[slot_index] == pallet_index:
+				_depot_pallet_staging_slots[slot_index] = -1
 		for crate_index in range(_depot_crates.size()):
 			if _depot_crates[crate_index].get_parent() == _forklift_held_pallet:
 				_depot_crates[crate_index].position = _depot_crate_home_positions[crate_index]
