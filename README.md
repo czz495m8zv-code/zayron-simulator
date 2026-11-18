@@ -282,3 +282,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 ### Highway traffic following behaviour
 
 The three prototype highway cars now use a lightweight same-lane following model. Each car measures the wrapped distance to the next car ahead and smoothly reduces its speed when the gap closes, then accelerates back toward its configured cruising speed as the gap opens. This avoids the previous purely independent movement and reduces visual overlap in the traffic loop. It remains a simplified visual simulation: traffic cars do not yet have collision bodies, lane changes, junction logic, or interaction with the player's vehicle.
+
+
+### Oman highway speed signage and traffic loop correction
+- Added three visible 80 km/h speed-limit boards along alternating sides of the Oman-inspired test road.
+- Corrected traffic-car respawn positions so all vehicles return inside the same 142 m loop with consistent spacing and ordering. This prevents wrapped-distance calculations from treating off-loop respawns as overlapping traffic.
+- Speed signs are visual environment props only; the player is not yet subject to a speed-limit enforcement or fine system.
