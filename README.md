@@ -234,3 +234,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 ### Passenger boarding sequence
 - Passenger seat-occupancy visuals now appear after the exterior boarding animation finishes, rather than immediately when the mission checkpoint is activated.
 - The passenger status changes from BOARDING PASSENGERS to PASSENGERS SEATED after the final boarding figure reaches the bus. This remains a timed visual sequence and does not simulate individual walking through the doorway or seat navigation.
+
+
+### Passenger capacity and dashboard occupancy
+- The shared vehicle script caps visible seated passengers at the ten modeled coach seat positions. The cockpit status line displays the seated passenger count for buses and coaches while occupied.
+- This is a display/capacity guard for the visual passenger manifest; it is not a ticketing system or dynamic seat reservation simulation.
