@@ -12,6 +12,7 @@ var _throttle_input: float = 0.0
 var _brake_input: float = 0.0
 var _reverse_input: float = 0.0
 var _steering_input: float = 0.0
+var _steering_multiplier: float = 1.0
 var _steer_left_held: bool = false
 var _steer_right_held: bool = false
 var _speed_label: Label
@@ -89,7 +90,7 @@ func _physics_process(delta: float) -> void:
 
 	if absf(_speed) > 0.2:
 		var direction := 1.0 if _speed >= 0.0 else -1.0
-		rotate_y(-steering * steering_speed * delta * direction)
+		rotate_y(-steering * steering_speed * _steering_multiplier * delta * direction)
 
 	velocity = -global_transform.basis.z * _speed
 	move_and_slide()
@@ -153,6 +154,9 @@ func _build_truck() -> void:
 			wheel.material_override = wheel_material
 			add_child(wheel)
 
+
+func set_steering_sensitivity(value: float) -> void:
+	_steering_multiplier = clampf(value, 0.5, 1.8)
 
 func set_cargo_payload(cargo_type: int, loaded: bool) -> void:
 	var payload := get_node_or_null("CargoPayload") as Node3D
