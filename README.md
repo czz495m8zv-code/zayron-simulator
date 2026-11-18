@@ -40,9 +40,11 @@ The first company-management layer is now implemented in the gameplay scene:
 - Purchase an additional company bus for the prototype cost of OMR 450.
 - Dispatch a hired driver on the currently selected route while the player continues driving.
 - Complete a timed background trip and receive a prototype net company return of OMR 50 after trip costs.
-- Save the company name, funds, bus count, driver count and completed company trips locally.
+- Save the company name, funds, individual bus records, individual driver records and completed company trips locally.
+- Show a fleet and staff roster with each bus and driver marked AVAILABLE or ON ROUTE.
+- Dispatch reserves one available driver and one available bus; both return to AVAILABLE after the simulated trip completes.
 
-**Important prototype boundary:** background dispatch is currently a timed management simulation, not yet a visible AI-controlled bus travelling the road. The company fleet count is management data and is not yet connected to individually owned, drivable vehicle instances. Route-by-route AI driving, driver schedules, multiple simultaneous dispatches, ticket demand, payroll cycles, depots and a full Oman road network remain future development milestones. All OMR values here are fictional in-game economy values.
+**Important prototype boundary:** background dispatch is currently a timed management simulation, not yet a visible AI-controlled bus travelling the road. Company buses and drivers now have individual saved roster records and availability states, but company buses are not yet separate drivable vehicle instances. Route-by-route AI driving, driver schedules, multiple simultaneous dispatches, ticket demand, payroll cycles, depots and a full Oman road network remain future development milestones. All OMR values here are fictional in-game economy values.
 
 ## Android build
 
