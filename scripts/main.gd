@@ -23,6 +23,10 @@ var _vehicle_button: Button
 var _mission_label: Label
 var _mission_complete: bool = false
 var _mission_target := Vector3(0.0, 0.0, -82.0)
+var _delivery_count: int = 0
+var _cash_balance: int = 0
+var _cash_label: Label
+var _restart_button: Button
 
 func _ready() -> void:
 	_build_environment()
@@ -39,6 +43,7 @@ func _process(_delta: float) -> void:
 	_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: %d m" % int(distance)
 
 func _spawn_vehicle() -> void:
+	_mission_complete = false
 	if is_instance_valid(_active_vehicle):
 		_active_vehicle.queue_free()
 	_active_vehicle = FLEET_SCENES[_selected_vehicle].instantiate() as Node3D
@@ -46,6 +51,8 @@ func _spawn_vehicle() -> void:
 	add_child(_active_vehicle)
 	if is_instance_valid(_vehicle_button):
 		_vehicle_button.text = "NEXT: " + FLEET_NAMES[(_selected_vehicle + 1) % FLEET_NAMES.size()]
+	if is_instance_valid(_mission_label):
+		_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: 000 m"
 
 func _build_vehicle_selector() -> void:
 	var layer := CanvasLayer.new()
@@ -190,6 +197,14 @@ func _build_mission_hud() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 4
 	add_child(layer)
+	_cash_label = Label.new()
+	_cash_label.name = "CashBalance"
+	_cash_label.text = "WALLET  |  OMR %d" % _cash_balance
+	_cash_label.position = Vector2(24.0, 94.0)
+	_cash_label.add_theme_font_size_override("font_size", 20)
+	_cash_label.add_theme_color_override("font_color", Color(0.55, 0.95, 0.72))
+	layer.add_child(_cash_label)
+
 	_mission_label = Label.new()
 	_mission_label.name = "MissionStatus"
 	_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: 000 m"
@@ -204,9 +219,34 @@ func _build_mission_hud() -> void:
 	_mission_label.add_theme_color_override("font_color", Color.WHITE)
 	layer.add_child(_mission_label)
 
+	_restart_button = Button.new()
+	_restart_button.name = "RestartDelivery"
+	_restart_button.text = "RESTART ROUTE"
+	_restart_button.anchor_left = 1.0
+	_restart_button.anchor_right = 1.0
+	_restart_button.offset_left = -190.0
+	_restart_button.offset_right = -20.0
+	_restart_button.offset_top = 88.0
+	_restart_button.offset_bottom = 136.0
+	_restart_button.add_theme_font_size_override("font_size", 16)
+	_restart_button.pressed.connect(_restart_delivery)
+	layer.add_child(_restart_button)
+
+func _restart_delivery() -> void:
+	_mission_complete = false
+	if is_instance_valid(_active_vehicle):
+		_active_vehicle.global_position = Vector3(0.0, 0.15, 8.0)
+		_active_vehicle.rotation = Vector3.ZERO
+	if is_instance_valid(_mission_label):
+		_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: 000 m"
+
 func _on_checkpoint_entered(body: Node3D) -> void:
 	if body != _active_vehicle or _mission_complete:
 		return
 	_mission_complete = true
+	_delivery_count += 1
+	_cash_balance += 25
+	if is_instance_valid(_cash_label):
+		_cash_label.text = "WALLET  |  OMR %d" % _cash_balance
 	if is_instance_valid(_mission_label):
-		_mission_label.text = "DELIVERY COMPLETE  |  WELL DONE!"
+		_mission_label.text = "DELIVERY %d COMPLETE  |  +25 OMR" % _delivery_count
