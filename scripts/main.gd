@@ -186,13 +186,16 @@ func _process(delta: float) -> void:
 			elif distance_to_stop_line > 0.0:
 				var safe_approach_speed := sqrt(2.0 * 4.0 * distance_to_stop_line)
 				target_speed = minf(target_speed, safe_approach_speed)
+		var side_vehicle_crossing := is_instance_valid(_side_road_traffic_vehicle) and _side_road_traffic_vehicle.position.x <= 5.5 and _side_road_traffic_vehicle.position.x >= -5.5
+		if side_vehicle_crossing and absf(traffic_vehicle.position.z + 48.0) > 3.0 and absf(traffic_vehicle.position.z + 48.0) < 18.0:
+			target_speed = 0.0
 		_traffic_current_speeds[traffic_index] = move_toward(_traffic_current_speeds[traffic_index], target_speed, 4.0 * delta)
 		traffic_vehicle.position.z += _traffic_current_speeds[traffic_index] * delta
 		if traffic_vehicle.position.z > 24.0:
 			# Keep every respawn inside the same 142 m loop and preserve the
 			# original traffic order; offsets outside the loop caused phase overlap.
 			traffic_vehicle.position.z = -118.0 + float(traffic_index) * 46.0
-	_traffic_signal_clock = fposmod(_traffic_signal_clock + delta, 14.0)
+	_traffic_signal_clock = fposmod(_traffic_signal_clock + delta, 16.0)
 	_update_side_road_traffic(delta)
 	_update_player_signal_rule()
 	var active_signal := 2 if _traffic_signal_clock < 8.0 else (1 if _traffic_signal_clock < 10.0 else 0)
@@ -646,7 +649,10 @@ func _update_player_signal_rule() -> void:
 	var signal_is_green := _traffic_signal_clock < 8.0
 	var distance_to_stop_line := _active_vehicle.global_position.z + 52.0
 	var brake_amount := 0.0
-	if not signal_is_green and distance_to_stop_line < 22.0:
+	var side_vehicle_crossing := is_instance_valid(_side_road_traffic_vehicle) and _side_road_traffic_vehicle.position.x <= 5.5 and _side_road_traffic_vehicle.position.x >= -5.5
+	if side_vehicle_crossing and distance_to_stop_line > 0.0 and distance_to_stop_line < 22.0:
+		brake_amount = 1.0
+	elif not signal_is_green and distance_to_stop_line < 22.0:
 		if distance_to_stop_line <= 1.0:
 			brake_amount = 1.0
 		elif distance_to_stop_line > 0.0:
@@ -775,7 +781,9 @@ func _build_traffic_vehicle() -> void:
 func _update_side_road_traffic(delta: float) -> void:
 	if not is_instance_valid(_side_road_traffic_vehicle):
 		return
-	var main_road_has_priority := _traffic_signal_clock < 8.0
+	# Green, amber, and the first two seconds of red keep side traffic waiting.
+	# The final two seconds of red provide an all-red clearance interval.
+	var main_road_has_priority := _traffic_signal_clock < 12.0
 	var junction_occupied := false
 	# Do not enter the conflict zone while a main-road vehicle or the player
 	# is physically passing through it. A vehicle already crossing is allowed
@@ -793,7 +801,7 @@ func _update_side_road_traffic(delta: float) -> void:
 	elif not main_road_has_priority and _side_road_traffic_vehicle.position.x > -5.5:
 		# Wait for a clear physical gap unless already committed to crossing.
 		if not junction_occupied or _side_road_traffic_vehicle.position.x <= 2.8:
-			target_speed = 5.2
+			target_speed = 7.5
 	_side_road_traffic_speed = move_toward(_side_road_traffic_speed, target_speed, 3.8 * delta)
 	_side_road_traffic_vehicle.position.x -= _side_road_traffic_speed * delta
 	if _side_road_traffic_vehicle.position.x <= -5.5:
