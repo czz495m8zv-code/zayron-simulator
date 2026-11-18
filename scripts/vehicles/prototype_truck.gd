@@ -44,6 +44,11 @@ var _door_hinge: Node3D
 var _horn_playback: AudioStreamGeneratorPlayback
 var _horn_frames_left := 0
 var _horn_phase := 0.0
+var _steering_wheel_mesh: MeshInstance3D
+var _seat_adjustment := 0.0
+var _high_beam_on := false
+var _parking_lights_on := false
+var _boot_open := false
 @export var cockpit_camera_position: Vector3 = Vector3(0.0, 2.45, -1.35)
 var _engine_playback: AudioStreamGeneratorPlayback
 var _engine_phase: float = 0.0
@@ -150,6 +155,8 @@ func _physics_process(delta: float) -> void:
 		_speed_label.text = "%03d km/h" % int(absf(_speed) * 3.6)
 	if is_instance_valid(_gear_label):
 		_gear_label.text = "R" if _speed < -0.2 else ("D" if _speed > 0.2 else "N")
+	if is_instance_valid(_steering_wheel_mesh):
+		_steering_wheel_mesh.rotation.z = -_steering_current * 0.72
 
 func _build_truck() -> void:
 	var body_shape := CollisionShape3D.new()
@@ -352,7 +359,7 @@ func _toggle_headlights() -> void:
 			beam.visible = _headlights_on
 	for lamp in _headlight_meshes:
 		if is_instance_valid(lamp):
-			lamp.visible = _headlights_on
+			lamp.visible = _headlights_on or _parking_lights_on
 	if is_instance_valid(_headlight_button):
 		_headlight_button.text = "LIGHTS: ON" if _headlights_on else "LIGHTS: OFF"
 
@@ -399,6 +406,13 @@ func _build_mobile_controls() -> void:
 	_add_action_button(ui, "WIPER", 102.0, 180.0, "wiper")
 	_add_action_button(ui, "PARK", 180.0, 180.0, "park")
 	_add_action_button(ui, "DOOR", -36.0, 226.0, "door")
+	_add_action_button(ui, "SEAT +", -210.0, 272.0, "seat_up")
+	_add_action_button(ui, "SEAT -", -132.0, 272.0, "seat_down")
+	_add_action_button(ui, "DIPPER", -54.0, 272.0, "dipper")
+	_add_action_button(ui, "HIGH/LOW", 24.0, 272.0, "beam")
+	_add_action_button(ui, "PARK LIGHT", 102.0, 272.0, "parking_lights")
+	_add_action_button(ui, "BOOT", 180.0, 272.0, "boot")
+	_add_action_button(ui, "WHEEL HORN", -72.0, 318.0, "horn")
 
 func _build_extra_vehicle_controls() -> void:
 	var horn_stream := AudioStreamGenerator.new()
@@ -489,7 +503,49 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			_door_open = not _door_open
 			_door_hinge.rotation.y = deg_to_rad(-68.0 if _door_open else 0.0)
 			button.text = "CLOSE" if _door_open else "DOOR"
+		"seat_up":
+			_adjust_seat(0.08)
+		"seat_down":
+			_adjust_seat(-0.08)
+		"dipper":
+			_high_beam_on = not _high_beam_on
+			_apply_beam_mode()
+			button.text = "DIPPER: ON" if _high_beam_on else "DIPPER"
+		"beam":
+			_high_beam_on = not _high_beam_on
+			_apply_beam_mode()
+			button.text = "HIGH BEAM" if _high_beam_on else "LOW BEAM"
+		"parking_lights":
+			_parking_lights_on = not _parking_lights_on
+			_apply_parking_lights()
+			button.text = "PARK: ON" if _parking_lights_on else "PARK LIGHT"
+		"boot":
+			_boot_open = not _boot_open
+			var payload := get_node_or_null("CargoPayload") as Node3D
+			if is_instance_valid(payload):
+				payload.visible = payload.visible or _boot_open
+			button.text = "BOOT: OPEN" if _boot_open else "BOOT"
 	_update_indicator_lights()
+
+func _adjust_seat(amount: float) -> void:
+	_seat_adjustment = clampf(_seat_adjustment + amount, -0.24, 0.24)
+	if is_instance_valid(_cockpit_camera):
+		_cockpit_camera.position.y = cockpit_camera_position.y + _seat_adjustment
+
+func _apply_beam_mode() -> void:
+	for beam in _headlight_lights:
+		if is_instance_valid(beam):
+			beam.light_energy = 2.0 if _high_beam_on else 1.15
+			beam.spot_range = 42.0 if _high_beam_on else 25.0
+			beam.spot_angle = 48.0 if _high_beam_on else 38.0
+
+func _apply_parking_lights() -> void:
+	for lamp in _headlight_meshes:
+		if is_instance_valid(lamp):
+			lamp.visible = _headlights_on or _parking_lights_on
+	for tail in get_children():
+		if tail is MeshInstance3D and String(tail.name) == "RearTailLamp":
+			tail.visible = _parking_lights_on or _brake_input > 0.0
 
 func _update_indicator_lights() -> void:
 	for i in range(_indicator_lights.size()):
@@ -607,6 +663,7 @@ func _update_steering_input() -> void:
 func _add_cockpit_steering_wheel(location: Vector3) -> void:
 	var wheel := MeshInstance3D.new()
 	wheel.name = "CockpitSteeringWheel"
+	_steering_wheel_mesh = wheel
 	var ring := TorusMesh.new()
 	ring.inner_radius = 0.205
 	ring.outer_radius = 0.255
