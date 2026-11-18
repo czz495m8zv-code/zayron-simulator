@@ -266,3 +266,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - The active vehicle's fuel is captured whenever career progress is saved, so wallet and mission saves also preserve its current tank level.
 
 - Career progress, including each vehicle's fuel level, is also saved when the app is paused or closed.
+
+
+### Roadside highway fuel station
+- Added a second Oman Fuel forecourt along the highway route, with an access lane, canopy, two dispensers, and diesel/petrol signage.
+- Player vehicles can refuel at either the cargo depot pump or the roadside station; both use the same stopped-and-parked wallet transaction and per-vehicle saved fuel level.
+- The roadside station is a prototype landmark on the current test-road segment, not a real-world Oman fuel network or real fuel-price simulation.
