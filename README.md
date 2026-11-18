@@ -214,3 +214,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Reaching the cargo destination no longer completes delivery automatically. The player must stop inside the delivery area, apply the parking brake and use the UNLOAD DELIVERED CARGO interaction.
 - The unload interaction appears only within the delivery radius while the vehicle is stationary with the parking brake engaged. Successful unloading clears the vehicle payload, records the delivery and pays the selected cargo reward.
 - This is a scripted unloading interaction; animated workers, dock equipment and physical pallet transfer at destination remain future work.
+
+### Desktop driving safety parity
+- Keyboard driving now uses the same engine, selected-drive-gear, passenger-door, trailer-door/landing-leg and unsecured-cargo interlocks as the Android touch controls.
+- Braking and steering remain available so the player can safely stop or manoeuvre while a drive interlock is active.
+- This keeps the desktop fallback from bypassing safety rules that already apply to mobile throttle and reverse inputs.
