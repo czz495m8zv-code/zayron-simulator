@@ -16,6 +16,7 @@ signal refuel_requested(cost_omr: int)
 var _speed: float = 0.0
 var _throttle_input: float = 0.0
 var _brake_input: float = 0.0
+var _traffic_signal_brake: float = 0.0
 var _reverse_input: float = 0.0
 var _steering_input: float = 0.0
 var _steering_current: float = 0.0
@@ -150,7 +151,7 @@ func _physics_process(delta: float) -> void:
 	var cargo_ready := not _cargo_loaded or _cargo_secured
 	var drive_ready := _engine_running and _fuel_level > 0.0 and trailer_ready and passenger_door_ready and cargo_ready
 	var throttle := _throttle_input if drive_ready and _gear_mode == "D" else 0.0
-	var brake := _brake_input
+	var brake := maxf(_brake_input, _traffic_signal_brake)
 	var reverse := _reverse_input if drive_ready and _gear_mode == "R" else 0.0
 	var steering := _steering_input
 
@@ -235,6 +236,8 @@ func _physics_process(delta: float) -> void:
 			status_parts.append("LOW FUEL")
 		if _handbrake_on:
 			status_parts.append("PARK BRAKE")
+		if _traffic_signal_brake > 0.05:
+			status_parts.append("TRAFFIC SIGNAL")
 		if supports_passenger_doors and _passenger_doors_open:
 			status_parts.append("CLOSE PASSENGER DOORS")
 		if supports_trailer and _trailer_doors_open:
@@ -314,6 +317,10 @@ func _build_truck() -> void:
 			wheel.position = Vector3(x, 0.55, z)
 			wheel.material_override = wheel_material
 			add_child(wheel)
+
+
+func set_traffic_signal_brake(value: float) -> void:
+	_traffic_signal_brake = clampf(value, 0.0, 1.0)
 
 
 func set_steering_sensitivity(value: float) -> void:
