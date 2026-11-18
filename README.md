@@ -404,6 +404,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - During the final two seconds of the pedestrian signal's red-traffic interval, the green WALK lamp and WALK text flash at a steady 0.8-second cycle.
 - The numeric countdown remains visible so pedestrians receive a clear indication that the phase is ending.
 
+### Engine and fuel behaviour
+- Fuel consumption now runs only while the engine is switched on, combining distance travelled with a small idle and throttle-load allowance.
+- A vehicle with an empty tank cannot restart its engine; the ignition control displays a no-fuel reminder until the vehicle is refuelled.
+
 ### Refuelling safety interlock
 - Refuelling is available only at the depot or roadside fuel station, while fully stopped with the parking brake engaged.
 - The engine must also be switched off. The refuel control stays disabled while the engine is running and displays an engine-off reminder.
