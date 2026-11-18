@@ -6,12 +6,23 @@ const BUS_SCENE: PackedScene = preload("res://scenes/vehicles/prototype_bus.tscn
 var _active_vehicle: Node3D
 var _using_bus: bool = false
 var _vehicle_button: Button
+var _mission_label: Label
+var _mission_complete: bool = false
+var _mission_target := Vector3(0.0, 0.0, -82.0)
 
 func _ready() -> void:
 	_build_environment()
 	_build_oman_test_road()
+	_build_mission()
 	_spawn_vehicle()
 	_build_vehicle_selector()
+	_build_mission_hud()
+
+func _process(_delta: float) -> void:
+	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
+		return
+	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
+	_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: %d m" % int(distance)
 
 func _spawn_vehicle() -> void:
 	if is_instance_valid(_active_vehicle):
@@ -138,3 +149,50 @@ func _make_box(node_name: String, dimensions: Vector3, location: Vector3, tint: 
 	material.albedo_color = tint
 	mesh_instance.material_override = material
 	return mesh_instance
+
+func _build_mission() -> void:
+	var checkpoint := Area3D.new()
+	checkpoint.name = "DeliveryCheckpoint"
+	checkpoint.position = _mission_target
+	var trigger := CollisionShape3D.new()
+	var trigger_shape := BoxShape3D.new()
+	trigger_shape.size = Vector3(8.0, 4.0, 5.0)
+	trigger.shape = trigger_shape
+	trigger.position.y = 1.5
+	checkpoint.add_child(trigger)
+	checkpoint.body_entered.connect(_on_checkpoint_entered)
+	add_child(checkpoint)
+
+	var gate_material := StandardMaterial3D.new()
+	gate_material.albedo_color = Color(0.05, 0.55, 0.34)
+	var left_post := _make_box("CheckpointLeftPost", Vector3(0.22, 3.2, 0.22), Vector3(-4.0, 1.6, _mission_target.z), gate_material.albedo_color)
+	var right_post := _make_box("CheckpointRightPost", Vector3(0.22, 3.2, 0.22), Vector3(4.0, 1.6, _mission_target.z), gate_material.albedo_color)
+	var top_bar := _make_box("CheckpointTopBar", Vector3(8.2, 0.22, 0.22), Vector3(0.0, 3.1, _mission_target.z), gate_material.albedo_color)
+	add_child(left_post)
+	add_child(right_post)
+	add_child(top_bar)
+
+func _build_mission_hud() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 4
+	add_child(layer)
+	_mission_label = Label.new()
+	_mission_label.name = "MissionStatus"
+	_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: 000 m"
+	_mission_label.anchor_left = 0.5
+	_mission_label.anchor_right = 0.5
+	_mission_label.offset_left = -190.0
+	_mission_label.offset_right = 190.0
+	_mission_label.offset_top = 22.0
+	_mission_label.offset_bottom = 58.0
+	_mission_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_mission_label.add_theme_font_size_override("font_size", 18)
+	_mission_label.add_theme_color_override("font_color", Color.WHITE)
+	layer.add_child(_mission_label)
+
+func _on_checkpoint_entered(body: Node3D) -> void:
+	if body != _active_vehicle or _mission_complete:
+		return
+	_mission_complete = true
+	if is_instance_valid(_mission_label):
+		_mission_label.text = "DELIVERY COMPLETE  |  WELL DONE!"
