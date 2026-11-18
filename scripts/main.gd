@@ -42,6 +42,7 @@ var _junction_pedestrian_crossing: bool = false
 var _junction_pedestrian_clock: float = 3.0
 var _junction_pedestrian_walk_time: float = 0.0
 var _junction_pedestrian_legs: Array[Node3D] = []
+var _pedestrian_signal_materials: Array[StandardMaterial3D] = []
 const TRAFFIC_LOOP_LENGTH: float = 142.0
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
@@ -212,6 +213,9 @@ func _process(delta: float) -> void:
 		var lamp_on := lamp_index % 3 == active_signal
 		lamp_material.emission_energy_multiplier = 1.8 if lamp_on else 0.08
 		_traffic_signal_lamps[lamp_index].visible = true
+	var pedestrian_walk_allowed := _traffic_signal_clock >= 10.0
+	for pedestrian_index in range(_pedestrian_signal_materials.size()):
+		_pedestrian_signal_materials[pedestrian_index].emission_energy_multiplier = 1.8 if (pedestrian_index == 1) == pedestrian_walk_allowed else 0.08
 	_forklift_animation_time += delta
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
@@ -751,6 +755,25 @@ func _build_test_intersection() -> void:
 			add_child(lamp)
 			_traffic_signal_lamps.append(lamp)
 			_traffic_signal_materials.append(material)
+	# Pedestrian signal faces the zebra crossing: red WAIT / green WALK.
+	var pedestrian_head := _make_box("PedestrianSignalHousing", Vector3(0.48, 0.92, 0.34), Vector3(8.0, 2.75, -43.4), Color(0.035, 0.04, 0.045))
+	add_child(pedestrian_head)
+	for lamp_index in range(2):
+		var pedestrian_lamp := MeshInstance3D.new()
+		pedestrian_lamp.name = "PedestrianSignalLamp_%d" % lamp_index
+		var pedestrian_sphere := SphereMesh.new()
+		pedestrian_sphere.radius = 0.13
+		pedestrian_sphere.height = 0.26
+		pedestrian_lamp.mesh = pedestrian_sphere
+		pedestrian_lamp.position = Vector3(8.0, 2.98 - float(lamp_index) * 0.43, -43.2)
+		var pedestrian_material := StandardMaterial3D.new()
+		pedestrian_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		pedestrian_material.emission_enabled = true
+		pedestrian_material.emission = Color(0.95, 0.035, 0.025) if lamp_index == 0 else Color(0.03, 0.85, 0.12)
+		pedestrian_material.emission_energy_multiplier = 1.8 if lamp_index == 0 else 0.08
+		pedestrian_lamp.material_override = pedestrian_material
+		add_child(pedestrian_lamp)
+		_pedestrian_signal_materials.append(pedestrian_material)
 
 func _build_traffic_vehicle() -> void:
 	var traffic_colors: Array[Color] = [Color(0.72, 0.12, 0.08), Color(0.12, 0.32, 0.72), Color(0.78, 0.78, 0.72)]
@@ -825,7 +848,7 @@ func _update_junction_pedestrian(delta: float) -> void:
 		return
 	_junction_pedestrian_walk_time += delta
 	if _junction_pedestrian_crossing:
-		_junction_pedestrian.position.z += 1.35 * delta
+		_junction_pedestrian.position.z += 1.8 * delta
 		for leg_index in range(_junction_pedestrian_legs.size()):
 			var leg_swing := sin(_junction_pedestrian_walk_time * 8.0 + float(leg_index) * PI) * 0.34
 			_junction_pedestrian_legs[leg_index].rotation.x = leg_swing
@@ -836,8 +859,9 @@ func _update_junction_pedestrian(delta: float) -> void:
 	else:
 		for leg in _junction_pedestrian_legs:
 			leg.rotation.x = move_toward(leg.rotation.x, 0.0, delta * 2.5)
-		_junction_pedestrian_clock -= delta
-		if _junction_pedestrian_clock <= 0.0:
+		# Pedestrians receive the crossing phase only while the main-road signal is red.
+		_junction_pedestrian_clock = 0.0
+		if _traffic_signal_clock >= 10.0:
 			_junction_pedestrian_crossing = true
 
 
