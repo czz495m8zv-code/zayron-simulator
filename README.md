@@ -219,3 +219,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Keyboard driving now uses the same engine, selected-drive-gear, passenger-door, trailer-door/landing-leg and unsecured-cargo interlocks as the Android touch controls.
 - Braking and steering remain available so the player can safely stop or manoeuvre while a drive interlock is active.
 - This keeps the desktop fallback from bypassing safety rules that already apply to mobile throttle and reverse inputs.
+
+
+### Bus cabin window openings
+- Replaced the single opaque bus body mesh with separate roof, bulkhead, lower/upper side panels and window pillars. The side windows are now open gaps rather than glass sitting over a solid wall, so the existing passenger seats, aisle and grab rails can be seen from outside.
+- The main chassis collision shape remains unchanged. This is a visual body-shell improvement; it does not yet add glass physics, a fully modelled interior, or animated passenger seat assignment.
