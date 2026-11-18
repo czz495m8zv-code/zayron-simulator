@@ -152,6 +152,7 @@ func _process(delta: float) -> void:
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
 	_update_company_ai_bus(delta)
+	_update_refuel_station_access()
 	_update_warehouse_load_prompt()
 	_update_cargo_unload_prompt()
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
@@ -666,6 +667,43 @@ func _build_cargo_depot() -> void:
 	truck_bay_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_cargo_depot.add_child(truck_bay_label)
 	_build_depot_forklift()
+	_build_depot_fuel_station()
+
+
+func _build_depot_fuel_station() -> void:
+	var station := Node3D.new()
+	station.name = "OmanDepotFuelStation"
+	station.position = Vector3(-9.0, 0.0, 5.2)
+	_cargo_depot.add_child(station)
+	var pad := _make_box("FuelStationConcretePad", Vector3(5.2, 0.12, 4.2), Vector3.ZERO, Color(0.34, 0.37, 0.38))
+	station.add_child(pad)
+	var canopy := _make_box("FuelStationCanopy", Vector3(5.0, 0.22, 3.8), Vector3(0.0, 3.35, 0.0), Color(0.08, 0.28, 0.38))
+	station.add_child(canopy)
+	for side in [-1.0, 1.0]:
+		var pillar := _make_box("FuelCanopyPillar", Vector3(0.16, 3.3, 0.16), Vector3(side * 2.25, 1.65, 1.55), Color(0.72, 0.75, 0.76))
+		station.add_child(pillar)
+	var pump := _make_box("FuelDispenser", Vector3(0.72, 1.45, 0.62), Vector3(0.0, 0.82, -0.35), Color(0.88, 0.9, 0.86))
+	station.add_child(pump)
+	var display := _make_box("FuelDispenserScreen", Vector3(0.48, 0.28, 0.035), Vector3(0.0, 1.05, -0.68), Color(0.02, 0.12, 0.15))
+	station.add_child(display)
+	var label := Label3D.new()
+	label.name = "FuelStationSign"
+	label.text = "OMAN FUEL\\nDIESEL / PETROL"
+	label.position = Vector3(0.0, 3.72, -0.05)
+	label.font_size = 24
+	label.pixel_size = 0.012
+	label.modulate = Color(0.75, 0.95, 1.0)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	station.add_child(label)
+
+
+func _update_refuel_station_access() -> void:
+	if not is_instance_valid(_active_vehicle) or not is_instance_valid(_cargo_depot):
+		return
+	var station_position := _cargo_depot.to_global(Vector3(-9.0, 0.0, 5.2))
+	var distance := Vector2(_active_vehicle.global_position.x - station_position.x, _active_vehicle.global_position.z - station_position.z).length()
+	if _active_vehicle.has_method("set_refuel_station_available"):
+		_active_vehicle.set_refuel_station_available(distance <= 6.0)
 
 
 func _animate_depot_cargo(loading: bool) -> void:
