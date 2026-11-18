@@ -336,3 +336,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - It approaches and waits at the give-way line while the main road has green.
 - It crosses the highway during the main road's red/amber phase, then loops back for another approach.
 - This is a scripted traffic demonstration, not yet collision-aware gap acceptance or a full junction AI system.
+
+
+### Side-road junction gap checks
+- Side-road traffic now checks the physical conflict zone before entering during its permitted phase.
+- It waits if a highway traffic vehicle or the player is passing through the junction.
+- A vehicle already committed to crossing is allowed to clear the junction instead of stopping in the carriageway.
+- This remains a simplified position-based check without collision shapes, predictive time-to-collision, or lane-aware turning paths.
