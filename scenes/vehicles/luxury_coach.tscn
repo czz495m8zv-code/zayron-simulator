@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicles/luxury_coach.gd" id="1"]
+
+[node name="OmanLuxuryCoach" type="CharacterBody3D"]
+script = ExtResource("1")
+primary_paint = Color(0.035, 0.12, 0.24, 1)
+accent_paint = Color(0.78, 0.62, 0.32, 1)
