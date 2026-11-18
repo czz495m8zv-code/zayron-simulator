@@ -148,3 +148,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - The depot forklift now has on-screen FORKS UP and FORKS DOWN controls. Each tap raises or lowers the fork carriage in bounded increments, with a short movement tween and a live height readout.
 - The previous automatic up/down oscillation has been removed; the mast stays at the selected height until the player changes it.
 - This controls mast height only. The forklift is still a stationary depot prop: driving, steering, fork tilt, pallet pickup/attachment, load stability and collision-based handling are not implemented yet.
+
+### Movable depot forklift and crate handling prototype
+- The depot forklift now responds to on-screen MOVE FORWARD, MOVE BACK, MOVE LEFT and MOVE RIGHT controls, with movement constrained to a small depot work area.
+- The player can lower the forks, move close to a visible depot crate and use GRAB / RELEASE CRATE to attach one crate to the fork carriage or set it back down.
+- Fork height remains player-controlled with FORKS UP and FORKS DOWN, and the selected height is shown on screen.
+- This is a first interaction prototype using bounded position steps and node attachment. It does not yet use vehicle-grade steering/drive physics, wheel rotation, collision-based fork insertion, pallet pickup, fork tilt, load stability, or realistic forklift hydraulics. Crates are handled individually rather than as a full pallet.
