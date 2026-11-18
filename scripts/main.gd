@@ -776,13 +776,24 @@ func _update_side_road_traffic(delta: float) -> void:
 	if not is_instance_valid(_side_road_traffic_vehicle):
 		return
 	var main_road_has_priority := _traffic_signal_clock < 8.0
+	var junction_occupied := false
+	# Do not enter the conflict zone while a main-road vehicle or the player
+	# is physically passing through it. A vehicle already crossing is allowed
+	# to clear the junction rather than stopping sideways in the carriageway.
+	for traffic_vehicle in _traffic_vehicles:
+		if is_instance_valid(traffic_vehicle) and absf(traffic_vehicle.position.z + 48.0) < 3.0:
+			junction_occupied = true
+			break
+	if is_instance_valid(_active_vehicle) and absf(_active_vehicle.global_position.z + 48.0) < 4.0:
+		junction_occupied = true
 	var target_speed := 0.0
 	if main_road_has_priority and _side_road_traffic_vehicle.position.x > 2.8:
 		# Approach slowly, then wait just behind the give-way markings.
 		target_speed = 3.8
 	elif not main_road_has_priority and _side_road_traffic_vehicle.position.x > -5.5:
-		# Cross only after the main-road signal changes to red/amber.
-		target_speed = 5.2
+		# Wait for a clear physical gap unless already committed to crossing.
+		if not junction_occupied or _side_road_traffic_vehicle.position.x <= 2.8:
+			target_speed = 5.2
 	_side_road_traffic_speed = move_toward(_side_road_traffic_speed, target_speed, 3.8 * delta)
 	_side_road_traffic_vehicle.position.x -= _side_road_traffic_speed * delta
 	if _side_road_traffic_vehicle.position.x <= -5.5:
