@@ -31,6 +31,8 @@ var _cash_label: Label
 var _restart_button: Button
 var _traffic_vehicles: Array[Node3D] = []
 var _traffic_vehicle_speeds: Array[float] = []
+var _traffic_current_speeds: Array[float] = []
+const TRAFFIC_LOOP_LENGTH: float = 142.0
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
 const ROUTE_TARGETS: Array[Vector3] = [Vector3(0.0, 0.0, -82.0), Vector3(0.0, 0.0, -48.0), Vector3(0.0, 0.0, -112.0)]
@@ -156,7 +158,19 @@ func _process(delta: float) -> void:
 		var traffic_vehicle := _traffic_vehicles[traffic_index]
 		if not is_instance_valid(traffic_vehicle):
 			continue
-		traffic_vehicle.position.z += _traffic_vehicle_speeds[traffic_index] * delta
+		# Traffic follows the vehicle ahead in the same lane instead of passing
+		# through it. The loop distance accounts for cars that have wrapped.
+		var nearest_gap := TRAFFIC_LOOP_LENGTH
+		for other_index in range(_traffic_vehicles.size()):
+			if other_index == traffic_index or not is_instance_valid(_traffic_vehicles[other_index]):
+				continue
+			var gap := fposmod(_traffic_vehicles[other_index].position.z - traffic_vehicle.position.z, TRAFFIC_LOOP_LENGTH)
+			if gap > 0.1:
+				nearest_gap = minf(nearest_gap, gap)
+		var gap_factor := clampf((nearest_gap - 5.0) / 13.0, 0.22, 1.0)
+		var target_speed := _traffic_vehicle_speeds[traffic_index] * gap_factor
+		_traffic_current_speeds[traffic_index] = move_toward(_traffic_current_speeds[traffic_index], target_speed, 3.2 * delta)
+		traffic_vehicle.position.z += _traffic_current_speeds[traffic_index] * delta
 		if traffic_vehicle.position.z > 24.0:
 			traffic_vehicle.position.z = -118.0 - float(traffic_index) * 42.0
 	_forklift_animation_time += delta
@@ -602,6 +616,7 @@ func _build_traffic_vehicle() -> void:
 				traffic_car.add_child(tire)
 		_traffic_vehicles.append(traffic_car)
 		_traffic_vehicle_speeds.append(traffic_speeds[traffic_index])
+		_traffic_current_speeds.append(traffic_speeds[traffic_index])
 
 
 func _make_box(node_name: String, dimensions: Vector3, location: Vector3, tint: Color) -> MeshInstance3D:
