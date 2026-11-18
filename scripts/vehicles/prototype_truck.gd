@@ -137,6 +137,50 @@ func _build_truck() -> void:
 			wheel.material_override = wheel_material
 			add_child(wheel)
 
+
+func set_cargo_payload(cargo_type: int, loaded: bool) -> void:
+	var payload := get_node_or_null("CargoPayload") as Node3D
+	if payload == null:
+		payload = Node3D.new()
+		payload.name = "CargoPayload"
+		add_child(payload)
+		var deck := MeshInstance3D.new()
+		deck.name = "CargoDeck"
+		var deck_mesh := BoxMesh.new()
+		deck_mesh.size = Vector3(1.95, 0.12, 2.0)
+		deck.mesh = deck_mesh
+		deck.position = Vector3(0.0, 1.08, 1.55)
+		var deck_mat := StandardMaterial3D.new()
+		deck_mat.albedo_color = Color(0.16, 0.18, 0.2)
+		deck.material_override = deck_mat
+		payload.add_child(deck)
+		var cargo_colors := [Color(0.62, 0.36, 0.16), Color(0.72, 0.58, 0.32), Color(0.24, 0.48, 0.62)]
+		var cargo_color: Color = cargo_colors[clampi(cargo_type, 0, cargo_colors.size() - 1)]
+		for i in range(4):
+			var crate := MeshInstance3D.new()
+			crate.name = "CargoCrate_%d" % i
+			var crate_mesh := BoxMesh.new()
+			crate_mesh.size = Vector3(0.88, 0.72, 0.88)
+			crate.mesh = crate_mesh
+			crate.position = Vector3(-0.48 if i % 2 == 0 else 0.48, 1.5, 1.05 + float(i / 2) * 0.92)
+			var crate_mat := StandardMaterial3D.new()
+			crate_mat.albedo_color = cargo_color
+			crate_mat.roughness = 0.82
+			crate.material_override = crate_mat
+			payload.add_child(crate)
+			var strap := MeshInstance3D.new()
+			strap.name = "CargoStrap_%d" % i
+			var strap_mesh := BoxMesh.new()
+			strap_mesh.size = Vector3(0.06, 0.76, 0.92)
+			strap.mesh = strap_mesh
+			strap.position = crate.position + Vector3(0.0, 0.0, 0.0)
+			var strap_mat := StandardMaterial3D.new()
+			strap_mat.albedo_color = Color(0.08, 0.1, 0.12)
+			strap.material_override = strap_mat
+			payload.add_child(strap)
+	payload.visible = loaded
+
+
 func _build_camera() -> void:
 	_exterior_camera = Camera3D.new()
 	_exterior_camera.name = "ChaseCamera"
