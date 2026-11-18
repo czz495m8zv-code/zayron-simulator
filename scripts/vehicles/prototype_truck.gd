@@ -21,6 +21,9 @@ var _close_camera: Camera3D
 var _cockpit_camera: Camera3D
 var _camera_button: Button
 var _camera_mode: int = 0
+var _headlights_on: bool = true
+var _headlight_lights: Array[OmniLight3D] = []
+var _headlight_button: Button
 @export var cockpit_camera_position: Vector3 = Vector3(0.0, 2.45, -1.35)
 var _engine_playback: AudioStreamGeneratorPlayback
 var _engine_phase: float = 0.0
@@ -29,6 +32,7 @@ const ENGINE_SAMPLE_RATE: float = 22050.0
 func _ready() -> void:
 	_build_truck()
 	_build_camera()
+	_build_vehicle_lights()
 	_build_mobile_controls()
 	_build_engine_audio()
 
@@ -240,6 +244,53 @@ func _toggle_camera() -> void:
 			_cockpit_camera.make_current()
 			_camera_button.text = "VIEW: CABIN"
 
+func _build_vehicle_lights() -> void:
+	var lamp_material := StandardMaterial3D.new()
+	lamp_material.albedo_color = Color(0.92, 0.88, 0.68)
+	lamp_material.emission_enabled = true
+	lamp_material.emission = Color(0.95, 0.86, 0.58)
+	lamp_material.emission_energy_multiplier = 1.4
+	for x in [-0.72, 0.72]:
+		var lamp := MeshInstance3D.new()
+		lamp.name = "FrontHeadlamp"
+		var lamp_mesh := BoxMesh.new()
+		lamp_mesh.size = Vector3(0.34, 0.2, 0.08)
+		lamp.mesh = lamp_mesh
+		lamp.position = Vector3(x, 1.25, -2.43)
+		lamp.material_override = lamp_material
+		add_child(lamp)
+		var beam := OmniLight3D.new()
+		beam.name = "HeadlightBeam"
+		beam.position = Vector3(x, 1.28, -2.52)
+		beam.light_color = Color(1.0, 0.9, 0.72)
+		beam.light_energy = 1.15
+		beam.omni_range = 25.0
+		beam.shadow_enabled = false
+		add_child(beam)
+		_headlight_lights.append(beam)
+	var tail_material := StandardMaterial3D.new()
+	tail_material.albedo_color = Color(0.55, 0.025, 0.018)
+	tail_material.emission_enabled = true
+	tail_material.emission = Color(0.8, 0.025, 0.012)
+	tail_material.emission_energy_multiplier = 0.8
+	for x in [-0.78, 0.78]:
+		var tail := MeshInstance3D.new()
+		tail.name = "RearTailLamp"
+		var tail_mesh := BoxMesh.new()
+		tail_mesh.size = Vector3(0.24, 0.28, 0.08)
+		tail.mesh = tail_mesh
+		tail.position = Vector3(x, 1.18, 2.43)
+		tail.material_override = tail_material
+		add_child(tail)
+
+func _toggle_headlights() -> void:
+	_headlights_on = not _headlights_on
+	for beam in _headlight_lights:
+		if is_instance_valid(beam):
+			beam.visible = _headlights_on
+	if is_instance_valid(_headlight_button):
+		_headlight_button.text = "LIGHTS: ON" if _headlights_on else "LIGHTS: OFF"
+
 func _build_mobile_controls() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "MobileControls"
@@ -275,6 +326,7 @@ func _build_mobile_controls() -> void:
 	_add_hold_button(ui, "GAS", false, -112.0, -124.0, -12.0, -24.0, "accelerate")
 	_add_hold_button(ui, "R", false, -112.0, -224.0, -12.0, -136.0, "reverse")
 	_add_camera_button(ui)
+	_add_headlight_button(ui)
 
 func _add_camera_button(parent: Control) -> void:
 	var button := Button.new()
@@ -294,6 +346,26 @@ func _add_camera_button(parent: Control) -> void:
 	button.add_theme_color_override("font_color", Color.WHITE)
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.04, 0.10, 0.17, 0.9)))
 	button.pressed.connect(_toggle_camera)
+	parent.add_child(button)
+
+func _add_headlight_button(parent: Control) -> void:
+	var button := Button.new()
+	button.name = "HeadlightToggle"
+	button.text = "LIGHTS: ON"
+	_headlight_button = button
+	button.focus_mode = Control.FOCUS_NONE
+	button.anchor_left = 1.0
+	button.anchor_right = 1.0
+	button.anchor_top = 0.0
+	button.anchor_bottom = 0.0
+	button.offset_left = -158.0
+	button.offset_top = 22.0
+	button.offset_right = -18.0
+	button.offset_bottom = 68.0
+	button.add_theme_font_size_override("font_size", 15)
+	button.add_theme_color_override("font_color", Color.WHITE)
+	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.04, 0.10, 0.17, 0.9)))
+	button.pressed.connect(_toggle_headlights)
 	parent.add_child(button)
 
 func _add_hold_button(parent: Control, label: String, left_side: bool, left: float, top: float, right: float, bottom: float, control_name: String) -> void:
