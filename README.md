@@ -264,3 +264,5 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Fuel level is saved independently for each of the six player vehicle types in the career save.
 - Switching vehicles stores the outgoing vehicle's current fuel and restores the selected vehicle's saved fuel.
 - The active vehicle's fuel is captured whenever career progress is saved, so wallet and mission saves also preserve its current tank level.
+
+- Career progress, including each vehicle's fuel level, is also saved when the app is paused or closed.
