@@ -272,3 +272,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Added a second Oman Fuel forecourt along the highway route, with an access lane, canopy, two dispensers, and diesel/petrol signage.
 - Player vehicles can refuel at either the cargo depot pump or the roadside station; both use the same stopped-and-parked wallet transaction and per-vehicle saved fuel level.
 - The roadside station is a prototype landmark on the current test-road segment, not a real-world Oman fuel network or real fuel-price simulation.
+
+
+### Highway traffic expansion
+- Replaced the single looping traffic sedan with three independently moving traffic cars, each with its own color, starting gap, and speed.
+- Traffic remains a visual prototype: vehicles do not yet use collision avoidance, lane-changing AI, traffic signals, or full road rules.
