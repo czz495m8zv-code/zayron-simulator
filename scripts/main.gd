@@ -804,6 +804,14 @@ func _dispatch_company_driver() -> void:
 
 func _on_company_driver_trip_completed() -> void:
 	_company_trip_active = false
+	if _company_trip_driver_index >= 0 and _company_trip_driver_index < _company_drivers.size():
+		_company_drivers[_company_trip_driver_index]["status"] = "AVAILABLE"
+		_company_drivers[_company_trip_driver_index]["route"] = "UNASSIGNED"
+		_company_drivers[_company_trip_driver_index]["bus"] = "NO BUS"
+	if _company_trip_bus_index >= 0 and _company_trip_bus_index < _company_fleet.size():
+		_company_fleet[_company_trip_bus_index]["status"] = "AVAILABLE"
+	_company_trip_driver_index = -1
+	_company_trip_bus_index = -1
 	_company_completed_trips += 1
 	# Illustrative game-economy figures: OMR 85 fare revenue is credited
 	# after OMR 35 trip costs were reserved at dispatch, for OMR 50 net profit.
@@ -815,8 +823,24 @@ func _on_company_driver_trip_completed() -> void:
 func _refresh_company_panel() -> void:
 	if is_instance_valid(_company_summary_label):
 		_company_summary_label.text = "%s\nCOMPANY FUNDS: OMR %d\nBUSES: %d     DRIVERS: %d\nCOMPLETED COMPANY TRIPS: %d" % [_company_name, _company_funds, _company_bus_count, _company_driver_count, _company_completed_trips]
+	if is_instance_valid(_company_roster_label):
+		var roster_text := "FLEET"
+		for bus in _company_fleet:
+			roster_text += "\n%s  |  %s" % [str(bus.get("name", "Bus")), str(bus.get("status", "AVAILABLE"))]
+		roster_text += "\nDRIVER STAFF"
+		for driver in _company_drivers:
+			roster_text += "\n%s  |  %s" % [str(driver.get("name", "Driver")), str(driver.get("status", "AVAILABLE"))]
+		_company_roster_label.text = roster_text
 	if is_instance_valid(_company_dispatch_button):
-		_company_dispatch_button.disabled = _company_trip_active or _company_driver_count < 1 or _company_bus_count < 1 or _company_funds < 35
+		var has_available_driver := false
+		var has_available_bus := false
+		for driver in _company_drivers:
+			if str(driver.get("status", "AVAILABLE")) == "AVAILABLE":
+				has_available_driver = true
+		for bus in _company_fleet:
+			if str(bus.get("status", "AVAILABLE")) == "AVAILABLE":
+				has_available_bus = true
+		_company_dispatch_button.disabled = _company_trip_active or not has_available_driver or not has_available_bus or _company_funds < 35
 		_company_dispatch_button.text = "DRIVER EN ROUTE..." if _company_trip_active else "ASSIGN DRIVER & SEND TO WORK"
 
 func _restart_delivery() -> void:
