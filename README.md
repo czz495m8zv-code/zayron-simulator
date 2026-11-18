@@ -28,7 +28,7 @@ We will build and test in small milestones: project foundation, a drivable proto
 
 **Current status: early gameplay prototype — source features are not yet verified in a clean Android run.**
 
-The project now contains a procedural Oman-inspired driving test scene, six selectable vehicle prototypes, touch controls, a delivery checkpoint, a basic OMR reward counter, and a route-restart control. These are early source-level features; the game still needs Godot runtime validation and Android device testing.
+The project now contains a procedural Oman-inspired driving test scene, six selectable vehicle prototypes, touch controls, a delivery checkpoint, a basic OMR reward counter, a route-restart control, initial roadside destination signs, and one moving visual traffic car. These are early source-level features; the game still needs Godot runtime validation and Android device testing.
 
 ## Documentation
 
