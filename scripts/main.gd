@@ -44,10 +44,15 @@ var _selected_cargo: int = 0
 var _cargo_button: Button
 var _passenger_mode: bool = false
 var _mission_type_button: Button
+var _passenger_pickup_done: bool = false
+var _passenger_pickup_target := Vector3(0.0, 0.0, -37.0)
 
 func _ready() -> void:
 	_load_progress()
 	_mission_target = ROUTE_TARGETS[_selected_route]
+	_passenger_pickup_target = Vector3(0.0, 0.0, (8.0 + _mission_target.z) * 0.5)
+	if _passenger_mode:
+		_mission_target = _passenger_pickup_target
 	_build_environment()
 	_build_oman_test_road()
 	_build_roadside_signs()
@@ -69,6 +74,14 @@ func _process(delta: float) -> void:
 
 func _spawn_vehicle() -> void:
 	_mission_complete = false
+	_passenger_pickup_done = false
+	if _passenger_mode:
+		_mission_target = Vector3(0.0, 0.0, (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5)
+	else:
+		_mission_target = ROUTE_TARGETS[_selected_route]
+	if is_instance_valid(_checkpoint_area):
+		_checkpoint_area.position = _mission_target
+	_move_checkpoint_gate()
 	if is_instance_valid(_active_vehicle):
 		_active_vehicle.queue_free()
 	_active_vehicle = FLEET_SCENES[_selected_vehicle].instantiate() as Node3D
@@ -338,9 +351,12 @@ func _restart_delivery() -> void:
 
 func _cycle_route() -> void:
 	_selected_route = (_selected_route + 1) % ROUTE_TARGETS.size()
-	_mission_target = ROUTE_TARGETS[_selected_route]
-	if is_instance_valid(_checkpoint_area):
-		_checkpoint_area.position = _mission_target
+	if is_instance_valid(_route_button):
+		_route_button.text = "ROUTE: " + ROUTE_NAMES[_selected_route]
+	_spawn_vehicle()
+	_save_progress()
+
+func _move_checkpoint_gate() -> void:
 	for i in range(_checkpoint_gate_parts.size()):
 		var gate_part := _checkpoint_gate_parts[i]
 		if not is_instance_valid(gate_part):
@@ -351,10 +367,6 @@ func _cycle_route() -> void:
 			gate_part.position = Vector3(4.0, 1.6, _mission_target.z)
 		else:
 			gate_part.position = Vector3(0.0, 3.1, _mission_target.z)
-	if is_instance_valid(_route_button):
-		_route_button.text = "ROUTE: " + ROUTE_NAMES[_selected_route]
-	_spawn_vehicle()
-	_save_progress()
 
 func _toggle_passenger_mode() -> void:
 	_passenger_mode = not _passenger_mode
@@ -375,6 +387,15 @@ func _cycle_cargo() -> void:
 
 func _on_checkpoint_entered(body: Node3D) -> void:
 	if body != _active_vehicle or _mission_complete:
+		return
+	if _passenger_mode and not _passenger_pickup_done:
+		_passenger_pickup_done = true
+		_mission_target = ROUTE_TARGETS[_selected_route]
+		if is_instance_valid(_checkpoint_area):
+			_checkpoint_area.position = _mission_target
+		_move_checkpoint_gate()
+		if is_instance_valid(_mission_label):
+			_mission_label.text = "PASSENGERS ON BOARD  |  CONTINUE TO " + ROUTE_NAMES[_selected_route].split(" -> ")[1]
 		return
 	_mission_complete = true
 	_delivery_count += 1
