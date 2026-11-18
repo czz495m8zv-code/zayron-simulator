@@ -4,6 +4,7 @@
 
 [node name="VIPSilverCoach" type="CharacterBody3D"]
 script = ExtResource("1")
+supports_passenger_doors = true
 primary_paint = Color(0.72, 0.77, 0.82, 1)
 accent_paint = Color(0.08, 0.23, 0.36, 1)
 acceleration = 6.2
