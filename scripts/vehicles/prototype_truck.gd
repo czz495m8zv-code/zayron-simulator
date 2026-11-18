@@ -6,12 +6,15 @@ extends CharacterBody3D
 @export var max_forward_speed: float = 25.0
 @export var max_reverse_speed: float = 6.0
 @export var steering_speed: float = 1.15
+@export var steering_response: float = 3.5
+@export var lateral_grip: float = 12.0
 
 var _speed: float = 0.0
 var _throttle_input: float = 0.0
 var _brake_input: float = 0.0
 var _reverse_input: float = 0.0
 var _steering_input: float = 0.0
+var _steering_current: float = 0.0
 var _steering_multiplier: float = 1.0
 var _steer_left_held: bool = false
 var _steer_right_held: bool = false
@@ -97,13 +100,22 @@ func _physics_process(delta: float) -> void:
 		var drag := rolling_resistance + (absf(_speed) * absf(_speed) * 0.018)
 		_speed = move_toward(_speed, 0.0, drag * delta)
 
+	# Steering input eases in and out rather than snapping instantly.
+	_steering_current = move_toward(_steering_current, steering, steering_response * delta)
+
 	# Steering authority fades at highway speed to avoid unrealistically sharp turns.
 	if absf(_speed) > 0.2:
 		var direction := 1.0 if _speed >= 0.0 else -1.0
 		var steering_authority := lerpf(1.0, 0.38, speed_ratio)
-		rotate_y(-steering * steering_speed * _steering_multiplier * steering_authority * delta * direction)
+		rotate_y(-_steering_current * steering_speed * _steering_multiplier * steering_authority * delta * direction)
 
-	velocity = -global_transform.basis.z * _speed
+	# Preserve a little lateral momentum, then let tire-grip approximation settle it.
+	# This creates mild body inertia without pretending to be full wheel physics.
+	var forward := -global_transform.basis.z
+	var previous_horizontal := Vector3(velocity.x, 0.0, velocity.z)
+	var lateral_velocity := previous_horizontal - forward * previous_horizontal.dot(forward)
+	lateral_velocity = lateral_velocity.move_toward(Vector3.ZERO, lateral_grip * delta)
+	velocity = forward * _speed + lateral_velocity
 	move_and_slide()
 
 	if is_instance_valid(_speed_label):
