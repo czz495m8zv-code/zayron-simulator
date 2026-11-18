@@ -77,3 +77,8 @@ The current source includes six selectable vehicle prototypes:
 - VIP silver coach
 
 Use the in-game **NEXT** button to cycle through the fleet and the **ROUTE** button to switch between three short Oman-inspired checkpoint routes and the **CARGO** button to choose general goods, construction supplies or chilled goods, and **JOB** to switch between cargo work and bus passenger trips. Cargo jobs now require reaching a loading checkpoint first, loading the selected goods, then driving to the route destination for delivery; the starter flatbed truck displays a matching crate payload after pickup; passenger trips require reaching the pickup gate first, boarding a displayed group of eight passengers, then driving to the destination drop-off gate. Both mission types use two stages, and their status resets when a route is restarted. Reach the green delivery gate to complete a run and earn a prototype reward of OMR 25; use **RESTART ROUTE** to drive again. The wallet is a gameplay placeholder, not real money. These original procedural Godot models are early prototypes, not final photorealistic assets, and still require on-device testing and visual refinement.
+
+
+### Driving model update
+- The shared player vehicle controller now uses a simple speed-dependent torque curve, stronger low-speed acceleration, engine/rolling drag, and reduced steering authority at higher speeds.
+- This remains an arcade-style CharacterBody3D controller; it is not yet a wheel-suspension or tire-physics simulation.
