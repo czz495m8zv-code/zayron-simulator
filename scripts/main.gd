@@ -82,6 +82,12 @@ var _company_fleet: Array[Dictionary] = []
 var _company_drivers: Array[Dictionary] = []
 var _company_trip_driver_index: int = -1
 var _company_trip_bus_index: int = -1
+var _company_ai_bus: Node3D
+var _company_ai_bus_phase: int = 0 # 0 outbound, 1 station stop, 2 return
+var _company_ai_bus_stop_time: float = 0.0
+var _company_ai_bus_start := Vector3(-2.0, 0.15, 8.0)
+var _company_ai_bus_destination := Vector3(-2.0, 0.15, -82.0)
+var _company_ai_bus_speed: float = 7.0
 
 func _ready() -> void:
 	_load_progress()
@@ -113,7 +119,8 @@ func _process(delta: float) -> void:
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
 	if _company_trip_active and is_instance_valid(_company_status_label) and is_instance_valid(_company_trip_timer):
-		_company_status_label.text = "DRIVER EN ROUTE  |  ARRIVAL IN %d SEC" % ceili(_company_trip_timer.time_left)
+		_company_status_label.text = "COMPANY BUS ON ROAD  |  %d SEC LEFT" % ceili(_company_trip_timer.time_left)
+	_update_company_ai_bus(delta)
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
 		return
 	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
@@ -686,7 +693,7 @@ func _build_company_management() -> void:
 	_company_trip_timer = Timer.new()
 	_company_trip_timer.name = "CompanyDriverTripTimer"
 	_company_trip_timer.one_shot = true
-	_company_trip_timer.wait_time = 45.0
+	_company_trip_timer.wait_time = 30.0
 	_company_trip_timer.process_mode = Node.PROCESS_MODE_ALWAYS
 	_company_trip_timer.timeout.connect(_on_company_driver_trip_completed)
 	add_child(_company_trip_timer)
@@ -869,13 +876,63 @@ func _dispatch_company_driver() -> void:
 	_company_drivers[driver_index]["bus"] = str(_company_fleet[bus_index].get("name", "Company Bus"))
 	_company_fleet[bus_index]["status"] = "ON ROUTE"
 	_company_trip_active = true
+	_spawn_company_ai_bus()
+	var route_distance: float = absf(_company_ai_bus_destination.z - _company_ai_bus_start.z)
+	_company_trip_timer.wait_time = (route_distance * 2.0 / _company_ai_bus_speed) + 7.0
 	_company_trip_timer.start()
 	_company_status_label.text = "%s dispatched in %s on %s. You can keep driving." % [_company_drivers[driver_index]["name"], _company_fleet[bus_index]["name"], ROUTE_NAMES[_company_selected_route]]
 	_refresh_company_panel()
 	_save_progress()
 
+func _spawn_company_ai_bus() -> void:
+	if is_instance_valid(_company_ai_bus):
+		_company_ai_bus.queue_free()
+	_company_ai_bus = FLEET_SCENES[3].instantiate() as Node3D
+	_company_ai_bus.name = "CompanyAIDispatchedBus"
+	_company_ai_bus.position = _company_ai_bus_start
+	_company_ai_bus.rotation.y = 0.0
+	add_child(_company_ai_bus)
+	# The company vehicle uses the same bus model, but its movement is driven by
+	# this route controller rather than the player's touch/keyboard input script.
+	_company_ai_bus.set_process(false)
+	_company_ai_bus.set_physics_process(false)
+	_company_ai_bus_phase = 0
+	_company_ai_bus_stop_time = 0.0
+	_company_ai_bus_destination = Vector3(-2.0, 0.15, ROUTE_TARGETS[_company_selected_route].z)
+	var route_marker := Label3D.new()
+	route_marker.name = "CompanyBusRouteMarker"
+	route_marker.text = "COMPANY SERVICE"
+	route_marker.position = Vector3(0.0, 3.3, 0.0)
+	route_marker.font_size = 24
+	route_marker.pixel_size = 0.009
+	route_marker.modulate = Color(0.55, 0.9, 1.0)
+	route_marker.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_company_ai_bus.add_child(route_marker)
+
+
+func _update_company_ai_bus(delta: float) -> void:
+	if not _company_trip_active or not is_instance_valid(_company_ai_bus):
+		return
+	if _company_ai_bus_phase == 0:
+		_company_ai_bus.position = _company_ai_bus.position.move_toward(_company_ai_bus_destination, _company_ai_bus_speed * delta)
+		if _company_ai_bus.position.distance_to(_company_ai_bus_destination) < 0.12:
+			_company_ai_bus.position = _company_ai_bus_destination
+			_company_ai_bus_phase = 1
+			_company_ai_bus_stop_time = 3.0
+	elif _company_ai_bus_phase == 1:
+		_company_ai_bus_stop_time -= delta
+		if _company_ai_bus_stop_time <= 0.0:
+			_company_ai_bus_phase = 2
+			_company_ai_bus.rotation.y = PI
+	elif _company_ai_bus_phase == 2:
+		_company_ai_bus.position = _company_ai_bus.position.move_toward(_company_ai_bus_start, _company_ai_bus_speed * delta)
+
+
 func _on_company_driver_trip_completed() -> void:
 	_company_trip_active = false
+	if is_instance_valid(_company_ai_bus):
+		_company_ai_bus.queue_free()
+	_company_ai_bus = null
 	if _company_trip_driver_index >= 0 and _company_trip_driver_index < _company_drivers.size():
 		_company_drivers[_company_trip_driver_index]["status"] = "AVAILABLE"
 		_company_drivers[_company_trip_driver_index]["route"] = "UNASSIGNED"
