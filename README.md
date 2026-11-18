@@ -162,3 +162,10 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - When carrying a crate above the low travel-height threshold, movement is blocked and the HUD asks the player to lower the load first. This is a simple stability safeguard, not a calculated load-centre or tip-over model.
 - If a cargo mission starts while a crate is attached to the forklift, the crate is safely returned to its depot home position before the mission's loading animation begins.
 - Forklift movement is still bounded, button-step movement without collision physics, articulated steering geometry, hydraulic tilt, or full pallet handling.
+
+
+### Forklift grouped-pallet handling
+- Depot crates are now arranged as child objects of three separate pallet assemblies. The forklift's GRAB / RELEASE control targets a complete pallet assembly, keeping its crates together while it is lifted and moved.
+- The cargo status reports the number of crates on the carried pallet. Starting a cargo mission returns a carried pallet and its crates to their depot home positions before the truck-loading visual sequence begins.
+- Crate loading/unloading animations now use world-space positions so the grouped crate objects can animate correctly while parented to a pallet assembly.
+- This is still a scripted attachment interaction, not collision-accurate fork insertion, pallet-jack/forklift physics, load-centre calculations, or realistic hydraulic tilt.
