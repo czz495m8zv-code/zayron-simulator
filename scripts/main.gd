@@ -220,6 +220,38 @@ func _build_environment() -> void:
 func _build_oman_test_road() -> void:
 	var road := _make_box("AsphaltRoad", Vector3(9.0, 0.12, 150.0), Vector3(0.0, 0.03, -48.0), Color(0.12, 0.13, 0.14))
 	add_child(road)
+
+	# Fine procedural aggregate gives the road surface visual texture without external assets.
+	var asphalt_noise := FastNoiseLite.new()
+	asphalt_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	asphalt_noise.frequency = 0.075
+	asphalt_noise.fractal_octaves = 3
+	var asphalt_texture := NoiseTexture2D.new()
+	asphalt_texture.width = 512
+	asphalt_texture.height = 512
+	asphalt_texture.seamless = true
+	asphalt_texture.noise = asphalt_noise
+	var asphalt_surface := MeshInstance3D.new()
+	asphalt_surface.name = "TexturedAsphaltSurface"
+	var asphalt_plane := PlaneMesh.new()
+	asphalt_plane.size = Vector2(9.0, 150.0)
+	asphalt_surface.mesh = asphalt_plane
+	asphalt_surface.position = Vector3(0.0, 0.094, -48.0)
+	var asphalt_material := StandardMaterial3D.new()
+	asphalt_material.albedo_color = Color(0.31, 0.32, 0.33)
+	asphalt_material.albedo_texture = asphalt_texture
+	asphalt_material.roughness = 0.96
+	asphalt_material.uv1_scale = Vector3(1.0, 7.0, 1.0)
+	asphalt_surface.material_override = asphalt_material
+	add_child(asphalt_surface)
+
+	# Continuous edge lines and reflective road studs improve road scale and night readability.
+	for side in [-1.0, 1.0]:
+		var edge_line := _make_box("RoadEdgeLine_%s" % side, Vector3(0.12, 0.025, 150.0), Vector3(side * 4.18, 0.108, -48.0), Color(0.88, 0.87, 0.79))
+		add_child(edge_line)
+		for stud_index in range(30):
+			var stud := _make_box("ReflectiveRoadStud_%s_%02d" % [side, stud_index], Vector3(0.10, 0.035, 0.16), Vector3(side * 4.02, 0.115, 23.0 - float(stud_index) * 4.9), Color(0.92, 0.78, 0.36))
+			add_child(stud)
 	var shoulder_left := _make_box("LeftRoadShoulder", Vector3(1.0, 0.10, 150.0), Vector3(-5.0, 0.0, -48.0), Color(0.48, 0.39, 0.29))
 	add_child(shoulder_left)
 	var shoulder_right := _make_box("RightRoadShoulder", Vector3(1.0, 0.10, 150.0), Vector3(5.0, 0.0, -48.0), Color(0.48, 0.39, 0.29))
