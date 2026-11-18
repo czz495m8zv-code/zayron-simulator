@@ -405,6 +405,8 @@ The three prototype highway cars now use a lightweight same-lane following model
 - The numeric countdown remains visible so pedestrians receive a clear indication that the phase is ending.
 
 ### Engine and fuel behaviour
+- The vehicle dashboard shows an approximate remaining driving range alongside fuel percentage. It is calculated from the prototype's distance-based fuel rate; idling, payload, terrain and driving style can reduce actual range.
+
 - Fuel consumption now runs only while the engine is switched on, combining distance travelled with a small idle and throttle-load allowance.
 - A vehicle with an empty tank cannot restart its engine; the ignition control displays a no-fuel reminder until the vehicle is refuelled.
 
