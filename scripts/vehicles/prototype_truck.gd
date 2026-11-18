@@ -229,7 +229,7 @@ func _physics_process(delta: float) -> void:
 	if is_instance_valid(_rpm_label):
 		_rpm_label.text = "RPM  %04d    TEMP  %02d°C" % [int(minf(rpm_value, 2800.0)), int(_engine_temperature)]
 	if is_instance_valid(_fuel_label):
-		_fuel_label.text = "FUEL  %02d%%" % int(ceil(_fuel_level))
+		_fuel_label.text = _fuel_display_text()
 		_fuel_label.add_theme_color_override("font_color", Color(1.0, 0.34, 0.22) if _fuel_level <= 15.0 else Color(0.55, 0.9, 1.0))
 	if is_instance_valid(_vehicle_status_label):
 		var status_parts: Array[String] = []
@@ -565,7 +565,7 @@ func _build_mobile_controls() -> void:
 	ui.add_child(_vehicle_status_label)
 
 	_fuel_label = Label.new()
-	_fuel_label.text = "FUEL  100%"
+	_fuel_label.text = "FUEL  100%  |  RANGE ~125 km"
 	_fuel_label.position = Vector2(28.0, 136.0)
 	_fuel_label.add_theme_font_size_override("font_size", 14)
 	_fuel_label.add_theme_color_override("font_color", Color(0.55, 0.9, 1.0))
@@ -677,9 +677,16 @@ func set_fuel_level(value: float) -> void:
 	_update_fuel_display()
 
 
+func _fuel_display_text() -> String:
+	# Range is a moving-distance estimate based on the current distance fuel rate;
+	# idling, payload, terrain and driving style can reduce the real range.
+	var estimated_range_km := int(floor((_fuel_level / 0.0008) / 1000.0))
+	return "FUEL  %02d%%  |  RANGE ~%d km" % [int(ceil(_fuel_level)), estimated_range_km]
+
+
 func _update_fuel_display() -> void:
 	if is_instance_valid(_fuel_label):
-		_fuel_label.text = "FUEL  %02d%%" % int(ceil(_fuel_level))
+		_fuel_label.text = _fuel_display_text()
 		_fuel_label.add_theme_color_override("font_color", Color(1.0, 0.34, 0.22) if _fuel_level <= 15.0 else Color(0.55, 0.9, 1.0))
 
 
