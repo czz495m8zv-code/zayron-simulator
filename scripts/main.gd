@@ -54,6 +54,8 @@ var _passenger_waiting_group: Node3D
 var _cargo_status_label: Label
 var _cargo_pickup_done: bool = false
 var _cargo_depot: Node3D
+var _depot_crates: Array[Node3D] = []
+var _depot_crate_home_positions: Array[Vector3] = []
 var _forklift_carriage: Node3D
 var _forklift_beacon: OmniLight3D
 var _forklift_animation_time: float = 0.0
@@ -159,6 +161,12 @@ func _spawn_vehicle() -> void:
 	if is_instance_valid(_cargo_depot):
 		_cargo_depot.visible = not _passenger_mode
 		_cargo_depot.position.z = (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5
+		for crate_index in range(_depot_crates.size()):
+			var depot_crate := _depot_crates[crate_index]
+			if is_instance_valid(depot_crate):
+				depot_crate.position = _depot_crate_home_positions[crate_index]
+				depot_crate.scale = Vector3.ONE
+				depot_crate.visible = true
 	if is_instance_valid(_passenger_status_label):
 		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
 	if is_instance_valid(_passenger_waiting_group):
@@ -486,9 +494,34 @@ func _build_cargo_depot() -> void:
 			var crate_color := Color(0.62, 0.38, 0.18) if pallet_index != 1 else Color(0.25, 0.48, 0.56)
 			var crate := _make_box("CargoCrate_%d_%d" % [pallet_index, layer_index], Vector3(1.3, 0.72, 1.12), Vector3(-2.1, 0.62 + float(layer_index) * 0.74, pallet_z), crate_color)
 			_cargo_depot.add_child(crate)
+			_depot_crates.append(crate)
+			_depot_crate_home_positions.append(crate.position)
 	var loading_marker := _make_box("DepotLoadingMarker", Vector3(5.5, 0.025, 2.2), Vector3(0.0, 0.07, 3.1), Color(0.9, 0.65, 0.12))
 	_cargo_depot.add_child(loading_marker)
 	_build_depot_forklift()
+
+
+func _animate_depot_cargo(loading: bool) -> void:
+	# A simple visible depot transfer sequence: crates move between the pallet area
+	# and loading bay; the truck's own payload visibility is managed separately.
+	for crate_index in range(_depot_crates.size()):
+		var crate := _depot_crates[crate_index]
+		if not is_instance_valid(crate):
+			continue
+		var tween := create_tween()
+		tween.set_trans(Tween.TRANS_QUAD)
+		tween.set_ease(Tween.EASE_IN_OUT)
+		if loading:
+			var staging := Vector3(0.0, 1.0 + float(crate_index % 2) * 0.08, 2.2)
+			tween.tween_property(crate, "position", staging, 0.45 + float(crate_index) * 0.08)
+			tween.tween_property(crate, "scale", Vector3.ZERO, 0.28)
+			tween.tween_callback(crate.hide)
+		else:
+			crate.visible = true
+			crate.scale = Vector3.ZERO
+			crate.position = Vector3(0.0, 1.0 + float(crate_index % 2) * 0.08, 2.2)
+			tween.tween_property(crate, "position", _depot_crate_home_positions[crate_index], 0.45 + float(crate_index) * 0.08)
+			tween.parallel().tween_property(crate, "scale", Vector3.ONE, 0.55)
 
 
 func _build_depot_forklift() -> void:
@@ -1538,8 +1571,7 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 		_sync_vehicle_cargo_payload()
 		if is_instance_valid(_cargo_status_label):
 			_cargo_status_label.text = "CARGO LOADED: " + CARGO_NAMES[_selected_cargo]
-		if is_instance_valid(_cargo_depot):
-			_cargo_depot.visible = false
+		_animate_depot_cargo(true)
 		_mission_target = ROUTE_TARGETS[_selected_route]
 		if is_instance_valid(_checkpoint_area):
 			_checkpoint_area.position = _mission_target
@@ -1555,8 +1587,12 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 		_complete_passenger_dropoff()
 		return
 	_mission_complete = true
-	if not _passenger_mode and is_instance_valid(_cargo_status_label):
-		_cargo_status_label.text = "CARGO DELIVERED: " + CARGO_NAMES[_selected_cargo]
+	if not _passenger_mode:
+		if is_instance_valid(_cargo_status_label):
+			_cargo_status_label.text = "CARGO DELIVERED: " + CARGO_NAMES[_selected_cargo]
+		_animate_depot_cargo(false)
+		if is_instance_valid(_active_vehicle) and _active_vehicle.has_method("set_cargo_payload"):
+			_active_vehicle.set_cargo_payload(_selected_cargo, false)
 	_delivery_count += 1
 	_cash_balance += PASSENGER_TRIP_REWARD if _passenger_mode else CARGO_REWARDS[_selected_cargo]
 	if is_instance_valid(_cash_label):
