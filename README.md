@@ -295,3 +295,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Added paired three-aspect traffic signal heads with red, amber, and green emissive lamps.
 - Signal phase cycles automatically: green for 8 seconds, amber for 2 seconds, and red for 4 seconds.
 - This is currently an environmental prototype only. Traffic cars and the player vehicle do not yet stop at the signal, and the spur is not yet a fully navigable route with junction AI.
+
+
+### Signal-aware highway traffic
+- Added a visible stop bar on the approach to the prototype T-junction.
+- The three looping highway traffic cars now calculate a safe approach speed and stop before the bar while the signal is red or amber.
+- Traffic resumes after the green phase begins; acceleration and braking are smoothed.
+- This is a first-pass single-lane traffic rule. It does not yet implement turning vehicles, cross traffic, pedestrian signals, collision-aware queues, or player enforcement.
