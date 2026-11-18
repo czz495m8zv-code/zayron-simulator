@@ -81,6 +81,8 @@ func _process(delta: float) -> void:
 func _spawn_vehicle() -> void:
 	_mission_complete = false
 	_passenger_pickup_done = false
+	if is_instance_valid(_passenger_status_label):
+		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
 	if _passenger_mode:
 		_mission_target = Vector3(0.0, 0.0, (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5)
 	else:
