@@ -75,6 +75,7 @@ var _depot_staging_positions: Array[Vector3] = [
 var _depot_pallet_staging_slots: Array[int] = []
 var _forklift_cargo_label: Label
 var _warehouse_load_button: Button
+var _cargo_unload_button: Button
 var _forklift_wheel_nodes: Array[MeshInstance3D] = []
 var _pause_button: Button
 var _pause_overlay: Control
@@ -152,6 +153,7 @@ func _process(delta: float) -> void:
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
 	_update_company_ai_bus(delta)
 	_update_warehouse_load_prompt()
+	_update_cargo_unload_prompt()
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
 		return
 	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
@@ -238,6 +240,46 @@ func _update_warehouse_load_prompt() -> void:
 			has_staged_pallet = true
 			break
 	_warehouse_load_button.visible = near_bay and has_staged_pallet and parked
+
+
+func _update_cargo_unload_prompt() -> void:
+	if not is_instance_valid(_cargo_unload_button):
+		return
+	if _passenger_mode or not _cargo_pickup_done or _mission_complete or not is_instance_valid(_active_vehicle):
+		_cargo_unload_button.visible = false
+		return
+	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
+	var parked := _active_vehicle.has_method("can_handle_cargo") and _active_vehicle.can_handle_cargo()
+	_cargo_unload_button.visible = distance <= 5.0 and parked
+
+
+func _unload_delivered_cargo() -> void:
+	if _passenger_mode or not _cargo_pickup_done or _mission_complete or not is_instance_valid(_active_vehicle):
+		return
+	if not _active_vehicle.has_method("can_handle_cargo") or not _active_vehicle.can_handle_cargo():
+		if is_instance_valid(_mission_label):
+			_mission_label.text = "STOP COMPLETELY AND APPLY PARK BRAKE BEFORE UNLOADING"
+		return
+	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
+	if distance > 5.0:
+		if is_instance_valid(_mission_label):
+			_mission_label.text = "PARK INSIDE THE DELIVERY UNLOADING AREA"
+		return
+	_mission_complete = true
+	if is_instance_valid(_cargo_status_label):
+		_cargo_status_label.text = "CARGO DELIVERED: " + CARGO_NAMES[_selected_cargo]
+	_animate_depot_cargo(false)
+	if _active_vehicle.has_method("set_cargo_payload"):
+		_active_vehicle.set_cargo_payload(_selected_cargo, false)
+	_delivery_count += 1
+	_cash_balance += CARGO_REWARDS[_selected_cargo]
+	if is_instance_valid(_cash_label):
+		_cash_label.text = "WALLET  |  OMR %d  |  DELIVERIES %d" % [_cash_balance, _delivery_count]
+	if is_instance_valid(_cargo_unload_button):
+		_cargo_unload_button.visible = false
+	_save_progress()
+	if is_instance_valid(_mission_label):
+		_mission_label.text = "%s COMPLETE  |  %s UNLOADED  |  +%d OMR" % [ROUTE_NAMES[_selected_route], CARGO_NAMES[_selected_cargo], CARGO_REWARDS[_selected_cargo]]
 
 
 func _load_truck_from_warehouse() -> void:
@@ -1040,6 +1082,16 @@ func _build_mission_hud() -> void:
 	_warehouse_load_button.visible = false
 	_warehouse_load_button.pressed.connect(_load_truck_from_warehouse)
 	layer.add_child(_warehouse_load_button)
+
+	_cargo_unload_button = Button.new()
+	_cargo_unload_button.name = "CargoDeliveryUnload"
+	_cargo_unload_button.text = "UNLOAD DELIVERED CARGO"
+	_cargo_unload_button.position = Vector2(24.0, 334.0)
+	_cargo_unload_button.custom_minimum_size = Vector2(250.0, 48.0)
+	_cargo_unload_button.add_theme_font_size_override("font_size", 16)
+	_cargo_unload_button.visible = false
+	_cargo_unload_button.pressed.connect(_unload_delivered_cargo)
+	layer.add_child(_cargo_unload_button)
 
 	var forklift_panel := VBoxContainer.new()
 	forklift_panel.name = "ForkliftLiftControls"
@@ -1968,6 +2020,10 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 				_mission_label.text = "STOP AT THE TERMINAL, APPLY PARK BRAKE AND OPEN PASSENGER DOORS TO UNLOAD"
 			return
 		_complete_passenger_dropoff()
+		return
+	if not _passenger_mode and _cargo_pickup_done:
+		if is_instance_valid(_mission_label):
+			_mission_label.text = "DELIVERY ARRIVED  |  APPLY PARK BRAKE AND UNLOAD CARGO"
 		return
 	_mission_complete = true
 	if not _passenger_mode:
