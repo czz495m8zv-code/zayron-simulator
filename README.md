@@ -302,3 +302,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - The three looping highway traffic cars now calculate a safe approach speed and stop before the bar while the signal is red or amber.
 - Traffic resumes after the green phase begins; acceleration and braking are smoothed.
 - This is a first-pass single-lane traffic rule. It does not yet implement turning vehicles, cross traffic, pedestrian signals, collision-aware queues, or player enforcement.
+
+
+### Player vehicle traffic-signal braking
+- The player's active truck or bus now receives a smooth braking assist while approaching the prototype junction on red or amber.
+- Braking is based on distance to the stop line and a simple deceleration estimate, while the driver's normal brake input remains effective.
+- The dashboard status indicates TRAFFIC SIGNAL while the assist is active.
+- This is a prototype single approach rule; it does not yet cover the opposite direction, turning lanes, cross traffic, or real-world traffic-law edge cases.
