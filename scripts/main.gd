@@ -58,6 +58,8 @@ var _forklift_animation_time: float = 0.0
 var _pause_button: Button
 var _pause_overlay: Control
 var _audio_slider: HSlider
+var _steering_slider: HSlider
+var _steering_sensitivity: float = 1.0
 
 func _ready() -> void:
 	_load_progress()
@@ -118,11 +120,16 @@ func _spawn_vehicle() -> void:
 	_active_vehicle.position = Vector3(0.0, 0.15, 8.0)
 	add_child(_active_vehicle)
 	_sync_vehicle_cargo_payload()
+	_apply_vehicle_settings()
 	if is_instance_valid(_vehicle_button):
 		_vehicle_button.text = "NEXT: " + FLEET_NAMES[(_selected_vehicle + 1) % FLEET_NAMES.size()]
 	if is_instance_valid(_mission_label):
 		_mission_label.text = "%s  |  CHECKPOINT: 000 m" % ROUTE_NAMES[_selected_route]
 
+
+func _apply_vehicle_settings() -> void:
+	if is_instance_valid(_active_vehicle) and _active_vehicle.has_method("set_steering_sensitivity"):
+		_active_vehicle.set_steering_sensitivity(_steering_sensitivity)
 
 func _sync_vehicle_cargo_payload() -> void:
 	if not is_instance_valid(_active_vehicle) or not _active_vehicle.has_method("set_cargo_payload"):
@@ -624,9 +631,9 @@ func _build_pause_menu() -> void:
 	panel.anchor_right = 0.5
 	panel.anchor_bottom = 0.5
 	panel.offset_left = -190.0
-	panel.offset_top = -190.0
+	panel.offset_top = -235.0
 	panel.offset_right = 190.0
-	panel.offset_bottom = 190.0
+	panel.offset_bottom = 235.0
 	_pause_overlay.add_child(panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 14)
@@ -651,6 +658,17 @@ func _build_pause_menu() -> void:
 	_audio_slider.custom_minimum_size = Vector2(300.0, 36.0)
 	_audio_slider.value_changed.connect(_on_master_volume_changed)
 	column.add_child(_audio_slider)
+	var steering_label := Label.new()
+	steering_label.text = "STEERING SENSITIVITY"
+	column.add_child(steering_label)
+	_steering_slider = HSlider.new()
+	_steering_slider.min_value = 0.5
+	_steering_slider.max_value = 1.8
+	_steering_slider.step = 0.05
+	_steering_slider.value = _steering_sensitivity
+	_steering_slider.custom_minimum_size = Vector2(300.0, 36.0)
+	_steering_slider.value_changed.connect(_on_steering_sensitivity_changed)
+	column.add_child(_steering_slider)
 	var resume := Button.new()
 	resume.text = "RESUME DRIVING"
 	resume.custom_minimum_size = Vector2(300.0, 48.0)
@@ -671,6 +689,11 @@ func _set_paused(paused: bool) -> void:
 
 func _on_master_volume_changed(value: float) -> void:
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(value, 0.001)))
+
+func _on_steering_sensitivity_changed(value: float) -> void:
+	_steering_sensitivity = clampf(value, 0.5, 1.8)
+	_apply_vehicle_settings()
+	_save_progress()
 
 func _cycle_route() -> void:
 	_selected_route = (_selected_route + 1) % ROUTE_TARGETS.size()
@@ -775,6 +798,7 @@ func _load_progress() -> void:
 	_selected_route = clampi(int(progress.get_value("career", "selected_route", 0)), 0, ROUTE_TARGETS.size() - 1)
 	_selected_cargo = clampi(int(progress.get_value("career", "selected_cargo", 0)), 0, CARGO_NAMES.size() - 1)
 	_passenger_mode = bool(progress.get_value("career", "passenger_mode", false))
+	_steering_sensitivity = clampf(float(progress.get_value("settings", "steering_sensitivity", 1.0)), 0.5, 1.8)
 	if _passenger_mode and _selected_vehicle < 3:
 		_selected_vehicle = 3
 
@@ -786,6 +810,7 @@ func _save_progress() -> void:
 	progress.set_value("career", "selected_route", _selected_route)
 	progress.set_value("career", "selected_cargo", _selected_cargo)
 	progress.set_value("career", "passenger_mode", _passenger_mode)
+	progress.set_value("settings", "steering_sensitivity", _steering_sensitivity)
 	var save_error := progress.save(SAVE_PATH)
 	if save_error != OK:
 		push_warning("Could not save Zayron Simulator progress. Error: %s" % save_error)
