@@ -80,6 +80,7 @@ var _company_roster_label: Label
 var _company_route_option: OptionButton
 var _company_config_bus_option: OptionButton
 var _company_config_route_option: OptionButton
+var _company_config_vehicle_option: OptionButton
 var _company_config_driver_option: OptionButton
 var _company_schedule_option: OptionButton
 var _company_config_bus_index: int = 0
@@ -699,6 +700,10 @@ func _initialize_company_records() -> void:
 	for bus in _company_fleet:
 		if not bus.has("route_index"):
 			bus["route_index"] = _company_selected_route
+		if not bus.has("vehicle_index"):
+			bus["vehicle_index"] = 3
+		if not bus.has("assigned_driver_index"):
+			bus["assigned_driver_index"] = -1
 	_company_bus_count = _company_fleet.size()
 	_company_driver_count = _company_drivers.size()
 
@@ -796,6 +801,16 @@ func _build_company_management() -> void:
 		_company_config_route_option.add_item(route_name)
 	_company_config_route_option.item_selected.connect(_on_company_config_route_selected)
 	content.add_child(_company_config_route_option)
+	var vehicle_label := Label.new()
+	vehicle_label.text = "VEHICLE MODEL FOR THIS COMPANY BUS"
+	vehicle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	content.add_child(vehicle_label)
+	_company_config_vehicle_option = OptionButton.new()
+	_company_config_vehicle_option.custom_minimum_size.y = 38
+	for vehicle_name in FLEET_NAMES:
+		_company_config_vehicle_option.add_item(vehicle_name)
+	_company_config_vehicle_option.item_selected.connect(_on_company_config_vehicle_selected)
+	content.add_child(_company_config_vehicle_option)
 	var driver_label := Label.new()
 	driver_label.text = "PREFERRED DRIVER FOR THIS BUS"
 	driver_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -890,7 +905,7 @@ func _buy_company_bus() -> void:
 		_company_status_label.text = "Not enough company funds. You need OMR 450 for another bus."
 		return
 	_company_funds -= 450
-	_company_fleet.append({"name": "Company Bus %03d" % (_company_fleet.size() + 1), "type": "INTERCITY COACH", "status": "AVAILABLE", "route_index": _company_selected_route})
+	_company_fleet.append({"name": "Company Bus %03d" % (_company_fleet.size() + 1), "type": FLEET_NAMES[3], "vehicle_index": 3, "status": "AVAILABLE", "route_index": _company_selected_route, "assigned_driver_index": -1})
 	_company_bus_count = _company_fleet.size()
 	_refresh_company_configuration()
 	_company_status_label.text = "Bus purchased and added to your company fleet."
@@ -909,6 +924,15 @@ func _on_company_config_route_selected(index: int) -> void:
 	_save_progress()
 	_refresh_company_panel()
 
+func _on_company_config_vehicle_selected(index: int) -> void:
+	if _company_config_bus_index < 0 or _company_config_bus_index >= _company_fleet.size():
+		return
+	var vehicle_index := clampi(index, 0, FLEET_SCENES.size() - 1)
+	_company_fleet[_company_config_bus_index]["vehicle_index"] = vehicle_index
+	_company_fleet[_company_config_bus_index]["type"] = FLEET_NAMES[vehicle_index]
+	_save_progress()
+	_refresh_company_panel()
+
 func _on_company_config_driver_selected(index: int) -> void:
 	if _company_config_bus_index < 0 or _company_config_bus_index >= _company_fleet.size():
 		return
@@ -917,7 +941,7 @@ func _on_company_config_driver_selected(index: int) -> void:
 	_refresh_company_panel()
 
 func _refresh_company_configuration() -> void:
-	if not is_instance_valid(_company_config_bus_option) or not is_instance_valid(_company_config_route_option) or not is_instance_valid(_company_config_driver_option):
+	if not is_instance_valid(_company_config_bus_option) or not is_instance_valid(_company_config_route_option) or not is_instance_valid(_company_config_vehicle_option) or not is_instance_valid(_company_config_driver_option):
 		return
 	_company_config_bus_option.clear()
 	for i in range(_company_fleet.size()):
@@ -926,15 +950,19 @@ func _refresh_company_configuration() -> void:
 		_company_config_bus_option.add_item("No company buses")
 		_company_config_bus_option.disabled = true
 		_company_config_route_option.disabled = true
+		_company_config_vehicle_option.disabled = true
 		_company_config_driver_option.disabled = true
 		return
 	_company_config_bus_option.disabled = false
 	_company_config_route_option.disabled = false
+	_company_config_vehicle_option.disabled = false
 	_company_config_driver_option.disabled = false
 	_company_config_bus_index = clampi(_company_config_bus_index, 0, _company_fleet.size() - 1)
 	_company_config_bus_option.select(_company_config_bus_index)
 	var route_index := clampi(int(_company_fleet[_company_config_bus_index].get("route_index", _company_selected_route)), 0, ROUTE_NAMES.size() - 1)
 	_company_config_route_option.select(route_index)
+	var vehicle_index := clampi(int(_company_fleet[_company_config_bus_index].get("vehicle_index", 3)), 0, FLEET_SCENES.size() - 1)
+	_company_config_vehicle_option.select(vehicle_index)
 	_company_config_driver_option.clear()
 	_company_config_driver_option.add_item("AUTO ASSIGN AVAILABLE DRIVER", -1)
 	for driver_index in range(_company_drivers.size()):
@@ -992,7 +1020,8 @@ func _dispatch_company_driver() -> void:
 	var trip := COMPANY_TRIP_SCRIPT.new()
 	trip.name = "CompanyTrip_%03d" % (bus_index + 1)
 	trip.trip_completed.connect(_on_company_trip_completed)
-	trip.configure(FLEET_SCENES[3], _company_ai_bus_start, Vector3(-2.0, 0.15, ROUTE_TARGETS[route_index].z), ROUTE_NAMES[route_index], driver_index, bus_index, departure_delay)
+	var vehicle_index := clampi(int(_company_fleet[bus_index].get("vehicle_index", 3)), 0, FLEET_SCENES.size() - 1)
+	trip.configure(FLEET_SCENES[vehicle_index], _company_ai_bus_start, Vector3(-2.0, 0.15, ROUTE_TARGETS[route_index].z), ROUTE_NAMES[route_index], driver_index, bus_index, departure_delay)
 	add_child(trip)
 	_company_trip_active = true
 	_company_status_label.text = "%s assigned to %s on %s. %s" % [_company_drivers[driver_index]["name"], _company_fleet[bus_index]["name"], ROUTE_NAMES[route_index], "Departure scheduled." if departure_delay > 0 else "Bus is on route."]
@@ -1220,7 +1249,8 @@ func _refresh_company_panel() -> void:
 			var bus_route := clampi(int(bus.get("route_index", _company_selected_route)), 0, ROUTE_NAMES.size() - 1)
 			var assigned_index := int(bus.get("assigned_driver_index", -1))
 			var assigned_name := "AUTO" if assigned_index < 0 or assigned_index >= _company_drivers.size() else str(_company_drivers[assigned_index].get("name", "Driver"))
-			roster_text += "\n%s  |  %s  |  %s  |  DRIVER: %s" % [str(bus.get("name", "Bus")), str(bus.get("status", "AVAILABLE")), ROUTE_NAMES[bus_route], assigned_name]
+			var model_index := clampi(int(bus.get("vehicle_index", 3)), 0, FLEET_NAMES.size() - 1)
+			roster_text += "\n%s  |  %s  |  %s  |  %s  |  DRIVER: %s" % [str(bus.get("name", "Bus")), str(bus.get("status", "AVAILABLE")), FLEET_NAMES[model_index], ROUTE_NAMES[bus_route], assigned_name]
 		roster_text += "\nDRIVER STAFF"
 		for driver in _company_drivers:
 			roster_text += "\n%s  |  %s" % [str(driver.get("name", "Driver")), str(driver.get("status", "AVAILABLE"))]
