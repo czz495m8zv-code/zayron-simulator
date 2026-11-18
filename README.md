@@ -277,3 +277,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 ### Highway traffic expansion
 - Replaced the single looping traffic sedan with three independently moving traffic cars, each with its own color, starting gap, and speed.
 - Traffic remains a visual prototype: vehicles do not yet use collision avoidance, lane-changing AI, traffic signals, or full road rules.
+
+
+### Highway traffic following behaviour
+
+The three prototype highway cars now use a lightweight same-lane following model. Each car measures the wrapped distance to the next car ahead and smoothly reduces its speed when the gap closes, then accelerates back toward its configured cruising speed as the gap opens. This avoids the previous purely independent movement and reduces visual overlap in the traffic loop. It remains a simplified visual simulation: traffic cars do not yet have collision bodies, lane changes, junction logic, or interaction with the player's vehicle.
