@@ -658,6 +658,21 @@ func _build_extra_vehicle_controls() -> void:
 	_door_hinge.add_child(door_panel)
 
 
+func get_fuel_level() -> float:
+	return _fuel_level
+
+
+func set_fuel_level(value: float) -> void:
+	_fuel_level = clampf(value, 0.0, 100.0)
+	_update_fuel_display()
+
+
+func _update_fuel_display() -> void:
+	if is_instance_valid(_fuel_label):
+		_fuel_label.text = "FUEL  %02d%%" % int(ceil(_fuel_level))
+		_fuel_label.add_theme_color_override("font_color", Color(1.0, 0.34, 0.22) if _fuel_level <= 15.0 else Color(0.55, 0.9, 1.0))
+
+
 func get_refuel_cost_omr() -> int:
 	return int(ceil(maxf(0.0, 100.0 - _fuel_level) * 0.12))
 
@@ -680,10 +695,7 @@ func set_refuel_station_available(available: bool, wallet_omr: int) -> void:
 
 
 func complete_refuel() -> void:
-	_fuel_level = 100.0
-	if is_instance_valid(_fuel_label):
-		_fuel_label.text = "FUEL  100%"
-		_fuel_label.add_theme_color_override("font_color", Color(0.55, 0.9, 1.0))
+	set_fuel_level(100.0)
 	if is_instance_valid(_refuel_button):
 		_refuel_button.text = "TANK FULL"
 		_refuel_button.disabled = true
