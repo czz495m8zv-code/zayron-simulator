@@ -62,6 +62,20 @@ var _steering_slider: HSlider
 var _steering_sensitivity: float = 1.0
 var _master_volume: float = 1.0
 
+# First playable transport-company management layer.
+var _company_name: String = "ZAYRON TRANSPORT"
+var _company_funds: int = 500
+var _company_bus_count: int = 1
+var _company_driver_count: int = 0
+var _company_completed_trips: int = 0
+var _company_trip_active: bool = false
+var _company_trip_timer: Timer
+var _company_panel: Control
+var _company_summary_label: Label
+var _company_status_label: Label
+var _company_name_edit: LineEdit
+var _company_dispatch_button: Button
+
 func _ready() -> void:
 	_load_progress()
 	_mission_target = ROUTE_TARGETS[_selected_route]
@@ -78,6 +92,7 @@ func _ready() -> void:
 	_build_vehicle_selector()
 	_build_mission_hud()
 	_build_pause_menu()
+	_build_company_management()
 
 func _process(delta: float) -> void:
 	if is_instance_valid(_traffic_car):
@@ -89,6 +104,8 @@ func _process(delta: float) -> void:
 		_forklift_carriage.position.y = 0.48 + (sin(_forklift_animation_time * 1.35) + 1.0) * 0.22
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
+	if _company_trip_active and is_instance_valid(_company_status_label) and is_instance_valid(_company_trip_timer):
+		_company_status_label.text = "DRIVER EN ROUTE  |  ARRIVAL IN %d SEC" % ceili(_company_trip_timer.time_left)
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
 		return
 	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
@@ -571,6 +588,20 @@ func _build_mission_hud() -> void:
 	_route_button.pressed.connect(_cycle_route)
 	layer.add_child(_route_button)
 
+
+	var company_button := Button.new()
+	company_button.name = "TransportCompany"
+	company_button.text = "MY TRANSPORT COMPANY"
+	company_button.anchor_left = 1.0
+	company_button.anchor_right = 1.0
+	company_button.offset_left = -224.0
+	company_button.offset_right = -20.0
+	company_button.offset_top = 204.0
+	company_button.offset_bottom = 252.0
+	company_button.add_theme_font_size_override("font_size", 15)
+	company_button.pressed.connect(_toggle_company_panel)
+	layer.add_child(company_button)
+
 	_cash_label = Label.new()
 	_cash_label.name = "CashBalance"
 	_cash_label.text = "WALLET  |  OMR %d  |  DELIVERIES %d" % [_cash_balance, _delivery_count]
@@ -623,6 +654,170 @@ func _build_mission_hud() -> void:
 	_restart_button.add_theme_font_size_override("font_size", 16)
 	_restart_button.pressed.connect(_restart_delivery)
 	layer.add_child(_restart_button)
+
+
+func _build_company_management() -> void:
+	_company_trip_timer = Timer.new()
+	_company_trip_timer.name = "CompanyDriverTripTimer"
+	_company_trip_timer.one_shot = true
+	_company_trip_timer.wait_time = 45.0
+	_company_trip_timer.process_mode = Node.PROCESS_MODE_ALWAYS
+	_company_trip_timer.timeout.connect(_on_company_driver_trip_completed)
+	add_child(_company_trip_timer)
+
+	var layer := CanvasLayer.new()
+	layer.name = "CompanyManagementLayer"
+	layer.layer = 30
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+
+	_company_panel = ColorRect.new()
+	_company_panel.name = "CompanyManagementOverlay"
+	_company_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_company_panel.color = Color(0.015, 0.035, 0.06, 0.94)
+	_company_panel.visible = false
+	layer.add_child(_company_panel)
+
+	var panel := PanelContainer.new()
+	panel.name = "CompanyManagementPanel"
+	panel.anchor_left = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -260.0
+	panel.offset_top = -245.0
+	panel.offset_right = 260.0
+	panel.offset_bottom = 245.0
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.035, 0.075, 0.11, 1.0)
+	panel_style.border_color = Color(0.12, 0.58, 0.78, 1.0)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(16)
+	panel.add_theme_stylebox_override("panel", panel_style)
+	_company_panel.add_child(panel)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 12)
+	panel.add_child(content)
+
+	var heading := Label.new()
+	heading.text = "TRANSPORT COMPANY"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 25)
+	heading.add_theme_color_override("font_color", Color(0.35, 0.82, 1.0))
+	content.add_child(heading)
+
+	_company_name_edit = LineEdit.new()
+	_company_name_edit.placeholder_text = "Enter your company name"
+	_company_name_edit.text = _company_name
+	_company_name_edit.max_length = 28
+	_company_name_edit.text_submitted.connect(_on_company_name_submitted)
+	content.add_child(_company_name_edit)
+
+	_company_summary_label = Label.new()
+	_company_summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_company_summary_label.add_theme_font_size_override("font_size", 17)
+	content.add_child(_company_summary_label)
+
+	_company_status_label = Label.new()
+	_company_status_label.text = "Your company is ready to operate."
+	_company_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_company_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_company_status_label.add_theme_color_override("font_color", Color(0.65, 0.85, 0.92))
+	content.add_child(_company_status_label)
+
+	var hire_button := Button.new()
+	hire_button.text = "HIRE DRIVER  |  OMR 80"
+	hire_button.custom_minimum_size.y = 48
+	hire_button.pressed.connect(_hire_company_driver)
+	content.add_child(hire_button)
+
+	var bus_button := Button.new()
+	bus_button.text = "BUY ADDITIONAL BUS  |  OMR 450"
+	bus_button.custom_minimum_size.y = 48
+	bus_button.pressed.connect(_buy_company_bus)
+	content.add_child(bus_button)
+
+	_company_dispatch_button = Button.new()
+	_company_dispatch_button.text = "ASSIGN DRIVER & SEND TO WORK"
+	_company_dispatch_button.custom_minimum_size.y = 52
+	_company_dispatch_button.pressed.connect(_dispatch_company_driver)
+	content.add_child(_company_dispatch_button)
+
+	var close_button := Button.new()
+	close_button.text = "CLOSE"
+	close_button.custom_minimum_size.y = 44
+	close_button.pressed.connect(_toggle_company_panel)
+	content.add_child(close_button)
+	_refresh_company_panel()
+
+func _toggle_company_panel() -> void:
+	if not is_instance_valid(_company_panel):
+		return
+	_company_panel.visible = not _company_panel.visible
+	if _company_panel.visible:
+		_refresh_company_panel()
+
+func _on_company_name_submitted(value: String) -> void:
+	var cleaned := value.strip_edges()
+	if not cleaned.is_empty():
+		_company_name = cleaned
+	_save_progress()
+	_refresh_company_panel()
+
+func _hire_company_driver() -> void:
+	if _company_funds < 80:
+		_company_status_label.text = "Not enough company funds. You need OMR 80 to hire a driver."
+		return
+	_company_funds -= 80
+	_company_driver_count += 1
+	_company_status_label.text = "Driver hired. Assign a bus and send your driver to work."
+	_save_progress()
+	_refresh_company_panel()
+
+func _buy_company_bus() -> void:
+	if _company_funds < 450:
+		_company_status_label.text = "Not enough company funds. You need OMR 450 for another bus."
+		return
+	_company_funds -= 450
+	_company_bus_count += 1
+	_company_status_label.text = "Bus purchased and added to your company fleet."
+	_save_progress()
+	_refresh_company_panel()
+
+func _dispatch_company_driver() -> void:
+	if _company_trip_active:
+		_company_status_label.text = "A company driver is already completing a route."
+		return
+	if _company_driver_count < 1 or _company_bus_count < 1:
+		_company_status_label.text = "You need at least one hired driver and one company bus."
+		return
+	if _company_funds < 35:
+		_company_status_label.text = "Your company needs OMR 35 available for trip fuel and driver costs."
+		return
+	_company_funds -= 35
+	_company_trip_active = true
+	_company_trip_timer.start()
+	_company_status_label.text = "Driver dispatched on %s. You can keep driving your own vehicle." % ROUTE_NAMES[_selected_route]
+	_refresh_company_panel()
+	_save_progress()
+
+func _on_company_driver_trip_completed() -> void:
+	_company_trip_active = false
+	_company_completed_trips += 1
+	# Illustrative game-economy figures: OMR 85 fare revenue, less OMR 20 fuel
+	# and OMR 15 driver pay. OMR 15 operating cost was reserved at dispatch.
+	_company_funds += 50
+	_company_status_label.text = "Company driver completed the route. Net company profit: OMR 50."
+	_refresh_company_panel()
+	_save_progress()
+
+func _refresh_company_panel() -> void:
+	if is_instance_valid(_company_summary_label):
+		_company_summary_label.text = "%s\nCOMPANY FUNDS: OMR %d\nBUSES: %d     DRIVERS: %d\nCOMPLETED COMPANY TRIPS: %d" % [_company_name, _company_funds, _company_bus_count, _company_driver_count, _company_completed_trips]
+	if is_instance_valid(_company_dispatch_button):
+		_company_dispatch_button.disabled = _company_trip_active or _company_driver_count < 1 or _company_bus_count < 1 or _company_funds < 35
+		_company_dispatch_button.text = "DRIVER EN ROUTE..." if _company_trip_active else "ASSIGN DRIVER & SEND TO WORK"
 
 func _restart_delivery() -> void:
 	_set_paused(false)
@@ -837,6 +1032,11 @@ func _load_progress() -> void:
 	_selected_route = clampi(int(progress.get_value("career", "selected_route", 0)), 0, ROUTE_TARGETS.size() - 1)
 	_selected_cargo = clampi(int(progress.get_value("career", "selected_cargo", 0)), 0, CARGO_NAMES.size() - 1)
 	_passenger_mode = bool(progress.get_value("career", "passenger_mode", false))
+	_company_name = str(progress.get_value("company", "name", _company_name))
+	_company_funds = maxi(0, int(progress.get_value("company", "funds_omr", _company_funds)))
+	_company_bus_count = maxi(1, int(progress.get_value("company", "buses", _company_bus_count)))
+	_company_driver_count = maxi(0, int(progress.get_value("company", "drivers", _company_driver_count)))
+	_company_completed_trips = maxi(0, int(progress.get_value("company", "completed_trips", _company_completed_trips)))
 	_steering_sensitivity = clampf(float(progress.get_value("settings", "steering_sensitivity", 1.0)), 0.5, 1.8)
 	_master_volume = clampf(float(progress.get_value("settings", "master_volume", 1.0)), 0.0, 1.0)
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(_master_volume, 0.001)))
@@ -851,6 +1051,11 @@ func _save_progress() -> void:
 	progress.set_value("career", "selected_route", _selected_route)
 	progress.set_value("career", "selected_cargo", _selected_cargo)
 	progress.set_value("career", "passenger_mode", _passenger_mode)
+	progress.set_value("company", "name", _company_name)
+	progress.set_value("company", "funds_omr", _company_funds)
+	progress.set_value("company", "buses", _company_bus_count)
+	progress.set_value("company", "drivers", _company_driver_count)
+	progress.set_value("company", "completed_trips", _company_completed_trips)
 	progress.set_value("settings", "steering_sensitivity", _steering_sensitivity)
 	progress.set_value("settings", "master_volume", _master_volume)
 	var save_error := progress.save(SAVE_PATH)
