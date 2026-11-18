@@ -17,11 +17,40 @@ var _gear_label: Label
 var _exterior_camera: Camera3D
 var _close_camera: Camera3D
 var _using_close_camera: bool = false
+var _engine_playback: AudioStreamGeneratorPlayback
+var _engine_phase: float = 0.0
+const ENGINE_SAMPLE_RATE: float = 22050.0
 
 func _ready() -> void:
 	_build_truck()
 	_build_camera()
 	_build_mobile_controls()
+	_build_engine_audio()
+
+func _process(_delta: float) -> void:
+	if _engine_playback == null:
+		return
+	var frames := _engine_playback.get_frames_available()
+	var frequency := 42.0 + absf(_speed) * 5.0 + _throttle_input * 24.0
+	for i in range(frames):
+		var fundamental := sin(_engine_phase) * 0.055
+		var harmonic := sin(_engine_phase * 2.0) * 0.018
+		var low_rumble := sin(_engine_phase * 0.5) * 0.022
+		var sample := fundamental + harmonic + low_rumble
+		_engine_playback.push_frame(Vector2(sample, sample))
+		_engine_phase = fmod(_engine_phase + TAU * frequency / ENGINE_SAMPLE_RATE, TAU)
+
+func _build_engine_audio() -> void:
+	var generator := AudioStreamGenerator.new()
+	generator.mix_rate = ENGINE_SAMPLE_RATE
+	generator.buffer_length = 0.18
+	var player := AudioStreamPlayer.new()
+	player.name = "ProceduralEngineAudio"
+	player.stream = generator
+	player.volume_db = -8.0
+	add_child(player)
+	player.play()
+	_engine_playback = player.get_stream_playback() as AudioStreamGeneratorPlayback
 
 func _physics_process(delta: float) -> void:
 	var throttle := _throttle_input
