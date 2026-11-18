@@ -233,12 +233,7 @@ func _build_mission_hud() -> void:
 	layer.add_child(_restart_button)
 
 func _restart_delivery() -> void:
-	_mission_complete = false
-	if is_instance_valid(_active_vehicle):
-		_active_vehicle.global_position = Vector3(0.0, 0.15, 8.0)
-		_active_vehicle.rotation = Vector3.ZERO
-	if is_instance_valid(_mission_label):
-		_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: 000 m"
+	_spawn_vehicle()
 
 func _on_checkpoint_entered(body: Node3D) -> void:
 	if body != _active_vehicle or _mission_complete:
