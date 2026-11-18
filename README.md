@@ -26,9 +26,9 @@ We will build and test in small milestones: project foundation, a drivable proto
 
 ## Current status
 
-<badge>Planning / foundation</badge>
+**Current status: early gameplay prototype — source features are not yet verified in a clean Android run.**
 
-The repository is created. The next milestone is establishing the Godot project structure and a minimal playable driving prototype.
+The project now contains a procedural Oman-inspired driving test scene, six selectable vehicle prototypes, touch controls, a delivery checkpoint, a basic OMR reward counter, and a route-restart control. These are early source-level features; the game still needs Godot runtime validation and Android device testing.
 
 ## Documentation
 
@@ -50,4 +50,4 @@ The current source includes six selectable vehicle prototypes:
 - Luxury coach with panoramic passenger windows and metallic trim
 - VIP silver coach
 
-Use the in-game **NEXT** button to cycle through the fleet. These are original procedural Godot models intended as an early playable fleet; they are not final photorealistic vehicle assets and still require on-device testing and visual refinement.
+Use the in-game **NEXT** button to cycle through the fleet. Reach the green delivery gate to complete a run and earn a prototype reward of OMR 25; use **RESTART ROUTE** to drive again. The wallet is a gameplay placeholder, not real money. These original procedural Godot models are early prototypes, not final photorealistic assets, and still require on-device testing and visual refinement.
