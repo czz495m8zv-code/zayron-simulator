@@ -27,7 +27,7 @@ func _process(_delta: float) -> void:
 func _spawn_vehicle() -> void:
 	if is_instance_valid(_active_vehicle):
 		_active_vehicle.queue_free()
-	_active_vehicle = (BUS_SCENE if _using_bus else TRUCK_SCENE).instantiate()
+	_active_vehicle = (BUS_SCENE if _using_bus else TRUCK_SCENE).instantiate() as Node3D
 	_active_vehicle.position = Vector3(0.0, 0.15, 8.0)
 	add_child(_active_vehicle)
 	if is_instance_valid(_vehicle_button):
