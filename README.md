@@ -93,3 +93,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 ### Reverse lamps
 - Two rear white reverse lamps illuminate automatically only while the engine is running and reverse gear is selected; they switch off when leaving reverse or turning the engine off.
 - Rear brake-lamp intensity increases with service-brake input. These are functional visual signals in the current prototype, not certified vehicle lighting simulation.
+
+
+### Brake and tail lamp behaviour
+- Rear red tail lamps illuminate with parking lights and automatically while the service brake is pressed, even if parking lights are off.
+- Brake application increases rear lamp emission intensity; releasing the brake returns them to the parking-light state.
