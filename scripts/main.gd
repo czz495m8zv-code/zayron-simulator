@@ -92,6 +92,7 @@ var _company_ai_bus_current_speed: float = 0.0
 var _company_ai_bus_acceleration: float = 2.8
 var _company_ai_route_points: Array[Vector3] = []
 var _company_ai_waypoint_index: int = 0
+var _company_ai_stop_passengers: Node3D
 
 func _ready() -> void:
 	_load_progress()
@@ -900,6 +901,9 @@ func _spawn_company_ai_bus() -> void:
 	_company_ai_bus.set_process(false)
 	_company_ai_bus.set_physics_process(false)
 	_company_ai_bus_phase = 0
+	if is_instance_valid(_company_ai_stop_passengers):
+		_company_ai_stop_passengers.queue_free()
+	_company_ai_stop_passengers = null
 	_company_ai_bus_stop_time = 0.0
 	_company_ai_bus_current_speed = 0.0
 	_company_ai_bus_destination = Vector3(-2.0, 0.15, ROUTE_TARGETS[_company_selected_route].z)
@@ -921,6 +925,57 @@ func _spawn_company_ai_bus() -> void:
 	route_marker.modulate = Color(0.55, 0.9, 1.0)
 	route_marker.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_company_ai_bus.add_child(route_marker)
+
+
+func _spawn_company_stop_passengers() -> void:
+	if is_instance_valid(_company_ai_stop_passengers):
+		_company_ai_stop_passengers.queue_free()
+	_company_ai_stop_passengers = Node3D.new()
+	_company_ai_stop_passengers.name = "CompanyBusStopWaitingPassengers"
+	_company_ai_stop_passengers.position = Vector3(0.2, 0.0, _company_ai_bus_destination.z - 3.0)
+	add_child(_company_ai_stop_passengers)
+
+	var clothing_colors: Array[Color] = [
+		Color(0.12, 0.32, 0.62), Color(0.58, 0.20, 0.14),
+		Color(0.18, 0.43, 0.30), Color(0.68, 0.48, 0.20)
+	]
+	for passenger_index in range(PASSENGER_GROUP_SIZE):
+		var passenger := Node3D.new()
+		passenger.name = "WaitingPassenger_%02d" % (passenger_index + 1)
+		passenger.position = Vector3(float(passenger_index % 4) * 0.62, 0.0, float(passenger_index / 4) * 0.85)
+		_company_ai_stop_passengers.add_child(passenger)
+
+		var body := MeshInstance3D.new()
+		var body_mesh := CapsuleMesh.new()
+		body_mesh.radius = 0.19
+		body_mesh.height = 0.82
+		body.mesh = body_mesh
+		body.position.y = 0.62
+		var clothing := StandardMaterial3D.new()
+		clothing.albedo_color = clothing_colors[passenger_index % clothing_colors.size()]
+		body.material_override = clothing
+		passenger.add_child(body)
+
+		var head := MeshInstance3D.new()
+		var head_mesh := SphereMesh.new()
+		head_mesh.radius = 0.15
+		head_mesh.height = 0.3
+		head.mesh = head_mesh
+		head.position.y = 1.12
+		var skin := StandardMaterial3D.new()
+		skin.albedo_color = Color(0.66, 0.46, 0.33)
+		head.material_override = skin
+		passenger.add_child(head)
+
+	var stop_sign := Label3D.new()
+	stop_sign.name = "CompanyBusStopSign"
+	stop_sign.text = "BUS STOP  |  8 WAITING"
+	stop_sign.position = Vector3(2.8, 2.1, 0.0)
+	stop_sign.font_size = 22
+	stop_sign.pixel_size = 0.01
+	stop_sign.modulate = Color(0.55, 0.9, 1.0)
+	stop_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_company_ai_stop_passengers.add_child(stop_sign)
 
 
 func _move_company_bus_toward(target: Vector3, delta: float) -> bool:
@@ -958,17 +1013,21 @@ func _update_company_ai_bus(delta: float) -> void:
 				_company_ai_bus_phase = 1
 				_company_ai_bus_stop_time = 3.0
 				_company_ai_bus_current_speed = 0.0
+				_spawn_company_stop_passengers()
 				if is_instance_valid(_company_status_label):
-					_company_status_label.text = "Company bus reached %s and is waiting at the stop." % ROUTE_NAMES[_company_selected_route].split(" -> ")[1]
+					_company_status_label.text = "Company bus reached %s. Passengers are waiting to board." % ROUTE_NAMES[_company_selected_route].split(" -> ")[1]
 	elif _company_ai_bus_phase == 1:
 		_company_ai_bus_current_speed = move_toward(_company_ai_bus_current_speed, 0.0, _company_ai_bus_acceleration * delta)
 		_company_ai_bus_stop_time -= delta
 		if _company_ai_bus_stop_time <= 0.0:
+			if is_instance_valid(_company_ai_stop_passengers):
+				_company_ai_stop_passengers.queue_free()
+			_company_ai_stop_passengers = null
 			_company_ai_bus_phase = 2
 			_company_ai_route_points.reverse()
 			_company_ai_waypoint_index = 1
 			if is_instance_valid(_company_status_label):
-				_company_status_label.text = "Company bus leaving the stop and returning to depot."
+				_company_status_label.text = "8 passengers boarded. Company bus returning to depot."
 	elif _company_ai_bus_phase == 2:
 		var return_target: Vector3 = _company_ai_route_points[_company_ai_waypoint_index]
 		if _move_company_bus_toward(return_target, delta):
@@ -980,6 +1039,9 @@ func _update_company_ai_bus(delta: float) -> void:
 
 func _on_company_driver_trip_completed() -> void:
 	_company_trip_active = false
+	if is_instance_valid(_company_ai_stop_passengers):
+		_company_ai_stop_passengers.queue_free()
+	_company_ai_stop_passengers = null
 	if is_instance_valid(_company_ai_bus):
 		_company_ai_bus.queue_free()
 	_company_ai_bus = null
