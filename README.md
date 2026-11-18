@@ -43,7 +43,8 @@ The first company-management layer is now implemented in the gameplay scene:
 - A bus with a specifically assigned driver will not dispatch if that driver is busy; select another driver or AUTO ASSIGN.
 - Choose immediate, 10-second or 30-second departure scheduling for each dispatch; scheduled buses and their assigned drivers are reserved until departure.
 - Dispatch an available hired driver with an available company bus; the roster marks both ON ROUTE while the player continues driving.
-- Return the assigned driver and bus to AVAILABLE when the timed trip completes.
+- Return the assigned driver and bus to AVAILABLE when the timed trip completes; each completed trip reduces that bus's condition by 8 percentage points.
+- Service the selected available bus back to 100% condition for OMR 1 per restored point; a bus at 15% condition or lower must be serviced before dispatch.
 - Complete a timed background trip and receive a prototype net company return of OMR 50 after trip costs.
 - Save the company name, funds, dispatch route, individual bus records, individual driver records and completed company trips locally.
 - Show a fleet and staff roster with each bus and driver marked AVAILABLE or ON ROUTE.
