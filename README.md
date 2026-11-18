@@ -288,3 +288,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Added three visible 80 km/h speed-limit boards along alternating sides of the Oman-inspired test road.
 - Corrected traffic-car respawn positions so all vehicles return inside the same 142 m loop with consistent spacing and ordering. This prevents wrapped-distance calculations from treating off-loop respawns as overlapping traffic.
 - Speed signs are visual environment props only; the player is not yet subject to a speed-limit enforcement or fine system.
+
+
+### Prototype Oman T-junction and animated traffic signals
+- Added a short asphalt access spur to form a visible T-junction beside the test highway.
+- Added paired three-aspect traffic signal heads with red, amber, and green emissive lamps.
+- Signal phase cycles automatically: green for 8 seconds, amber for 2 seconds, and red for 4 seconds.
+- This is currently an environmental prototype only. Traffic cars and the player vehicle do not yet stop at the signal, and the spur is not yet a fully navigable route with junction AI.
