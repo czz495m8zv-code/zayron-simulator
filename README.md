@@ -258,3 +258,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Refill cost is proportional to the missing fuel level at OMR 0.12 per percentage point (rounded up); the control shows the required amount and disables when the wallet cannot cover it.
 - The game rechecks station proximity, parking state and wallet balance before deducting money, then saves the updated wallet.
 - Fuel level itself is not yet persisted across vehicle resets, and fuel type/tank capacity are still simplified.
+
+
+### Persistent vehicle fuel tanks
+- Fuel level is saved independently for each of the six player vehicle types in the career save.
+- Switching vehicles stores the outgoing vehicle's current fuel and restores the selected vehicle's saved fuel.
+- The active vehicle's fuel is captured whenever career progress is saved, so wallet and mission saves also preserve its current tank level.
