@@ -60,6 +60,7 @@ var _pause_overlay: Control
 var _audio_slider: HSlider
 var _steering_slider: HSlider
 var _steering_sensitivity: float = 1.0
+var _master_volume: float = 1.0
 
 func _ready() -> void:
 	_load_progress()
@@ -626,14 +627,14 @@ func _build_pause_menu() -> void:
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_pause_overlay.add_child(shade)
 	var panel := PanelContainer.new()
-	panel.anchor_left = 0.5
-	panel.anchor_top = 0.5
-	panel.anchor_right = 0.5
-	panel.anchor_bottom = 0.5
-	panel.offset_left = -190.0
-	panel.offset_top = -235.0
-	panel.offset_right = 190.0
-	panel.offset_bottom = 235.0
+	panel.anchor_left = 0.06
+	panel.anchor_top = 0.08
+	panel.anchor_right = 0.94
+	panel.anchor_bottom = 0.92
+	panel.offset_left = 0.0
+	panel.offset_top = 0.0
+	panel.offset_right = 0.0
+	panel.offset_bottom = 0.0
 	_pause_overlay.add_child(panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 14)
@@ -654,8 +655,9 @@ func _build_pause_menu() -> void:
 	_audio_slider.min_value = 0.0
 	_audio_slider.max_value = 1.0
 	_audio_slider.step = 0.05
-	_audio_slider.value = db_to_linear(AudioServer.get_bus_volume_db(0))
-	_audio_slider.custom_minimum_size = Vector2(300.0, 36.0)
+	_audio_slider.value = _master_volume
+	_audio_slider.custom_minimum_size = Vector2(220.0, 40.0)
+	_audio_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_audio_slider.value_changed.connect(_on_master_volume_changed)
 	column.add_child(_audio_slider)
 	var steering_label := Label.new()
@@ -666,17 +668,20 @@ func _build_pause_menu() -> void:
 	_steering_slider.max_value = 1.8
 	_steering_slider.step = 0.05
 	_steering_slider.value = _steering_sensitivity
-	_steering_slider.custom_minimum_size = Vector2(300.0, 36.0)
+	_steering_slider.custom_minimum_size = Vector2(220.0, 40.0)
+	_steering_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_steering_slider.value_changed.connect(_on_steering_sensitivity_changed)
 	column.add_child(_steering_slider)
 	var resume := Button.new()
 	resume.text = "RESUME DRIVING"
-	resume.custom_minimum_size = Vector2(300.0, 48.0)
+	resume.custom_minimum_size = Vector2(220.0, 52.0)
+	resume.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	resume.pressed.connect(_set_paused.bind(false))
 	column.add_child(resume)
 	var restart := Button.new()
 	restart.text = "RESTART ROUTE"
-	restart.custom_minimum_size = Vector2(300.0, 48.0)
+	restart.custom_minimum_size = Vector2(220.0, 52.0)
+	restart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	restart.pressed.connect(_restart_delivery)
 	column.add_child(restart)
 
@@ -688,7 +693,9 @@ func _set_paused(paused: bool) -> void:
 		_pause_button.visible = not paused
 
 func _on_master_volume_changed(value: float) -> void:
-	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(value, 0.001)))
+	_master_volume = clampf(value, 0.0, 1.0)
+	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(_master_volume, 0.001)))
+	_save_progress()
 
 func _on_steering_sensitivity_changed(value: float) -> void:
 	_steering_sensitivity = clampf(value, 0.5, 1.8)
@@ -799,6 +806,8 @@ func _load_progress() -> void:
 	_selected_cargo = clampi(int(progress.get_value("career", "selected_cargo", 0)), 0, CARGO_NAMES.size() - 1)
 	_passenger_mode = bool(progress.get_value("career", "passenger_mode", false))
 	_steering_sensitivity = clampf(float(progress.get_value("settings", "steering_sensitivity", 1.0)), 0.5, 1.8)
+	_master_volume = clampf(float(progress.get_value("settings", "master_volume", 1.0)), 0.0, 1.0)
+	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(_master_volume, 0.001)))
 	if _passenger_mode and _selected_vehicle < 3:
 		_selected_vehicle = 3
 
@@ -811,6 +820,7 @@ func _save_progress() -> void:
 	progress.set_value("career", "selected_cargo", _selected_cargo)
 	progress.set_value("career", "passenger_mode", _passenger_mode)
 	progress.set_value("settings", "steering_sensitivity", _steering_sensitivity)
+	progress.set_value("settings", "master_volume", _master_volume)
 	var save_error := progress.save(SAVE_PATH)
 	if save_error != OK:
 		push_warning("Could not save Zayron Simulator progress. Error: %s" % save_error)
