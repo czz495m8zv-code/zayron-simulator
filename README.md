@@ -124,3 +124,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Passenger trips now require the bus to be stopped with its parking brake engaged and passenger doors open before the passengers are marked delivered and the fare is awarded.
 - If the bus reaches the destination with doors closed, the mission waits; opening the doors while stopped at the terminal completes the drop-off without requiring the bus to leave and re-enter the checkpoint.
 - Passenger figures remain visual pickup placeholders: this update does not yet animate individual passengers walking down the aisle, sitting, or alighting.
+
+
+### Company bus boarding animation update
+- Company-service passengers now form a staggered two-column queue, walk through a short approach path toward the bus entrance, and disappear as a visual boarding effect.
+- A boarding manifest updates from 0/8 to 8/8 as each passenger's animation finishes.
+- This remains a lightweight visual effect; it does not yet place passenger characters on interior seats or simulate individual door collision, navigation or alighting.
