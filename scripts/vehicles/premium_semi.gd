@@ -121,13 +121,21 @@ func _add_box(label: String, dimensions: Vector3, location: Vector3, tint: Color
 	var mesh := BoxMesh.new()
 	mesh.size = dimensions
 	part.mesh = mesh
-	part.position = location
 	var material := StandardMaterial3D.new()
 	material.albedo_color = tint
 	material.metallic = 0.24
 	material.roughness = 0.34
 	part.material_override = material
-	_trailer_parent_for(label).add_child(part)
+	if label == "RearDoorLeft" or label == "RearDoorRight":
+		var hinge := Node3D.new()
+		hinge.name = label
+		hinge.position = location
+		part.position = Vector3.ZERO
+		_trailer_parent_for(label).add_child(hinge)
+		hinge.add_child(part)
+	else:
+		part.position = location
+		_trailer_parent_for(label).add_child(part)
 
 func _add_wheel(location: Vector3, radius: float) -> void:
 	var wheel := MeshInstance3D.new()
