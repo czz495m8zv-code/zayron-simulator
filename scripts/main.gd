@@ -46,6 +46,7 @@ var _passenger_mode: bool = false
 var _mission_type_button: Button
 var _passenger_pickup_done: bool = false
 var _passenger_pickup_target := Vector3(0.0, 0.0, -37.0)
+var _checkpoint_label: Label3D
 
 func _ready() -> void:
 	_load_progress()
@@ -70,7 +71,10 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
 		return
 	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
-	_mission_label.text = "%s  |  CHECKPOINT: %d m" % [ROUTE_NAMES[_selected_route], int(distance)]
+	var stage_name := "CHECKPOINT"
+	if _passenger_mode:
+		stage_name = "PICKUP STOP" if not _passenger_pickup_done else "PASSENGER DROP-OFF"
+	_mission_label.text = "%s  |  %s: %d m" % [ROUTE_NAMES[_selected_route], stage_name, int(distance)]
 
 func _spawn_vehicle() -> void:
 	_mission_complete = false
@@ -275,6 +279,15 @@ func _build_mission() -> void:
 	var right_post := _make_box("CheckpointRightPost", Vector3(0.22, 3.2, 0.22), Vector3(4.0, 1.6, _mission_target.z), gate_material.albedo_color)
 	var top_bar := _make_box("CheckpointTopBar", Vector3(8.2, 0.22, 0.22), Vector3(0.0, 3.1, _mission_target.z), gate_material.albedo_color)
 	_checkpoint_gate_parts = [left_post, right_post, top_bar]
+	_checkpoint_label = Label3D.new()
+	_checkpoint_label.name = "CheckpointSign"
+	_checkpoint_label.position = Vector3(0.0, 3.75, _mission_target.z)
+	_checkpoint_label.text = "DELIVERY"
+	_checkpoint_label.font_size = 40
+	_checkpoint_label.pixel_size = 0.01
+	_checkpoint_label.modulate = Color(0.85, 1.0, 0.9)
+	_checkpoint_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	add_child(_checkpoint_label)
 	add_child(left_post)
 	add_child(right_post)
 	add_child(top_bar)
@@ -367,6 +380,12 @@ func _move_checkpoint_gate() -> void:
 			gate_part.position = Vector3(4.0, 1.6, _mission_target.z)
 		else:
 			gate_part.position = Vector3(0.0, 3.1, _mission_target.z)
+	if is_instance_valid(_checkpoint_label):
+		_checkpoint_label.position.z = _mission_target.z
+		if _passenger_mode:
+			_checkpoint_label.text = "PICKUP" if not _passenger_pickup_done else "DROP-OFF"
+		else:
+			_checkpoint_label.text = "DELIVERY"
 
 func _toggle_passenger_mode() -> void:
 	_passenger_mode = not _passenger_mode
