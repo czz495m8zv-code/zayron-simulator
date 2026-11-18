@@ -113,6 +113,7 @@ func _on_vehicle_button_pressed() -> void:
 	else:
 		_selected_vehicle = (_selected_vehicle + 1) % FLEET_SCENES.size()
 	_spawn_vehicle()
+	_save_progress()
 
 func _build_environment() -> void:
 	var world_environment := WorldEnvironment.new()
@@ -383,9 +384,9 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 	_save_progress()
 	if is_instance_valid(_mission_label):
 		if _passenger_mode:
-		_mission_label.text = "%s COMPLETE  |  PASSENGERS DELIVERED  |  +%d OMR" % [ROUTE_NAMES[_selected_route], PASSENGER_TRIP_REWARD]
-	else:
-		_mission_label.text = "%s COMPLETE  |  %s  |  +%d OMR" % [ROUTE_NAMES[_selected_route], CARGO_NAMES[_selected_cargo], CARGO_REWARDS[_selected_cargo]]
+			_mission_label.text = "%s COMPLETE  |  PASSENGERS DELIVERED  |  +%d OMR" % [ROUTE_NAMES[_selected_route], PASSENGER_TRIP_REWARD]
+		else:
+			_mission_label.text = "%s COMPLETE  |  %s  |  +%d OMR" % [ROUTE_NAMES[_selected_route], CARGO_NAMES[_selected_cargo], CARGO_REWARDS[_selected_cargo]]
 
 
 func _load_progress() -> void:
