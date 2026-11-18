@@ -1,5 +1,7 @@
 extends CharacterBody3D
 
+signal refuel_requested(cost_omr: int)
+
 @export var acceleration: float = 8.0
 @export var service_brake: float = 18.0
 @export var rolling_resistance: float = 1.4
@@ -656,11 +658,35 @@ func _build_extra_vehicle_controls() -> void:
 	_door_hinge.add_child(door_panel)
 
 
-func set_refuel_station_available(available: bool) -> void:
+func get_refuel_cost_omr() -> int:
+	return int(ceil(maxf(0.0, 100.0 - _fuel_level) * 0.12))
+
+
+func set_refuel_station_available(available: bool, wallet_omr: int) -> void:
 	_refuel_station_available = available
+	if not is_instance_valid(_refuel_button):
+		return
+	var cost := get_refuel_cost_omr()
+	var can_pay := wallet_omr >= cost
+	_refuel_button.disabled = not available or not can_pay or cost <= 0
+	if not available:
+		_refuel_button.text = "FUEL STATION ONLY"
+	elif cost <= 0:
+		_refuel_button.text = "TANK FULL"
+	elif not can_pay:
+		_refuel_button.text = "NEED OMR %d" % cost
+	else:
+		_refuel_button.text = "REFUEL OMR %d" % cost
+
+
+func complete_refuel() -> void:
+	_fuel_level = 100.0
+	if is_instance_valid(_fuel_label):
+		_fuel_label.text = "FUEL  100%"
+		_fuel_label.add_theme_color_override("font_color", Color(0.55, 0.9, 1.0))
 	if is_instance_valid(_refuel_button):
-		_refuel_button.disabled = not available
-		_refuel_button.text = "REFUEL" if available else "FUEL STATION ONLY"
+		_refuel_button.text = "TANK FULL"
+		_refuel_button.disabled = true
 
 func _add_action_button(parent: Control, label: String, x: float, y: float, action: String) -> Button:
 	var button := Button.new()
@@ -689,10 +715,11 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			if absf(_speed) > 0.15 or not _handbrake_on:
 				button.text = "STOP + PARK FIRST"
 				return
-			_fuel_level = 100.0
-			button.text = "FUEL: FULL"
-			if is_instance_valid(_fuel_label):
-				_fuel_label.text = "FUEL  100%"
+			var refuel_cost := get_refuel_cost_omr()
+			if refuel_cost <= 0:
+				button.text = "TANK FULL"
+				return
+			refuel_requested.emit(refuel_cost)
 		"horn":
 			_horn_frames_left = 6600
 			_horn_phase = 0.0
