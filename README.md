@@ -455,3 +455,8 @@ The three prototype highway cars now use a lightweight same-lane following model
 - The three moving highway sedans and the crossing side-road sedan now have `AnimatableBody3D` collision bodies with compact box shapes.
 - The player vehicle can physically contact these traffic vehicles instead of passing through visual-only meshes.
 - This is a basic obstacle/collision layer only: there is not yet vehicle damage, crash response, traffic collision avoidance, or a complete road-user physics simulation.
+
+### Traffic impact response
+
+- Hitting a highway traffic collision body at driving speed sharply reduces the player's speed, activates hazard lights, and displays a temporary `COLLISION - CHECK VEHICLE` dashboard warning.
+- The impact response is a simple gameplay approximation; it does not yet model vehicle deformation, repair costs, injury, insurance, or detailed crash physics.
