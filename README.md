@@ -382,3 +382,8 @@ The three prototype highway cars now use a lightweight same-lane following model
 - The pedestrian waits at the kerb until the main-road vehicle signal enters its red phase, then crosses at a faster walking pace designed to clear before the next cycle.
 - Side-road traffic continues to yield while the pedestrian occupies the crossing.
 - This is a timed prototype signal, not a standards-certified pedestrian crossing controller.
+
+
+### Pedestrian signal text indicators
+- Added illuminated 3D WAIT and WALK text labels beside the two-aspect pedestrian signal.
+- The labels switch with the same timed crossing phase as the signal lamps and pedestrian movement.
