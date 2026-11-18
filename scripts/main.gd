@@ -217,6 +217,8 @@ func _spawn_vehicle() -> void:
 	_active_vehicle = FLEET_SCENES[_selected_vehicle].instantiate() as Node3D
 	_active_vehicle.position = Vector3(0.0, 0.15, 8.0)
 	add_child(_active_vehicle)
+	if _active_vehicle.has_signal("refuel_requested"):
+		_active_vehicle.refuel_requested.connect(_on_vehicle_refuel_requested)
 	_sync_vehicle_cargo_payload()
 	_apply_vehicle_settings()
 	if is_instance_valid(_vehicle_button):
@@ -703,7 +705,24 @@ func _update_refuel_station_access() -> void:
 	var station_position := _cargo_depot.to_global(Vector3(-9.0, 0.0, 5.2))
 	var distance := Vector2(_active_vehicle.global_position.x - station_position.x, _active_vehicle.global_position.z - station_position.z).length()
 	if _active_vehicle.has_method("set_refuel_station_available"):
-		_active_vehicle.set_refuel_station_available(distance <= 6.0)
+		_active_vehicle.set_refuel_station_available(distance <= 6.0, _cash_balance)
+
+
+func _on_vehicle_refuel_requested(cost_omr: int) -> void:
+	if not is_instance_valid(_active_vehicle) or not is_instance_valid(_cargo_depot):
+		return
+	var station_position := _cargo_depot.to_global(Vector3(-9.0, 0.0, 5.2))
+	var distance := Vector2(_active_vehicle.global_position.x - station_position.x, _active_vehicle.global_position.z - station_position.z).length()
+	if distance > 6.0 or not _active_vehicle.has_method("can_handle_cargo") or not _active_vehicle.can_handle_cargo():
+		return
+	if cost_omr <= 0 or _cash_balance < cost_omr:
+		return
+	_cash_balance -= cost_omr
+	if _active_vehicle.has_method("complete_refuel"):
+		_active_vehicle.complete_refuel()
+	if is_instance_valid(_cash_label):
+		_cash_label.text = "WALLET  |  OMR %d  |  DELIVERIES %d" % [_cash_balance, _delivery_count]
+	_save_progress()
 
 
 func _animate_depot_cargo(loading: bool) -> void:
