@@ -35,7 +35,8 @@
 - [ ] Tune mass, traction, suspension, braking and steering with real-device testing
 - [x] Add a lightweight procedural engine sound layer
 - [ ] Add recorded or licensed vehicle engine samples and transmission behaviour
-- [x] Add an alternate close driving camera and on-screen view toggle
+- [x] Add chase, close-follow and vehicle-positioned cockpit camera views with an on-screen cycle control (source implemented; runtime verification pending)
+- [x] Add basic steering-wheel geometry to starter truck, semi-trucks, city bus and luxury coaches (source implemented; runtime verification pending)
 - [x] Add initial luxury coach passenger-cabin and premium truck dashboard details
 - [ ] Test at multiple frame rates and device performance levels
 
