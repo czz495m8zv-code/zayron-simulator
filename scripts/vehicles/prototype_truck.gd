@@ -22,6 +22,9 @@ var _steer_left_held: bool = false
 var _steer_right_held: bool = false
 var _speed_label: Label
 var _gear_label: Label
+var _rpm_label: Label
+var _vehicle_status_label: Label
+var _engine_temperature := 22.0
 var _exterior_camera: Camera3D
 var _close_camera: Camera3D
 var _cockpit_camera: Camera3D
@@ -176,6 +179,29 @@ func _physics_process(delta: float) -> void:
 		_speed_label.text = "%03d km/h" % int(absf(_speed) * 3.6)
 	if is_instance_valid(_gear_label):
 		_gear_label.text = _gear_mode + ("  •  OFF" if not _engine_running else "  •  ON")
+	var rpm_value := 0.0
+	if _engine_running:
+		rpm_value = 650.0 + absf(_speed) * 48.0 + _throttle_input * 720.0
+		_engine_temperature = move_toward(_engine_temperature, 90.0, delta * (0.12 + _throttle_input * 0.24))
+	else:
+		_engine_temperature = move_toward(_engine_temperature, 22.0, delta * 0.45)
+	if is_instance_valid(_rpm_label):
+		_rpm_label.text = "RPM  %04d    TEMP  %02d°C" % [int(minf(rpm_value, 2800.0)), int(_engine_temperature)]
+	if is_instance_valid(_vehicle_status_label):
+		var status_parts: Array[String] = []
+		if _handbrake_on:
+			status_parts.append("PARK BRAKE")
+		if _headlights_on:
+			status_parts.append("HEADLIGHTS")
+		if _hazard_on:
+			status_parts.append("HAZARD")
+		elif _left_indicator_on:
+			status_parts.append("LEFT SIGNAL")
+		elif _right_indicator_on:
+			status_parts.append("RIGHT SIGNAL")
+		if supports_trailer and _trailer_legs_down:
+			status_parts.append("TRAILER LEGS DOWN")
+		_vehicle_status_label.text = "  |  ".join(status_parts) if not status_parts.is_empty() else "SYSTEMS NORMAL"
 	if is_instance_valid(_steering_wheel_mesh):
 		_steering_wheel_mesh.rotation.z = -_steering_current * 0.72
 
@@ -422,6 +448,22 @@ func _build_mobile_controls() -> void:
 	_gear_label.add_theme_font_size_override("font_size", 20)
 	_gear_label.add_theme_color_override("font_color", Color(0.35, 0.85, 1.0))
 	ui.add_child(_gear_label)
+
+	_rpm_label = Label.new()
+	_rpm_label.text = "RPM  0650    TEMP  22°C"
+	_rpm_label.position = Vector2(28.0, 90.0)
+	_rpm_label.add_theme_font_size_override("font_size", 15)
+	_rpm_label.add_theme_color_override("font_color", Color(0.55, 0.9, 1.0))
+	_rpm_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	ui.add_child(_rpm_label)
+
+	_vehicle_status_label = Label.new()
+	_vehicle_status_label.text = "SYSTEMS NORMAL"
+	_vehicle_status_label.position = Vector2(28.0, 114.0)
+	_vehicle_status_label.add_theme_font_size_override("font_size", 12)
+	_vehicle_status_label.add_theme_color_override("font_color", Color(0.7, 0.92, 0.75))
+	_vehicle_status_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	ui.add_child(_vehicle_status_label)
 
 	_add_hold_button(ui, "◀", true, 24.0, -124.0, 112.0, -24.0, "steer_left")
 	_add_hold_button(ui, "▶", true, 132.0, -124.0, 220.0, -24.0, "steer_right")
