@@ -162,22 +162,37 @@ func set_cargo_payload(cargo_type: int, loaded: bool) -> void:
 			var crate_mesh := BoxMesh.new()
 			crate_mesh.size = Vector3(0.88, 0.72, 0.88)
 			crate.mesh = crate_mesh
-			crate.position = Vector3(-0.48 if i % 2 == 0 else 0.48, 1.5, 1.05 + float(i / 2) * 0.92)
+			crate.position = Vector3(-0.48 if i % 2 == 0 else 0.48, 1.5, 1.05 + (float(i) / 2.0) * 0.92)
 			var crate_mat := StandardMaterial3D.new()
 			crate_mat.albedo_color = cargo_color
 			crate_mat.roughness = 0.82
 			crate.material_override = crate_mat
 			payload.add_child(crate)
-			var strap := MeshInstance3D.new()
-			strap.name = "CargoStrap_%d" % i
-			var strap_mesh := BoxMesh.new()
-			strap_mesh.size = Vector3(0.06, 0.76, 0.92)
-			strap.mesh = strap_mesh
-			strap.position = crate.position + Vector3(0.0, 0.0, 0.0)
-			var strap_mat := StandardMaterial3D.new()
-			strap_mat.albedo_color = Color(0.08, 0.1, 0.12)
-			strap.material_override = strap_mat
-			payload.add_child(strap)
+			for strap_index in range(2):
+				var strap := MeshInstance3D.new()
+				strap.name = "CargoStrap_%d_%d" % [i, strap_index]
+				var strap_mesh := BoxMesh.new()
+				strap_mesh.size = Vector3(0.045, 0.76, 0.92)
+				strap.mesh = strap_mesh
+				var strap_offset := -0.24 if strap_index == 0 else 0.24
+				strap.position = crate.position + Vector3(strap_offset, 0.0, 0.0)
+				var strap_mat := StandardMaterial3D.new()
+				strap_mat.albedo_color = Color(0.055, 0.07, 0.085)
+				strap_mat.metallic = 0.18
+				strap.material_override = strap_mat
+				payload.add_child(strap)
+				var buckle := MeshInstance3D.new()
+				buckle.name = "CargoStrapBuckle_%d_%d" % [i, strap_index]
+				var buckle_mesh := BoxMesh.new()
+				buckle_mesh.size = Vector3(0.11, 0.07, 0.045)
+				buckle.mesh = buckle_mesh
+				buckle.position = crate.position + Vector3(strap_offset, -0.23, -0.47)
+				var buckle_mat := StandardMaterial3D.new()
+				buckle_mat.albedo_color = Color(0.42, 0.46, 0.49)
+				buckle_mat.metallic = 0.72
+				buckle_mat.roughness = 0.34
+				buckle.material_override = buckle_mat
+				payload.add_child(buckle)
 	payload.visible = loaded
 
 
