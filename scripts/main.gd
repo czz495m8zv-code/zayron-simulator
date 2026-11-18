@@ -32,11 +32,15 @@ var _traffic_speed: float = 7.5
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
 const ROUTE_TARGETS: Array[Vector3] = [Vector3(0.0, 0.0, -82.0), Vector3(0.0, 0.0, -48.0), Vector3(0.0, 0.0, -112.0)]
+const CARGO_NAMES: Array[String] = ["GENERAL GOODS", "CONSTRUCTION SUPPLIES", "CHILLED GOODS"]
+const CARGO_REWARDS: Array[int] = [25, 40, 35]
 
 var _selected_route: int = 0
 var _route_button: Button
 var _checkpoint_area: Area3D
 var _checkpoint_gate_parts: Array[MeshInstance3D] = []
+var _selected_cargo: int = 0
+var _cargo_button: Button
 
 func _ready() -> void:
 	_load_progress()
@@ -259,6 +263,15 @@ func _build_mission_hud() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 4
 	add_child(layer)
+	_cargo_button = Button.new()
+	_cargo_button.name = "CargoSelector"
+	_cargo_button.text = "CARGO: " + CARGO_NAMES[_selected_cargo]
+	_cargo_button.position = Vector2(24.0, 78.0)
+	_cargo_button.custom_minimum_size = Vector2(250.0, 48.0)
+	_cargo_button.add_theme_font_size_override("font_size", 16)
+	_cargo_button.pressed.connect(_cycle_cargo)
+	layer.add_child(_cargo_button)
+
 	_route_button = Button.new()
 	_route_button.name = "RouteSelector"
 	_route_button.text = "ROUTE: " + ROUTE_NAMES[_selected_route]
@@ -326,17 +339,23 @@ func _cycle_route() -> void:
 	_spawn_vehicle()
 	_save_progress()
 
+func _cycle_cargo() -> void:
+	_selected_cargo = (_selected_cargo + 1) % CARGO_NAMES.size()
+	if is_instance_valid(_cargo_button):
+		_cargo_button.text = "CARGO: " + CARGO_NAMES[_selected_cargo]
+	_save_progress()
+
 func _on_checkpoint_entered(body: Node3D) -> void:
 	if body != _active_vehicle or _mission_complete:
 		return
 	_mission_complete = true
 	_delivery_count += 1
-	_cash_balance += 25
+	_cash_balance += CARGO_REWARDS[_selected_cargo]
 	if is_instance_valid(_cash_label):
 		_cash_label.text = "WALLET  |  OMR %d  |  DELIVERIES %d" % [_cash_balance, _delivery_count]
 	_save_progress()
 	if is_instance_valid(_mission_label):
-		_mission_label.text = "%s COMPLETE  |  +25 OMR" % ROUTE_NAMES[_selected_route]
+		_mission_label.text = "%s COMPLETE  |  %s  |  +%d OMR" % [ROUTE_NAMES[_selected_route], CARGO_NAMES[_selected_cargo], CARGO_REWARDS[_selected_cargo]]
 
 
 func _load_progress() -> void:
@@ -347,6 +366,7 @@ func _load_progress() -> void:
 	_cash_balance = int(progress.get_value("career", "wallet_omr", 0))
 	_selected_vehicle = clampi(int(progress.get_value("career", "selected_vehicle", 0)), 0, FLEET_SCENES.size() - 1)
 	_selected_route = clampi(int(progress.get_value("career", "selected_route", 0)), 0, ROUTE_TARGETS.size() - 1)
+	_selected_cargo = clampi(int(progress.get_value("career", "selected_cargo", 0)), 0, CARGO_NAMES.size() - 1)
 
 func _save_progress() -> void:
 	var progress := ConfigFile.new()
@@ -354,6 +374,7 @@ func _save_progress() -> void:
 	progress.set_value("career", "wallet_omr", _cash_balance)
 	progress.set_value("career", "selected_vehicle", _selected_vehicle)
 	progress.set_value("career", "selected_route", _selected_route)
+	progress.set_value("career", "selected_cargo", _selected_cargo)
 	var save_error := progress.save(SAVE_PATH)
 	if save_error != OK:
 		push_warning("Could not save Zayron Simulator progress. Error: %s" % save_error)
