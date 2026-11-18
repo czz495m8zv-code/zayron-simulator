@@ -41,11 +41,12 @@
 
 ### 3 — Oman vertical slice
 - [x] Create an initial original desert-road environment
-- [ ] Add detailed road markings, signs, terrain, buildings and landmarks
+- [x] Add initial roadside destination signs and a moving visual traffic prototype (runtime verification pending)
+- [ ] Add detailed road markings, terrain, buildings and landmarks
 - [x] Add a first delivery checkpoint objective and HUD
 - [x] Add a repeatable delivery restart control and a simple OMR reward counter (source implemented; runtime verification pending)
 - [ ] Expand the starter delivery loop with multiple routes, cargo types, route selection and passenger missions
-- [ ] Add traffic and road rules
+- [ ] Add interactive traffic with collision avoidance, traffic signals and road rules
 - [ ] Verify all third-party asset licenses
 
 ### 4 — First Android test release
