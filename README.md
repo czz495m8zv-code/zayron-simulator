@@ -343,3 +343,12 @@ The three prototype highway cars now use a lightweight same-lane following model
 - It waits if a highway traffic vehicle or the player is passing through the junction.
 - A vehicle already committed to crossing is allowed to clear the junction instead of stopping in the carriageway.
 - This remains a simplified position-based check without collision shapes, predictive time-to-collision, or lane-aware turning paths.
+
+### Junction all-red clearance and crossing protection
+- Extended the signal cycle to 16 seconds: green 8 s, amber 2 s, red 6 s.
+- Side-road traffic remains held through green, amber, and the first 2 seconds of red; it may enter only during the final 4 seconds of the red phase.
+- The final 2 seconds of red provide an all-red clearance interval before the main road returns to green.
+- Side-road traffic now crosses faster to target clearing the junction before the next green phase.
+- Main-road AI traffic is held outside the conflict area while the side-road vehicle occupies the crossing.
+- Player braking assistance also holds before the stop line while the side-road vehicle is crossing.
+- This remains a single scripted vehicle and position-based conflict zone; it is not a complete multi-lane junction controller or collision-physics system.
