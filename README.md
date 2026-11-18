@@ -309,3 +309,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Braking is based on distance to the stop line and a simple deceleration estimate, while the driver's normal brake input remains effective.
 - The dashboard status indicates TRAFFIC SIGNAL while the assist is active.
 - This is a prototype single approach rule; it does not yet cover the opposite direction, turning lanes, cross traffic, or real-world traffic-law edge cases.
+
+
+### Junction signal timing and stop-line correction
+- Corrected the signal phase order to green (8 s), amber (2 s), red (4 s), matching the documented cycle.
+- Corrected the player's approach-distance calculation for travel toward decreasing Z coordinates. The earlier sign was reversed, so player-side braking could fail to engage.
+- Added a firm low-speed stop hold within 1 m of the stop line during red/amber.
+- Highway traffic uses the same green phase as the visible signal.
