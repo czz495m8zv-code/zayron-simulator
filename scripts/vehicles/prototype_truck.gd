@@ -59,6 +59,7 @@ var _engine_button: Button
 var _trailer_assembly: Node3D
 var _trailer_attached := false
 var _trailer_legs_down := false
+var _trailer_doors_open := false
 var _trailer_home_transform := Transform3D.IDENTITY
 var _trailer_button: Button
 var _landing_legs_button: Button
@@ -436,6 +437,7 @@ func _build_mobile_controls() -> void:
 	if supports_trailer:
 		_add_action_button(ui, "TRAILER", 16.0, 410.0, "trailer")
 		_add_action_button(ui, "LANDING LEGS", 124.0, 410.0, "trailer_legs")
+		_add_action_button(ui, "TRAILER DOORS", -90.0, 502.0, "trailer_doors")
 	if supports_passenger_doors:
 		_add_action_button(ui, "PASSENGER DOOR", -90.0, 456.0, "passenger_door")
 
@@ -521,6 +523,8 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			_toggle_trailer_coupling(button)
 		"trailer_legs":
 			_toggle_trailer_legs(button)
+		"trailer_doors":
+			_toggle_trailer_doors(button)
 		"left":
 			_left_indicator_on = not _left_indicator_on
 			if _left_indicator_on:
@@ -605,6 +609,18 @@ func _toggle_trailer_coupling(button: Button) -> void:
 		_trailer_legs_down = false
 		_set_landing_leg_positions()
 		button.text = "TRAILER: ATTACHED"
+
+func _toggle_trailer_doors(button: Button) -> void:
+	if not is_instance_valid(_trailer_assembly):
+		return
+	_trailer_doors_open = not _trailer_doors_open
+	var left_door := _trailer_assembly.get_node_or_null("RearDoorLeft") as Node3D
+	var right_door := _trailer_assembly.get_node_or_null("RearDoorRight") as Node3D
+	if is_instance_valid(left_door):
+		left_door.rotation.y = deg_to_rad(82.0 if _trailer_doors_open else 0.0)
+	if is_instance_valid(right_door):
+		right_door.rotation.y = deg_to_rad(-82.0 if _trailer_doors_open else 0.0)
+	button.text = "CLOSE TRAILER" if _trailer_doors_open else "TRAILER DOORS"
 
 func _toggle_trailer_legs(button: Button) -> void:
 	if not is_instance_valid(_trailer_assembly):
