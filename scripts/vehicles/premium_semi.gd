@@ -25,6 +25,14 @@ func _build_truck() -> void:
 		_add_box("MirrorArm_%s" % side, Vector3(0.08, 0.08, 0.65), Vector3(side * 1.42, 2.55, -2.7), trim_paint)
 	_add_box("FrontBumper", Vector3(2.45, 0.28, 0.22), Vector3(0.0, 0.65, -3.2), trim_paint)
 	_add_box("FuelTank", Vector3(0.48, 0.5, 1.4), Vector3(1.32, 0.82, 0.2), Color(0.45, 0.48, 0.5))
+	_add_box("Dashboard", Vector3(2.05, 0.34, 0.72), Vector3(0.0, 1.55, -2.72), Color(0.035, 0.045, 0.06))
+	_add_box("DigitalInstrumentPanel", Vector3(0.62, 0.24, 0.04), Vector3(0.0, 1.78, -2.92), Color(0.04, 0.55, 0.72))
+	_add_box("DriverSeat", Vector3(0.72, 0.9, 0.72), Vector3(-0.62, 1.35, -0.9), Color(0.09, 0.11, 0.13))
+	_add_box("PassengerSeat", Vector3(0.72, 0.9, 0.72), Vector3(0.62, 1.35, -0.9), Color(0.09, 0.11, 0.13))
+	_add_box("LeftHeadlamp", Vector3(0.42, 0.22, 0.08), Vector3(-0.82, 1.0, -3.2), Color(0.92, 0.95, 1.0))
+	_add_box("RightHeadlamp", Vector3(0.42, 0.22, 0.08), Vector3(0.82, 1.0, -3.2), Color(0.92, 0.95, 1.0))
+	_add_box("TrailerSideStripeLeft", Vector3(0.035, 0.12, 8.2), Vector3(-1.29, 1.0, 5.9), trim_paint)
+	_add_box("TrailerSideStripeRight", Vector3(0.035, 0.12, 8.2), Vector3(1.29, 1.0, 5.9), trim_paint)
 
 func _add_box(label: String, dimensions: Vector3, location: Vector3, tint: Color) -> void:
 	var part := MeshInstance3D.new()
