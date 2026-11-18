@@ -77,12 +77,13 @@ func _build_camera() -> void:
 func _build_mobile_controls() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "MobileControls"
+	layer.layer = 10
 	add_child(layer)
 
 	var ui := Control.new()
 	ui.name = "TouchUI"
 	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.mouse_filter = Control.MOUSE_FILTER_PASS
 	layer.add_child(ui)
 
 	_speed_label = Label.new()
@@ -90,34 +91,58 @@ func _build_mobile_controls() -> void:
 	_speed_label.text = "SPEED  000 km/h"
 	_speed_label.position = Vector2(24.0, 24.0)
 	_speed_label.add_theme_font_size_override("font_size", 26)
-	_speed_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	_speed_label.add_theme_color_override("font_color", Color.WHITE)
+	_speed_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	_speed_label.add_theme_constant_override("shadow_offset_x", 2)
+	_speed_label.add_theme_constant_override("shadow_offset_y", 2)
 	ui.add_child(_speed_label)
 
-	_add_hold_button(ui, "◀", Vector2(28.0, -118.0), Vector2(90.0, 90.0), "steer_left")
-	_add_hold_button(ui, "▶", Vector2(128.0, -118.0), Vector2(90.0, 90.0), "steer_right")
-	_add_hold_button(ui, "BRAKE", Vector2(-218.0, -118.0), Vector2(90.0, 90.0), "brake")
-	_add_hold_button(ui, "GAS", Vector2(-118.0, -118.0), Vector2(90.0, 90.0), "accelerate")
+	_add_hold_button(ui, "◀", true, 24.0, -124.0, 112.0, -24.0, "steer_left")
+	_add_hold_button(ui, "▶", true, 132.0, -124.0, 220.0, -24.0, "steer_right")
+	_add_hold_button(ui, "BRAKE", false, -224.0, -124.0, -124.0, -24.0, "brake")
+	_add_hold_button(ui, "GAS", false, -112.0, -124.0, -12.0, -24.0, "accelerate")
 
-func _add_hold_button(parent: Control, label: String, offset: Vector2, button_size: Vector2, control_name: String) -> void:
+func _add_hold_button(parent: Control, label: String, left_side: bool, left: float, top: float, right: float, bottom: float, control_name: String) -> void:
 	var button := Button.new()
 	button.name = control_name
 	button.text = label
-	button.custom_minimum_size = button_size
-	button.size = button_size
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 20)
-	button.modulate = Color(1.0, 1.0, 1.0, 0.88)
-
-	if control_name == "steer_left" or control_name == "steer_right":
-		button.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-		button.position = offset
+	button.add_theme_color_override("font_color", Color.WHITE)
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color.WHITE)
+	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.04, 0.10, 0.17, 0.82)))
+	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.08, 0.24, 0.36, 0.94)))
+	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.0, 0.55, 0.75, 0.98)))
+	if left_side:
+		button.anchor_left = 0.0
+		button.anchor_right = 0.0
 	else:
-		button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-		button.position = offset
-
+		button.anchor_left = 1.0
+		button.anchor_right = 1.0
+	button.anchor_top = 1.0
+	button.anchor_bottom = 1.0
+	button.offset_left = left
+	button.offset_top = top
+	button.offset_right = right
+	button.offset_bottom = bottom
 	button.button_down.connect(_on_control_down.bind(control_name))
 	button.button_up.connect(_on_control_up.bind(control_name))
 	parent.add_child(button)
+
+func _make_button_style(color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.corner_radius_top_left = 14
+	style.corner_radius_top_right = 14
+	style.corner_radius_bottom_left = 14
+	style.corner_radius_bottom_right = 14
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.25, 0.75, 0.95, 0.9)
+	return style
 
 func _on_control_down(control_name: String) -> void:
 	match control_name:
