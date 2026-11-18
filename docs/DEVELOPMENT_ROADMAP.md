@@ -49,7 +49,8 @@
 - [x] Add three selectable Oman-inspired delivery checkpoint routes with route selection and local route-progress saving (source implemented; runtime verification pending)
 - [x] Add selectable general, construction and chilled-goods delivery jobs with different prototype rewards and local selection saving (source implemented; runtime verification pending)
 - [x] Add a bus-only passenger trip mode, automatically select a bus, and award a separate prototype trip reward (source implemented; runtime verification pending)
-- [ ] Add passenger pickup/drop-off stops, passenger animations and route-specific depot gameplay
+- [x] Add a two-stage bus passenger mission with a pickup checkpoint followed by destination drop-off (source implemented; runtime verification pending)
+- [ ] Add passenger models/boarding animations and route-specific depot gameplay
 - [ ] Add interactive traffic with collision avoidance, traffic signals and road rules
 - [ ] Verify all third-party asset licenses
 
