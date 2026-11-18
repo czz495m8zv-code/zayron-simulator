@@ -200,6 +200,11 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Clearing the cargo payload hides the strap control and resets the securing state. This is a gameplay safety interlock and visual representation, not a physics-based tensioning or load-shift simulation.
 - Trailer rear doors now require the tractor to be stopped with the parking brake applied. Forward and reverse drive input are blocked while trailer doors are open; close them before moving.
 
+### Passenger boarding and alighting
+- Passenger jobs use eight visible low-poly waiting figures at the pickup stop. After the bus is stopped, parking brake applied and passenger doors opened, the figures animate toward the bus side and disappear as the onboard count is recorded.
+- At the destination, the same figures reappear beside the stopped bus and animate toward a nearby waiting area. The passenger delivery reward is then credited.
+- These are scripted exterior walk-up animations. There is not yet a true bus interior, seat assignment, collision-aware pathfinding, individual passenger AI, ticketing or realistic door-to-seat boarding.
+
 ### Delivery-site cargo unloading
 - Reaching the cargo destination no longer completes delivery automatically. The player must stop inside the delivery area, apply the parking brake and use the UNLOAD DELIVERED CARGO interaction.
 - The unload interaction appears only within the delivery radius while the vehicle is stationary with the parking brake engaged. Successful unloading clears the vehicle payload, records the delivery and pays the selected cargo reward.
