@@ -55,6 +55,9 @@ var _cargo_depot: Node3D
 var _forklift_carriage: Node3D
 var _forklift_beacon: OmniLight3D
 var _forklift_animation_time: float = 0.0
+var _pause_button: Button
+var _pause_overlay: Control
+var _audio_slider: HSlider
 
 func _ready() -> void:
 	_load_progress()
@@ -71,6 +74,7 @@ func _ready() -> void:
 	_spawn_vehicle()
 	_build_vehicle_selector()
 	_build_mission_hud()
+	_build_pause_menu()
 
 func _process(delta: float) -> void:
 	if is_instance_valid(_traffic_car):
@@ -581,7 +585,92 @@ func _build_mission_hud() -> void:
 	layer.add_child(_restart_button)
 
 func _restart_delivery() -> void:
+	_set_paused(false)
 	_spawn_vehicle()
+
+func _build_pause_menu() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "PauseMenuLayer"
+	layer.layer = 20
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	_pause_button = Button.new()
+	_pause_button.name = "PauseButton"
+	_pause_button.text = "PAUSE"
+	_pause_button.anchor_left = 1.0
+	_pause_button.anchor_right = 1.0
+	_pause_button.offset_left = -112.0
+	_pause_button.offset_right = -20.0
+	_pause_button.offset_top = 146.0
+	_pause_button.offset_bottom = 192.0
+	_pause_button.add_theme_font_size_override("font_size", 16)
+	_pause_button.pressed.connect(_set_paused.bind(true))
+	layer.add_child(_pause_button)
+
+	_pause_overlay = Control.new()
+	_pause_overlay.name = "PauseOverlay"
+	_pause_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_pause_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_pause_overlay.visible = false
+	_pause_overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	layer.add_child(_pause_overlay)
+	var shade := ColorRect.new()
+	shade.color = Color(0.015, 0.035, 0.06, 0.88)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_pause_overlay.add_child(shade)
+	var panel := PanelContainer.new()
+	panel.anchor_left = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -190.0
+	panel.offset_top = -190.0
+	panel.offset_right = 190.0
+	panel.offset_bottom = 190.0
+	_pause_overlay.add_child(panel)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 14)
+	panel.add_child(column)
+	var heading := Label.new()
+	heading.text = "ZAYRON SIMULATOR"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 24)
+	column.add_child(heading)
+	var subtitle := Label.new()
+	subtitle.text = "PAUSED  |  SETTINGS"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(subtitle)
+	var volume_label := Label.new()
+	volume_label.text = "MASTER VOLUME"
+	column.add_child(volume_label)
+	_audio_slider = HSlider.new()
+	_audio_slider.min_value = 0.0
+	_audio_slider.max_value = 1.0
+	_audio_slider.step = 0.05
+	_audio_slider.value = db_to_linear(AudioServer.get_bus_volume_db(0))
+	_audio_slider.custom_minimum_size = Vector2(300.0, 36.0)
+	_audio_slider.value_changed.connect(_on_master_volume_changed)
+	column.add_child(_audio_slider)
+	var resume := Button.new()
+	resume.text = "RESUME DRIVING"
+	resume.custom_minimum_size = Vector2(300.0, 48.0)
+	resume.pressed.connect(_set_paused.bind(false))
+	column.add_child(resume)
+	var restart := Button.new()
+	restart.text = "RESTART ROUTE"
+	restart.custom_minimum_size = Vector2(300.0, 48.0)
+	restart.pressed.connect(_restart_delivery)
+	column.add_child(restart)
+
+func _set_paused(paused: bool) -> void:
+	get_tree().paused = paused
+	if is_instance_valid(_pause_overlay):
+		_pause_overlay.visible = paused
+	if is_instance_valid(_pause_button):
+		_pause_button.visible = not paused
+
+func _on_master_volume_changed(value: float) -> void:
+	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(value, 0.001)))
 
 func _cycle_route() -> void:
 	_selected_route = (_selected_route + 1) % ROUTE_TARGETS.size()
