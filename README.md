@@ -403,3 +403,11 @@ The three prototype highway cars now use a lightweight same-lane following model
 ### Pedestrian WALK clearance warning
 - During the final two seconds of the pedestrian signal's red-traffic interval, the green WALK lamp and WALK text flash at a steady 0.8-second cycle.
 - The numeric countdown remains visible so pedestrians receive a clear indication that the phase is ending.
+
+### Protected multi-phase T-junction signal cycle
+- Extended the junction cycle to 26 seconds: main-road green 8 s, amber 2 s, and red 16 s.
+- Pedestrian WALK runs from second 10 to second 16, followed by an all-red clearance interval.
+- Side-road traffic receives a dedicated protected crossing window from second 18 to second 24, followed by a 2-second all-red clearance before main-road green returns.
+- Side-road vehicles wait behind the give-way line until their phase, enter only when the junction is clear, and are allowed to finish crossing once committed.
+- The main-road traffic countdown and player braking assist use the same 26-second cycle; the pedestrian countdown includes the wait until the next WALK phase.
+- This remains a single-lane scripted junction prototype, not a certified signal controller or collision-physics traffic system.
