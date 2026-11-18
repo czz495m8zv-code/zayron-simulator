@@ -404,6 +404,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - During the final two seconds of the pedestrian signal's red-traffic interval, the green WALK lamp and WALK text flash at a steady 0.8-second cycle.
 - The numeric countdown remains visible so pedestrians receive a clear indication that the phase is ending.
 
+### Road-position awareness
+- The driving HUD reports normal road position, lane-departure warning, and road-edge warning based on the player's lateral position on the current prototype highway.
+- The warning is visual only; it does not steer the vehicle, apply braking, or represent a full lane-marking/collision detection system.
+
 ### Highway speed awareness
 - The driving HUD shows the prototype highway limit of 80 km/h and changes to a caution/overspeed warning above the limit.
 - This is a visual driver-awareness warning only; it does not yet issue fines, enforce speed, or model location-specific speed-limit zones.
