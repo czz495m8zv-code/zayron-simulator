@@ -239,3 +239,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 ### Passenger capacity and dashboard occupancy
 - The shared vehicle script caps visible seated passengers at the ten modeled coach seat positions. The cockpit status line displays the seated passenger count for buses and coaches while occupied.
 - This is a display/capacity guard for the visual passenger manifest; it is not a ticketing system or dynamic seat reservation simulation.
+
+
+### Fuel gauge and refuelling
+- Player vehicles consume fuel based on distance travelled and engine load, show a cockpit fuel percentage, and display LOW FUEL / OUT OF FUEL warnings.
+- At zero fuel, throttle and reverse are inhibited. The REFUEL control restores the tank only while the vehicle is stopped and the parking brake is engaged.
+- This is an initial vehicle-level fuel prototype: refuelling is currently free and available from the control anywhere while parked. Fuel stations, fuel prices, tank-size differences and persistent fuel storage remain future work.
