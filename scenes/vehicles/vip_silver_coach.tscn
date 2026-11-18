@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicles/luxury_coach.gd" id="1"]
+
+[node name="VIPSilverCoach" type="CharacterBody3D"]
+script = ExtResource("1")
+primary_paint = Color(0.72, 0.77, 0.82, 1)
+accent_paint = Color(0.08, 0.23, 0.36, 1)
