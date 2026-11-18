@@ -76,21 +76,32 @@ func _physics_process(delta: float) -> void:
 		steering = Input.get_axis("ui_left", "ui_right")
 		reverse = 0.0
 
+	throttle = clampf(throttle, 0.0, 1.0)
+	brake = clampf(brake, 0.0, 1.0)
+	reverse = clampf(reverse, 0.0, 1.0)
+	var speed_ratio := clampf(absf(_speed) / maxf(max_forward_speed, 0.1), 0.0, 1.0)
+
 	if is_instance_valid(_rear_lamp_material):
 		_rear_lamp_material.emission_energy_multiplier = 0.8 + brake * 2.2
 
+	# A simple torque curve: strongest pull at low speed, tapering near top speed.
 	if brake > 0.0:
 		_speed = move_toward(_speed, 0.0, service_brake * brake * delta)
 	elif reverse > 0.0 and absf(_speed) < 0.8:
-		_speed = move_toward(_speed, -max_reverse_speed, acceleration * 0.55 * delta)
+		_speed = move_toward(_speed, -max_reverse_speed, acceleration * 0.48 * delta)
 	elif throttle > 0.0 and _speed >= -0.1:
-		_speed = move_toward(_speed, max_forward_speed, acceleration * throttle * delta)
+		var torque_factor := lerpf(1.0, 0.42, speed_ratio)
+		_speed = move_toward(_speed, max_forward_speed, acceleration * torque_factor * throttle * delta)
 	else:
-		_speed = move_toward(_speed, 0.0, rolling_resistance * delta)
+		# Engine braking plus speed-dependent aerodynamic/rolling drag.
+		var drag := rolling_resistance + (absf(_speed) * absf(_speed) * 0.018)
+		_speed = move_toward(_speed, 0.0, drag * delta)
 
+	# Steering authority fades at highway speed to avoid unrealistically sharp turns.
 	if absf(_speed) > 0.2:
 		var direction := 1.0 if _speed >= 0.0 else -1.0
-		rotate_y(-steering * steering_speed * _steering_multiplier * delta * direction)
+		var steering_authority := lerpf(1.0, 0.38, speed_ratio)
+		rotate_y(-steering * steering_speed * _steering_multiplier * steering_authority * delta * direction)
 
 	velocity = -global_transform.basis.z * _speed
 	move_and_slide()
