@@ -159,6 +159,7 @@ func _process(delta: float) -> void:
 			_complete_passenger_dropoff()
 
 func _spawn_vehicle() -> void:
+	_release_forklift_load_for_mission()
 	_mission_complete = false
 	_passenger_pickup_done = false
 	_cargo_pickup_done = false
