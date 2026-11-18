@@ -30,9 +30,17 @@ var _restart_button: Button
 var _traffic_car: Node3D
 var _traffic_speed: float = 7.5
 const SAVE_PATH := "user://zayron_progress.cfg"
+const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
+const ROUTE_TARGETS: Array[Vector3] = [Vector3(0.0, 0.0, -82.0), Vector3(0.0, 0.0, -48.0), Vector3(0.0, 0.0, -112.0)]
+
+var _selected_route: int = 0
+var _route_button: Button
+var _checkpoint_area: Area3D
+var _checkpoint_gate_parts: Array[MeshInstance3D] = []
 
 func _ready() -> void:
 	_load_progress()
+	_mission_target = ROUTE_TARGETS[_selected_route]
 	_build_environment()
 	_build_oman_test_road()
 	_build_roadside_signs()
@@ -50,7 +58,7 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
 		return
 	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
-	_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: %d m" % int(distance)
+	_mission_label.text = "%s  |  CHECKPOINT: %d m" % [ROUTE_NAMES[_selected_route], int(distance)]
 
 func _spawn_vehicle() -> void:
 	_mission_complete = false
@@ -62,7 +70,7 @@ func _spawn_vehicle() -> void:
 	if is_instance_valid(_vehicle_button):
 		_vehicle_button.text = "NEXT: " + FLEET_NAMES[(_selected_vehicle + 1) % FLEET_NAMES.size()]
 	if is_instance_valid(_mission_label):
-		_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: 000 m"
+		_mission_label.text = "%s  |  CHECKPOINT: 000 m" % ROUTE_NAMES[_selected_route]
 
 func _build_vehicle_selector() -> void:
 	var layer := CanvasLayer.new()
@@ -225,23 +233,24 @@ func _make_box(node_name: String, dimensions: Vector3, location: Vector3, tint: 
 	return mesh_instance
 
 func _build_mission() -> void:
-	var checkpoint := Area3D.new()
-	checkpoint.name = "DeliveryCheckpoint"
-	checkpoint.position = _mission_target
+	_checkpoint_area = Area3D.new()
+	_checkpoint_area.name = "DeliveryCheckpoint"
+	_checkpoint_area.position = _mission_target
 	var trigger := CollisionShape3D.new()
 	var trigger_shape := BoxShape3D.new()
 	trigger_shape.size = Vector3(8.0, 4.0, 5.0)
 	trigger.shape = trigger_shape
 	trigger.position.y = 1.5
-	checkpoint.add_child(trigger)
-	checkpoint.body_entered.connect(_on_checkpoint_entered)
-	add_child(checkpoint)
+	_checkpoint_area.add_child(trigger)
+	_checkpoint_area.body_entered.connect(_on_checkpoint_entered)
+	add_child(_checkpoint_area)
 
 	var gate_material := StandardMaterial3D.new()
 	gate_material.albedo_color = Color(0.05, 0.55, 0.34)
 	var left_post := _make_box("CheckpointLeftPost", Vector3(0.22, 3.2, 0.22), Vector3(-4.0, 1.6, _mission_target.z), gate_material.albedo_color)
 	var right_post := _make_box("CheckpointRightPost", Vector3(0.22, 3.2, 0.22), Vector3(4.0, 1.6, _mission_target.z), gate_material.albedo_color)
 	var top_bar := _make_box("CheckpointTopBar", Vector3(8.2, 0.22, 0.22), Vector3(0.0, 3.1, _mission_target.z), gate_material.albedo_color)
+	_checkpoint_gate_parts = [left_post, right_post, top_bar]
 	add_child(left_post)
 	add_child(right_post)
 	add_child(top_bar)
@@ -250,6 +259,15 @@ func _build_mission_hud() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 4
 	add_child(layer)
+	_route_button = Button.new()
+	_route_button.name = "RouteSelector"
+	_route_button.text = "ROUTE: " + ROUTE_NAMES[_selected_route]
+	_route_button.position = Vector2(24.0, 22.0)
+	_route_button.custom_minimum_size = Vector2(250.0, 48.0)
+	_route_button.add_theme_font_size_override("font_size", 16)
+	_route_button.pressed.connect(_cycle_route)
+	layer.add_child(_route_button)
+
 	_cash_label = Label.new()
 	_cash_label.name = "CashBalance"
 	_cash_label.text = "WALLET  |  OMR %d  |  DELIVERIES %d" % [_cash_balance, _delivery_count]
@@ -288,6 +306,26 @@ func _build_mission_hud() -> void:
 func _restart_delivery() -> void:
 	_spawn_vehicle()
 
+func _cycle_route() -> void:
+	_selected_route = (_selected_route + 1) % ROUTE_TARGETS.size()
+	_mission_target = ROUTE_TARGETS[_selected_route]
+	if is_instance_valid(_checkpoint_area):
+		_checkpoint_area.position = _mission_target
+	for i in range(_checkpoint_gate_parts.size()):
+		var gate_part := _checkpoint_gate_parts[i]
+		if not is_instance_valid(gate_part):
+			continue
+		if i == 0:
+			gate_part.position = Vector3(-4.0, 1.6, _mission_target.z)
+		elif i == 1:
+			gate_part.position = Vector3(4.0, 1.6, _mission_target.z)
+		else:
+			gate_part.position = Vector3(0.0, 3.1, _mission_target.z)
+	if is_instance_valid(_route_button):
+		_route_button.text = "ROUTE: " + ROUTE_NAMES[_selected_route]
+	_spawn_vehicle()
+	_save_progress()
+
 func _on_checkpoint_entered(body: Node3D) -> void:
 	if body != _active_vehicle or _mission_complete:
 		return
@@ -298,7 +336,7 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 		_cash_label.text = "WALLET  |  OMR %d  |  DELIVERIES %d" % [_cash_balance, _delivery_count]
 	_save_progress()
 	if is_instance_valid(_mission_label):
-		_mission_label.text = "DELIVERY %d COMPLETE  |  +25 OMR" % _delivery_count
+		_mission_label.text = "%s COMPLETE  |  +25 OMR" % ROUTE_NAMES[_selected_route]
 
 
 func _load_progress() -> void:
@@ -308,12 +346,14 @@ func _load_progress() -> void:
 	_delivery_count = int(progress.get_value("career", "deliveries", 0))
 	_cash_balance = int(progress.get_value("career", "wallet_omr", 0))
 	_selected_vehicle = clampi(int(progress.get_value("career", "selected_vehicle", 0)), 0, FLEET_SCENES.size() - 1)
+	_selected_route = clampi(int(progress.get_value("career", "selected_route", 0)), 0, ROUTE_TARGETS.size() - 1)
 
 func _save_progress() -> void:
 	var progress := ConfigFile.new()
 	progress.set_value("career", "deliveries", _delivery_count)
 	progress.set_value("career", "wallet_omr", _cash_balance)
 	progress.set_value("career", "selected_vehicle", _selected_vehicle)
+	progress.set_value("career", "selected_route", _selected_route)
 	var save_error := progress.save(SAVE_PATH)
 	if save_error != OK:
 		push_warning("Could not save Zayron Simulator progress. Error: %s" % save_error)
