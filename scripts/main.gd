@@ -685,6 +685,15 @@ func _build_test_intersection() -> void:
 	# Side-road traffic receives a clear give-way marking before joining the highway.
 	var give_way_bar := _make_box("JunctionGiveWayBar", Vector3(0.34, 0.035, 7.0), Vector3(2.1, 0.14, -48.0), Color(0.96, 0.94, 0.87))
 	add_child(give_way_bar)
+	# A marked pedestrian crossing makes the side-road entrance easier to read.
+	# Stripes span the access road and sit just inside the junction mouth.
+	for crossing_index in range(6):
+		var crossing_stripe := _make_box("JunctionPedestrianStripe_%d" % crossing_index, Vector3(0.38, 0.03, 6.4), Vector3(5.0 + float(crossing_index) * 0.72, 0.15, -48.0), Color(0.96, 0.95, 0.88))
+		add_child(crossing_stripe)
+	# Raised kerb-edge guides define both sides of the pedestrian crossing.
+	for kerb_z in [-51.9, -44.1]:
+		var crossing_kerb := _make_box("JunctionCrossingKerb_%s" % str(kerb_z), Vector3(5.0, 0.16, 0.18), Vector3(5.0, 0.08, kerb_z), Color(0.68, 0.67, 0.61))
+		add_child(crossing_kerb)
 	for triangle_index in range(3):
 		var triangle_base := _make_box("GiveWayTriangleBase_%d" % triangle_index, Vector3(0.85, 0.025, 0.12), Vector3(3.15, 0.145, -50.4 + float(triangle_index) * 2.4), Color(0.96, 0.94, 0.87))
 		add_child(triangle_base)
