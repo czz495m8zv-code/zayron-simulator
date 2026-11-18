@@ -8,6 +8,7 @@ extends CharacterBody3D
 @export var steering_speed: float = 1.15
 @export var steering_response: float = 3.5
 @export var lateral_grip: float = 12.0
+@export var supports_passenger_doors: bool = false
 
 var _speed: float = 0.0
 var _throttle_input: float = 0.0
@@ -41,6 +42,8 @@ var _wipers_on := false
 var _wiper_arm: MeshInstance3D
 var _door_open := false
 var _door_hinge: Node3D
+var _passenger_door_hinge: Node3D
+var _passenger_doors_open := false
 var _horn_playback: AudioStreamGeneratorPlayback
 var _horn_frames_left := 0
 var _horn_phase := 0.0
@@ -62,6 +65,7 @@ func _ready() -> void:
 	_build_camera()
 	_build_vehicle_lights()
 	_build_extra_vehicle_controls()
+	_build_passenger_door_controls()
 	_build_mobile_controls()
 	_build_engine_audio()
 
@@ -421,6 +425,8 @@ func _build_mobile_controls() -> void:
 	_add_action_button(ui, "N", -4.0, 364.0, "gear_n")
 	_add_action_button(ui, "D", 74.0, 364.0, "gear_d")
 	_add_action_button(ui, "ENGINE", -72.0, 410.0, "engine")
+	if supports_passenger_doors:
+		_add_action_button(ui, "PASSENGER DOOR", -90.0, 456.0, "passenger_door")
 
 func _build_extra_vehicle_controls() -> void:
 	var horn_stream := AudioStreamGenerator.new()
@@ -525,6 +531,10 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			_door_open = not _door_open
 			_door_hinge.rotation.y = deg_to_rad(-68.0 if _door_open else 0.0)
 			button.text = "CLOSE" if _door_open else "DOOR"
+		"passenger_door":
+			_passenger_doors_open = not _passenger_doors_open
+			_passenger_door_hinge.rotation.y = deg_to_rad(-82.0 if _passenger_doors_open else 0.0)
+			button.text = "CLOSE PASSENGER" if _passenger_doors_open else "PASSENGER DOOR"
 		"seat_up":
 			_adjust_seat(0.08)
 		"seat_down":
@@ -562,6 +572,28 @@ func _set_gear(next_gear: String) -> void:
 		_throttle_input = 0.0
 	if is_instance_valid(_gear_label):
 		_gear_label.text = _gear_mode + ("  •  ON" if _engine_running else "  •  OFF")
+
+func _build_passenger_door_controls() -> void:
+	if not supports_passenger_doors:
+		return
+	_passenger_door_hinge = Node3D.new()
+	_passenger_door_hinge.name = "PassengerEntryDoorHinge"
+	_passenger_door_hinge.position = Vector3(1.28, 1.35, -3.35)
+	add_child(_passenger_door_hinge)
+	var panel := MeshInstance3D.new()
+	panel.name = "PassengerEntryDoor"
+	var panel_mesh := BoxMesh.new()
+	panel_mesh.size = Vector3(0.075, 1.9, 0.92)
+	panel.mesh = panel_mesh
+	panel.position = Vector3(0.0, 0.0, 0.46)
+	var panel_material := StandardMaterial3D.new()
+	panel_material.albedo_color = Color(0.12, 0.18, 0.22)
+	panel_material.metallic = 0.28
+	panel.material_override = panel_material
+	_passenger_door_hinge.add_child(panel)
+
+func can_board_passengers() -> bool:
+	return supports_passenger_doors and _passenger_doors_open and absf(_speed) < 0.25
 
 func _adjust_seat(amount: float) -> void:
 	_seat_adjustment = clampf(_seat_adjustment + amount, -0.24, 0.24)
