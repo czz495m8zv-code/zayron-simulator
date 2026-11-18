@@ -358,3 +358,8 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Extended the Oman T-junction access road beyond the opposite side of the highway, with a matching asphalt surface and centre dashes.
 - Side-road traffic now traverses the full crossing and west exit before recycling to its approach position; it no longer respawns as soon as it clears the main carriageway.
 - This remains a scripted single-vehicle traffic prototype, not a complete multi-lane road network or collision-physics traffic simulation.
+
+
+### Junction pedestrian crossing markings
+- Added a six-stripe zebra crossing across the side-road mouth, with raised kerb-edge guides.
+- The crossing is currently visual road infrastructure only; pedestrian AI, crossing signals and vehicle yielding to pedestrians are not implemented yet.
