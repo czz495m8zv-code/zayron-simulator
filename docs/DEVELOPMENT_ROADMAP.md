@@ -46,7 +46,8 @@
 - [x] Add a first delivery checkpoint objective and HUD
 - [x] Add a repeatable delivery restart control and a simple OMR reward counter (source implemented; runtime verification pending)
 - [x] Save completed deliveries, in-game OMR wallet and selected vehicle locally on the device (runtime verification pending)
-- [ ] Expand the starter delivery loop with multiple routes, cargo types, route selection and passenger missions
+- [x] Add three selectable Oman-inspired delivery checkpoint routes with route selection and local route-progress saving (source implemented; runtime verification pending)
+- [ ] Add cargo types, passenger missions and route-specific depot gameplay
 - [ ] Add interactive traffic with collision avoidance, traffic signals and road rules
 - [ ] Verify all third-party asset licenses
 
