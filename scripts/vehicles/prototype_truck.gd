@@ -25,6 +25,7 @@ var _gear_label: Label
 var _rpm_label: Label
 var _vehicle_status_label: Label
 var _engine_temperature := 22.0
+var _cargo_loaded := false
 var _exterior_camera: Camera3D
 var _close_camera: Camera3D
 var _cockpit_camera: Camera3D
@@ -151,7 +152,8 @@ func _physics_process(delta: float) -> void:
 		_speed = move_toward(_speed, -max_reverse_speed, acceleration * 0.48 * delta)
 	elif throttle > 0.0 and _speed >= -0.1 and not _handbrake_on:
 		var torque_factor := lerpf(1.0, 0.42, speed_ratio)
-		_speed = move_toward(_speed, max_forward_speed, acceleration * torque_factor * throttle * delta)
+		var payload_factor := 0.78 if _cargo_loaded else 1.0
+		_speed = move_toward(_speed, max_forward_speed * (0.90 if _cargo_loaded else 1.0), acceleration * torque_factor * payload_factor * throttle * delta)
 	else:
 		# Engine braking plus speed-dependent aerodynamic/rolling drag.
 		var drag := rolling_resistance + (absf(_speed) * absf(_speed) * 0.018)
@@ -201,6 +203,8 @@ func _physics_process(delta: float) -> void:
 			status_parts.append("RIGHT SIGNAL")
 		if supports_trailer and _trailer_legs_down:
 			status_parts.append("TRAILER LEGS DOWN")
+		if _cargo_loaded:
+			status_parts.append("CARGO ONBOARD")
 		_vehicle_status_label.text = "  |  ".join(status_parts) if not status_parts.is_empty() else "SYSTEMS NORMAL"
 	if is_instance_valid(_steering_wheel_mesh):
 		_steering_wheel_mesh.rotation.z = -_steering_current * 0.72
@@ -264,6 +268,7 @@ func set_steering_sensitivity(value: float) -> void:
 	_steering_multiplier = clampf(value, 0.5, 1.8)
 
 func set_cargo_payload(cargo_type: int, loaded: bool) -> void:
+	_cargo_loaded = loaded
 	var payload := get_node_or_null("CargoPayload") as Node3D
 	if payload == null:
 		payload = Node3D.new()
