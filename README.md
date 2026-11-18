@@ -84,3 +84,7 @@ Use the in-game **NEXT** button to cycle through the fleet and the **ROUTE** but
 - This remains an arcade-style CharacterBody3D controller; it is not yet a wheel-suspension or tire-physics simulation.
 
 - Steering input now eases smoothly, and a lightweight lateral-grip approximation damps sideways momentum for more planted handling. This is still not full tire, suspension, or wheel-contact physics.
+
+
+### Shared player vehicle controls
+All six player-drivable vehicle models inherit a shared touch-control layer. The current additions include a procedural horn, left/right indicators, hazard flashers, animated wipers, a parking brake that holds the vehicle, and a functional animated cab-door toggle. These are early gameplay controls with simple procedural visuals; vehicle-specific passenger boarding, trailer coupling, cargo loading equipment, mirrors, gearbox/clutch simulation and detailed cockpit interactions remain planned.
