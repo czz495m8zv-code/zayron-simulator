@@ -174,6 +174,8 @@ func _spawn_vehicle() -> void:
 	_release_forklift_load_for_mission()
 	_mission_complete = false
 	_passenger_pickup_done = false
+	if is_instance_valid(_active_vehicle) and _active_vehicle.has_method("set_visible_passenger_manifest"):
+		_active_vehicle.set_visible_passenger_manifest(0)
 	_cargo_pickup_done = false
 	if is_instance_valid(_cargo_status_label):
 		_cargo_status_label.text = "CARGO STATUS: WAITING FOR LOAD"
@@ -1995,6 +1997,8 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 				_mission_label.text = "STOP THE BUS AND OPEN PASSENGER DOORS TO BOARD"
 			return
 		_passenger_pickup_done = true
+		if _active_vehicle.has_method("set_visible_passenger_manifest"):
+			_active_vehicle.set_visible_passenger_manifest(PASSENGER_GROUP_SIZE)
 		_animate_passenger_boarding()
 		if is_instance_valid(_passenger_status_label):
 			_passenger_status_label.text = "PASSENGERS ON BOARD: %d" % PASSENGER_GROUP_SIZE
@@ -2085,6 +2089,8 @@ func _complete_passenger_dropoff() -> void:
 	if not is_instance_valid(_active_vehicle) or not _active_vehicle.has_method("can_board_passengers") or not _active_vehicle.can_board_passengers():
 		return
 	_mission_complete = true
+	if _active_vehicle.has_method("set_visible_passenger_manifest"):
+		_active_vehicle.set_visible_passenger_manifest(0)
 	_animate_passenger_alighting()
 	if is_instance_valid(_passenger_status_label):
 		_passenger_status_label.text = "PASSENGERS DELIVERED: %d" % PASSENGER_GROUP_SIZE
