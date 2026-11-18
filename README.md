@@ -369,3 +369,9 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Added a simple procedural pedestrian who waits at the kerb, walks across the marked zebra crossing, and repeats after a short interval.
 - Side-road AI traffic yields while the pedestrian occupies the crossing zone; main-road AI traffic pauses near the junction during the crossing.
 - This is a single scripted pedestrian prototype with position-based yielding, not pedestrian pathfinding, collision physics, pedestrian signals, or a crowd system.
+
+
+### Pedestrian walking animation
+- Replaced static pedestrian legs with pivoted leg nodes and alternating swing while crossing the zebra crossing.
+- Leg motion settles back to a standing pose while the pedestrian waits at either kerb.
+- Animation is procedural and lightweight; it does not use a skeletal character rig or motion-capture animation.
