@@ -112,3 +112,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Passenger jobs now show a group of eight simple procedural passenger figures waiting beside the pickup stop.
 - The group follows the selected route's pickup location and disappears from the stop when the boarding checkpoint is accepted.
 - These are visual placeholders; individual walking-to-door, boarding animations, seat assignment, passenger comfort and alighting sequences remain future work.
+
+
+### City bus passenger cabin
+- The Oman City Bus now includes ten procedural passenger seats arranged in paired rows, seat grab rails and a central aisle.
+- Luxury and VIP coaches already have their own paired passenger-seat layouts.
+- These are static cabin meshes; passengers are not yet individually assigned to seats and no seat-belt, walking or boarding animation is simulated.
