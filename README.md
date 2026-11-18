@@ -408,6 +408,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - The driving HUD reports normal road position, lane-departure warning, and road-edge warning based on the player's lateral position on the current prototype highway.
 - The warning is visual only; it does not steer the vehicle, apply braking, or represent a full lane-marking/collision detection system.
 
+### Pedestrian proximity awareness
+- The driving HUD warns when the animated junction pedestrian is crossing close to the player's vehicle and returns to a clear status when the hazard is no longer nearby.
+- This is a proximity warning for the current prototype crossing only; it is not certified collision avoidance and does not guarantee that a collision will be prevented.
+
 ### Highway speed awareness
 - The driving HUD shows the prototype highway limit of 80 km/h and changes to a caution/overspeed warning above the limit.
 - This is a visual driver-awareness warning only; it does not yet issue fines, enforce speed, or model location-specific speed-limit zones.
