@@ -46,7 +46,7 @@ The first company-management layer is now implemented in the gameplay scene:
 - Show a fleet and staff roster with each bus and driver marked AVAILABLE or ON ROUTE.
 - Dispatch reserves one available driver and one available bus; both return to AVAILABLE after the simulated trip completes.
 
-**Important prototype boundary:** background dispatch is currently a timed management simulation, not yet a visible AI-controlled bus travelling the road. Company buses and drivers now have individual saved roster records and availability states, but company buses are not yet separate drivable vehicle instances. Route-by-route AI driving, driver schedules, multiple simultaneous dispatches, ticket demand, payroll cycles, depots and a full Oman road network remain future development milestones. All OMR values here are fictional in-game economy values.
+**Important prototype boundary:** visible company-bus movement is an early scripted waypoint-style demonstration on the existing short straight test road. It is not yet lane-aware traffic AI, realistic steering/turning, a real Oman intercity road network, or a separate player-drivable fleet vehicle. Company buses and drivers have individual saved roster records and availability states. Route-by-route AI driving, driver schedules, multiple simultaneous dispatches, ticket demand, payroll cycles, depots and a full Oman road network remain future development milestones. All OMR values here are fictional in-game economy values.
 
 ## Android build
 
