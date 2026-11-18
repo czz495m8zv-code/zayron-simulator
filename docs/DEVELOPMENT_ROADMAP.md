@@ -25,6 +25,7 @@
 - [x] Add a follow camera
 - [x] Add keyboard fallback controls
 - [x] Add Android touch-control UI in source
+- [x] Track left/right touch steering holds independently to support multi-touch release correctly (source implemented; runtime verification pending)
 - [ ] Verify touch controls, vehicle switching, mission trigger and handling in a fresh Android run
 
 ### 2 — Vehicle simulation
@@ -43,6 +44,7 @@
 ### 3 — Oman vertical slice
 - [x] Create an initial original desert-road environment
 - [x] Add initial roadside destination signs and a moving visual traffic prototype (runtime verification pending)
+- [x] Add an initial procedural date-palm and desert-shrub roadside vegetation pass (source implemented; runtime verification pending)
 - [ ] Add detailed road markings, terrain, buildings and landmarks
 - [x] Add a first delivery checkpoint objective and HUD
 - [x] Add a repeatable delivery restart control and a simple OMR reward counter (source implemented; runtime verification pending)
