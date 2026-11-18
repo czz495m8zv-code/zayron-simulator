@@ -700,7 +700,11 @@ func _toggle_forklift_crate() -> void:
 	_forklift_held_pallet = nearest_pallet
 	_forklift_held_pallet.reparent(_forklift_carriage, true)
 	_forklift_held_pallet.position = Vector3(0.0, 0.34, -0.92)
-	_forklift_cargo_label.text = "PALLET: %d CRATES" % _forklift_held_pallet.get_child_count()
+	var crate_count := 0
+	for crate in _depot_crates:
+		if is_instance_valid(crate) and crate.get_parent() == _forklift_held_pallet:
+			crate_count += 1
+	_forklift_cargo_label.text = "PALLET: %d CRATES" % crate_count
 
 
 func _release_forklift_load_for_mission() -> void:
