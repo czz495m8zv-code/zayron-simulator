@@ -14,6 +14,9 @@ var _reverse_input: float = 0.0
 var _steering_input: float = 0.0
 var _speed_label: Label
 var _gear_label: Label
+var _exterior_camera: Camera3D
+var _close_camera: Camera3D
+var _using_close_camera: bool = false
 
 func _ready() -> void:
 	_build_truck()
@@ -106,12 +109,28 @@ func _build_truck() -> void:
 			add_child(wheel)
 
 func _build_camera() -> void:
-	var camera := Camera3D.new()
-	camera.position = Vector3(0.0, 5.2, 10.5)
-	camera.rotation_degrees = Vector3(-19.0, 0.0, 0.0)
-	camera.current = true
-	camera.fov = 72.0
-	add_child(camera)
+	_exterior_camera = Camera3D.new()
+	_exterior_camera.name = "ChaseCamera"
+	_exterior_camera.position = Vector3(0.0, 5.2, 10.5)
+	_exterior_camera.rotation_degrees = Vector3(-19.0, 0.0, 0.0)
+	_exterior_camera.current = true
+	_exterior_camera.fov = 72.0
+	add_child(_exterior_camera)
+
+	_close_camera = Camera3D.new()
+	_close_camera.name = "CloseDrivingCamera"
+	_close_camera.position = Vector3(0.0, 3.4, 5.2)
+	_close_camera.rotation_degrees = Vector3(-11.0, 0.0, 0.0)
+	_close_camera.current = false
+	_close_camera.fov = 78.0
+	add_child(_close_camera)
+
+func _toggle_camera() -> void:
+	_using_close_camera = not _using_close_camera
+	if _using_close_camera:
+		_close_camera.make_current()
+	else:
+		_exterior_camera.make_current()
 
 func _build_mobile_controls() -> void:
 	var layer := CanvasLayer.new()
@@ -147,6 +166,26 @@ func _build_mobile_controls() -> void:
 	_add_hold_button(ui, "BRAKE", false, -224.0, -124.0, -124.0, -24.0, "brake")
 	_add_hold_button(ui, "GAS", false, -112.0, -124.0, -12.0, -24.0, "accelerate")
 	_add_hold_button(ui, "R", false, -112.0, -224.0, -12.0, -136.0, "reverse")
+	_add_camera_button(ui)
+
+func _add_camera_button(parent: Control) -> void:
+	var button := Button.new()
+	button.name = "CameraToggle"
+	button.text = "VIEW"
+	button.focus_mode = Control.FOCUS_NONE
+	button.anchor_left = 0.5
+	button.anchor_right = 0.5
+	button.anchor_top = 0.0
+	button.anchor_bottom = 0.0
+	button.offset_left = -48.0
+	button.offset_top = 22.0
+	button.offset_right = 48.0
+	button.offset_bottom = 68.0
+	button.add_theme_font_size_override("font_size", 17)
+	button.add_theme_color_override("font_color", Color.WHITE)
+	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.04, 0.10, 0.17, 0.9)))
+	button.pressed.connect(_toggle_camera)
+	parent.add_child(button)
 
 func _add_hold_button(parent: Control, label: String, left_side: bool, left: float, top: float, right: float, bottom: float, control_name: String) -> void:
 	var button := Button.new()
