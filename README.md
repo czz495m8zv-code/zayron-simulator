@@ -352,3 +352,9 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Main-road AI traffic is held outside the conflict area while the side-road vehicle occupies the crossing.
 - Player braking assistance also holds before the stop line while the side-road vehicle is crossing.
 - This remains a single scripted vehicle and position-based conflict zone; it is not a complete multi-lane junction controller or collision-physics system.
+
+
+### Full side-road crossing
+- Extended the Oman T-junction access road beyond the opposite side of the highway, with a matching asphalt surface and centre dashes.
+- Side-road traffic now traverses the full crossing and west exit before recycling to its approach position; it no longer respawns as soon as it clears the main carriageway.
+- This remains a scripted single-vehicle traffic prototype, not a complete multi-lane road network or collision-physics traffic simulation.
