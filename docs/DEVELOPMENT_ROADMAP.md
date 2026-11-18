@@ -25,7 +25,7 @@
 - [x] Add a follow camera
 - [x] Add keyboard fallback controls
 - [x] Add Android touch-control UI in source
-- [ ] Verify touch controls and handling in a fresh Android run
+- [ ] Verify touch controls, vehicle switching, mission trigger and handling in a fresh Android run
 
 ### 2 — Vehicle simulation
 - [x] Separate service brake and reverse inputs in the current truck controller
@@ -38,7 +38,7 @@
 ### 3 — Oman vertical slice
 - [x] Create an initial original desert-road environment
 - [ ] Add detailed road markings, signs, terrain, buildings and landmarks
-- [ ] Add a simple delivery / passenger mission loop
+- [x] Add a first delivery checkpoint objective and HUD\n- [ ] Add a full delivery / passenger mission loop with rewards and route selection
 - [ ] Add traffic and road rules
 - [ ] Verify all third-party asset licenses
 
@@ -50,7 +50,7 @@
 - [ ] Fix crashes and blocking gameplay issues
 
 ### 5 — Content expansion
-- [ ] Add a proper bus and additional truck models
+- [x] Add a first bus prototype scene and model built from procedural meshes\n- [ ] Add more detailed production-quality bus and truck models
 - [ ] Add depots, routes, cargo, passengers and progression
 - [ ] Expand the Oman map in manageable regions
 - [ ] Add GCC regions only after the Oman foundation is stable
