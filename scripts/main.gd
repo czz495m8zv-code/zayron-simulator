@@ -805,9 +805,9 @@ func _dispatch_company_driver() -> void:
 func _on_company_driver_trip_completed() -> void:
 	_company_trip_active = false
 	_company_completed_trips += 1
-	# Illustrative game-economy figures: OMR 85 fare revenue, less OMR 20 fuel
-	# and OMR 15 driver pay. OMR 15 operating cost was reserved at dispatch.
-	_company_funds += 50
+	# Illustrative game-economy figures: OMR 85 fare revenue is credited
+	# after OMR 35 trip costs were reserved at dispatch, for OMR 50 net profit.
+	_company_funds += 85
 	_company_status_label.text = "Company driver completed the route. Net company profit: OMR 50."
 	_refresh_company_panel()
 	_save_progress()
