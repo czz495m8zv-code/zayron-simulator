@@ -24,6 +24,7 @@ var _selected_vehicle: int = 0
 var _vehicle_button: Button
 var _mission_label: Label
 var _junction_status_label: Label
+var _speed_limit_status_label: Label
 var _mission_complete: bool = false
 var _mission_target := Vector3(0.0, 0.0, -82.0)
 var _delivery_count: int = 0
@@ -216,6 +217,17 @@ func _process(delta: float) -> void:
 	_update_junction_pedestrian(delta)
 	_update_side_road_traffic(delta)
 	_update_player_signal_rule()
+	if is_instance_valid(_speed_limit_status_label) and is_instance_valid(_active_vehicle) and _active_vehicle.has_method("get_speed_kmh"):
+		var player_speed_kmh := float(_active_vehicle.get_speed_kmh())
+		if player_speed_kmh > 82.0:
+			_speed_limit_status_label.text = "SPEED LIMIT 80 km/h  |  OVERSPEED"
+			_speed_limit_status_label.add_theme_color_override("font_color", Color(1.0, 0.28, 0.2))
+		elif player_speed_kmh > 80.0:
+			_speed_limit_status_label.text = "SPEED LIMIT 80 km/h  |  SLOW DOWN"
+			_speed_limit_status_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.25))
+		else:
+			_speed_limit_status_label.text = "SPEED LIMIT 80 km/h"
+			_speed_limit_status_label.add_theme_color_override("font_color", Color(0.68, 0.9, 0.76))
 	if is_instance_valid(_junction_status_label):
 		var junction_phase_name := "MAIN ROAD GREEN"
 		var junction_phase_end := 8.0
@@ -1712,6 +1724,17 @@ func _build_mission_hud() -> void:
 	_junction_status_label.add_theme_font_size_override("font_size", 14)
 	_junction_status_label.add_theme_color_override("font_color", Color(1.0, 0.84, 0.42))
 	layer.add_child(_junction_status_label)
+
+	_speed_limit_status_label = Label.new()
+	_speed_limit_status_label.name = "SpeedLimitStatus"
+	_speed_limit_status_label.anchor_left = 0.05
+	_speed_limit_status_label.anchor_right = 0.95
+	_speed_limit_status_label.offset_top = 138.0
+	_speed_limit_status_label.offset_bottom = 160.0
+	_speed_limit_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_speed_limit_status_label.add_theme_font_size_override("font_size", 13)
+	_speed_limit_status_label.add_theme_color_override("font_color", Color(0.68, 0.9, 0.76))
+	layer.add_child(_speed_limit_status_label)
 
 	_restart_button = Button.new()
 	_restart_button.name = "RestartDelivery"
