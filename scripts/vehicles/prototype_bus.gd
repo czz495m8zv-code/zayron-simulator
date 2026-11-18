@@ -1,5 +1,16 @@
 extends "res://scripts/vehicles/prototype_truck.gd"
 
+func _add_bus_body_panel(panel_name: String, panel_size: Vector3, panel_position: Vector3, panel_material: Material) -> void:
+	var panel := MeshInstance3D.new()
+	panel.name = panel_name
+	var panel_mesh := BoxMesh.new()
+	panel_mesh.size = panel_size
+	panel.mesh = panel_mesh
+	panel.position = panel_position
+	panel.material_override = panel_material
+	add_child(panel)
+
+
 func _build_truck() -> void:
 	cockpit_camera_position = Vector3(0.0, 2.35, -3.8)
 	var chassis_shape := CollisionShape3D.new()
@@ -11,13 +22,16 @@ func _build_truck() -> void:
 
 	var body_material := StandardMaterial3D.new()
 	body_material.albedo_color = Color(0.86, 0.82, 0.68)
-	var body_mesh := MeshInstance3D.new()
-	var body_box := BoxMesh.new()
-	body_box.size = Vector3(2.5, 2.8, 9.0)
-	body_mesh.mesh = body_box
-	body_mesh.position.y = 1.4
-	body_mesh.material_override = body_material
-	add_child(body_mesh)
+	# Separate body panels leave open window bays for a visible passenger cabin.
+	_add_bus_body_panel("RoofPanel", Vector3(2.5, 0.28, 9.0), Vector3(0.0, 2.66, 0.0), body_material)
+	_add_bus_body_panel("FrontBulkhead", Vector3(2.5, 2.8, 0.14), Vector3(0.0, 1.4, -4.43), body_material)
+	_add_bus_body_panel("RearBulkhead", Vector3(2.5, 2.8, 0.14), Vector3(0.0, 1.4, 4.43), body_material)
+	for side in [-1.0, 1.0]:
+		_add_bus_body_panel("LowerSidePanel_%s" % side, Vector3(0.08, 1.32, 9.0), Vector3(side * 1.22, 0.82, 0.0), body_material)
+		_add_bus_body_panel("UpperSidePanel_%s" % side, Vector3(0.08, 0.34, 9.0), Vector3(side * 1.22, 2.39, 0.0), body_material)
+		for pillar_index in range(6):
+			var pillar_z := -3.9 + float(pillar_index) * 1.56
+			_add_bus_body_panel("WindowPillar_%s_%d" % [side, pillar_index], Vector3(0.09, 0.94, 0.12), Vector3(side * 1.22, 2.08, pillar_z), body_material)
 
 	var lower_band := MeshInstance3D.new()
 	var band_box := BoxMesh.new()
