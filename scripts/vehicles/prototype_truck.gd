@@ -16,7 +16,10 @@ var _speed_label: Label
 var _gear_label: Label
 var _exterior_camera: Camera3D
 var _close_camera: Camera3D
-var _using_close_camera: bool = false
+var _cockpit_camera: Camera3D
+var _camera_button: Button
+var _camera_mode: int = 0
+@export var cockpit_camera_position: Vector3 = Vector3(0.0, 2.45, -1.35)
 var _engine_playback: AudioStreamGeneratorPlayback
 var _engine_phase: float = 0.0
 const ENGINE_SAMPLE_RATE: float = 22050.0
@@ -122,6 +125,8 @@ func _build_truck() -> void:
 	windscreen.material_override = glass
 	add_child(windscreen)
 
+	_add_cockpit_steering_wheel(Vector3(-0.62, 2.15, -1.55))
+
 	var wheel_material := StandardMaterial3D.new()
 	wheel_material.albedo_color = Color(0.045, 0.045, 0.05)
 	for x in [-1.12, 1.12]:
@@ -213,12 +218,25 @@ func _build_camera() -> void:
 	_close_camera.fov = 78.0
 	add_child(_close_camera)
 
+	_cockpit_camera = Camera3D.new()
+	_cockpit_camera.name = "CockpitCamera"
+	_cockpit_camera.position = cockpit_camera_position
+	_cockpit_camera.current = false
+	_cockpit_camera.fov = 76.0
+	add_child(_cockpit_camera)
+
 func _toggle_camera() -> void:
-	_using_close_camera = not _using_close_camera
-	if _using_close_camera:
-		_close_camera.make_current()
-	else:
-		_exterior_camera.make_current()
+	_camera_mode = (_camera_mode + 1) % 3
+	match _camera_mode:
+		0:
+			_exterior_camera.make_current()
+			_camera_button.text = "VIEW: CHASE"
+		1:
+			_close_camera.make_current()
+			_camera_button.text = "VIEW: CLOSE"
+		2:
+			_cockpit_camera.make_current()
+			_camera_button.text = "VIEW: CABIN"
 
 func _build_mobile_controls() -> void:
 	var layer := CanvasLayer.new()
@@ -259,7 +277,8 @@ func _build_mobile_controls() -> void:
 func _add_camera_button(parent: Control) -> void:
 	var button := Button.new()
 	button.name = "CameraToggle"
-	button.text = "VIEW"
+	button.text = "VIEW: CHASE"
+	_camera_button = button
 	button.focus_mode = Control.FOCUS_NONE
 	button.anchor_left = 0.5
 	button.anchor_right = 0.5
@@ -334,3 +353,39 @@ func _on_control_up(control_name: String) -> void:
 			_reverse_input = 0.0
 		"steer_left", "steer_right":
 			_steering_input = 0.0
+
+func _add_cockpit_steering_wheel(location: Vector3) -> void:
+	var wheel := MeshInstance3D.new()
+	wheel.name = "CockpitSteeringWheel"
+	var ring := TorusMesh.new()
+	ring.inner_radius = 0.205
+	ring.outer_radius = 0.255
+	wheel.mesh = ring
+	wheel.rotation_degrees.x = 90.0
+	wheel.position = location
+	var wheel_material := StandardMaterial3D.new()
+	wheel_material.albedo_color = Color(0.055, 0.065, 0.075)
+	wheel_material.metallic = 0.22
+	wheel.material_override = wheel_material
+	add_child(wheel)
+	var hub := MeshInstance3D.new()
+	hub.name = "SteeringWheelHub"
+	var hub_mesh := CylinderMesh.new()
+	hub_mesh.top_radius = 0.075
+	hub_mesh.bottom_radius = 0.075
+	hub_mesh.height = 0.09
+	hub.mesh = hub_mesh
+	hub.rotation_degrees.x = 90.0
+	hub.position = location + Vector3(0.0, 0.0, -0.025)
+	hub.material_override = wheel_material
+	add_child(hub)
+	for spoke_index in range(3):
+		var spoke := MeshInstance3D.new()
+		spoke.name = "SteeringWheelSpoke_%d" % spoke_index
+		var spoke_mesh := BoxMesh.new()
+		spoke_mesh.size = Vector3(0.045, 0.22, 0.055)
+		spoke.mesh = spoke_mesh
+		spoke.position = location + Vector3(0.0, -0.07, 0.0)
+		spoke.rotation.z = TAU * float(spoke_index) / 3.0
+		spoke.material_override = wheel_material
+		add_child(spoke)
