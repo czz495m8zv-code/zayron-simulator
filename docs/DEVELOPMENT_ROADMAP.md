@@ -33,6 +33,8 @@
 - [x] Add simple wheel and cab details to the placeholder truck
 - [ ] Tune mass, traction, suspension, braking and steering
 - [ ] Add transmission behaviour and engine audio
+- [x] Add an alternate close driving camera and on-screen view toggle
+- [x] Add initial luxury coach passenger-cabin and premium truck dashboard details
 - [ ] Test at multiple frame rates and device performance levels
 
 ### 3 — Oman vertical slice
