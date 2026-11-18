@@ -31,8 +31,10 @@
 - [x] Separate service brake and reverse inputs in the current truck controller
 - [x] Add basic speed and gear-state display
 - [x] Add simple wheel and cab details to the placeholder truck
-- [ ] Tune mass, traction, suspension, braking and steering
-- [ ] Add transmission behaviour and engine audio
+- [x] Add different baseline acceleration, braking, speed and steering profiles for buses and heavy trucks
+- [ ] Tune mass, traction, suspension, braking and steering with real-device testing
+- [x] Add a lightweight procedural engine sound layer
+- [ ] Add recorded or licensed vehicle engine samples and transmission behaviour
 - [x] Add an alternate close driving camera and on-screen view toggle
 - [x] Add initial luxury coach passenger-cabin and premium truck dashboard details
 - [ ] Test at multiple frame rates and device performance levels
