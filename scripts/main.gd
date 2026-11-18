@@ -49,13 +49,14 @@ var _passenger_pickup_done: bool = false
 var _passenger_pickup_target := Vector3(0.0, 0.0, -37.0)
 var _checkpoint_label: Label3D
 var _passenger_status_label: Label
+var _cargo_status_label: Label
+var _cargo_pickup_done: bool = false
 
 func _ready() -> void:
 	_load_progress()
 	_mission_target = ROUTE_TARGETS[_selected_route]
 	_passenger_pickup_target = Vector3(0.0, 0.0, (8.0 + _mission_target.z) * 0.5)
-	if _passenger_mode:
-		_mission_target = _passenger_pickup_target
+	_mission_target = _passenger_pickup_target
 	_build_environment()
 	_build_oman_test_road()
 	_build_roadside_signs()
@@ -73,7 +74,7 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
 		return
 	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
-	var stage_name := "CHECKPOINT"
+	var stage_name := "LOAD CARGO" if not _cargo_pickup_done else "DELIVER CARGO"
 	if _passenger_mode:
 		stage_name = "PICKUP STOP" if not _passenger_pickup_done else "PASSENGER DROP-OFF"
 	_mission_label.text = "%s  |  %s: %d m" % [ROUTE_NAMES[_selected_route], stage_name, int(distance)]
@@ -81,9 +82,12 @@ func _process(delta: float) -> void:
 func _spawn_vehicle() -> void:
 	_mission_complete = false
 	_passenger_pickup_done = false
+	_cargo_pickup_done = false
+	if is_instance_valid(_cargo_status_label):
+		_cargo_status_label.text = "CARGO STATUS: WAITING FOR LOAD"
 	if is_instance_valid(_passenger_status_label):
 		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
-	if _passenger_mode:
+	if _passenger_mode or not _cargo_pickup_done:
 		_mission_target = Vector3(0.0, 0.0, (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5)
 	else:
 		_mission_target = ROUTE_TARGETS[_selected_route]
@@ -345,6 +349,15 @@ func _build_mission_hud() -> void:
 	_passenger_status_label.visible = _passenger_mode
 	layer.add_child(_passenger_status_label)
 
+	_cargo_status_label = Label.new()
+	_cargo_status_label.name = "CargoManifest"
+	_cargo_status_label.text = "CARGO STATUS: WAITING FOR LOAD"
+	_cargo_status_label.position = Vector2(24.0, 222.0)
+	_cargo_status_label.add_theme_font_size_override("font_size", 18)
+	_cargo_status_label.add_theme_color_override("font_color", Color(1.0, 0.83, 0.58))
+	_cargo_status_label.visible = not _passenger_mode
+	layer.add_child(_cargo_status_label)
+
 	_mission_label = Label.new()
 	_mission_label.name = "MissionStatus"
 	_mission_label.text = "DELIVERY RUN  |  CHECKPOINT: 000 m"
@@ -398,7 +411,7 @@ func _move_checkpoint_gate() -> void:
 		if _passenger_mode:
 			_checkpoint_label.text = "PICKUP" if not _passenger_pickup_done else "DROP-OFF"
 		else:
-			_checkpoint_label.text = "DELIVERY"
+			_checkpoint_label.text = "LOAD CARGO" if not _cargo_pickup_done else "DELIVER CARGO"
 
 func _toggle_passenger_mode() -> void:
 	_passenger_mode = not _passenger_mode
@@ -411,6 +424,9 @@ func _toggle_passenger_mode() -> void:
 	if is_instance_valid(_passenger_status_label):
 		_passenger_status_label.visible = _passenger_mode
 		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
+	if is_instance_valid(_cargo_status_label):
+		_cargo_status_label.visible = not _passenger_mode
+		_cargo_status_label.text = "CARGO STATUS: WAITING FOR LOAD"
 	_spawn_vehicle()
 	_save_progress()
 
@@ -434,9 +450,22 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 		if is_instance_valid(_mission_label):
 			_mission_label.text = "PASSENGERS ON BOARD  |  CONTINUE TO " + ROUTE_NAMES[_selected_route].split(" -> ")[1]
 		return
+	if not _passenger_mode and not _cargo_pickup_done:
+		_cargo_pickup_done = true
+		if is_instance_valid(_cargo_status_label):
+			_cargo_status_label.text = "CARGO LOADED: " + CARGO_NAMES[_selected_cargo]
+		_mission_target = ROUTE_TARGETS[_selected_route]
+		if is_instance_valid(_checkpoint_area):
+			_checkpoint_area.position = _mission_target
+		_move_checkpoint_gate()
+		if is_instance_valid(_mission_label):
+			_mission_label.text = "CARGO LOADED  |  CONTINUE TO " + ROUTE_NAMES[_selected_route].split(" -> ")[1]
+		return
 	_mission_complete = true
 	if _passenger_mode and is_instance_valid(_passenger_status_label):
 		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
+	if not _passenger_mode and is_instance_valid(_cargo_status_label):
+		_cargo_status_label.text = "CARGO DELIVERED: " + CARGO_NAMES[_selected_cargo]
 	_delivery_count += 1
 	_cash_balance += PASSENGER_TRIP_REWARD if _passenger_mode else CARGO_REWARDS[_selected_cargo]
 	if is_instance_valid(_cash_label):
