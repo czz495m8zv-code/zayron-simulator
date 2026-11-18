@@ -36,6 +36,7 @@ const CARGO_NAMES: Array[String] = ["GENERAL GOODS", "CONSTRUCTION SUPPLIES", "C
 const CARGO_REWARDS: Array[int] = [25, 40, 35]
 const PASSENGER_TRIP_REWARD: int = 30
 const PASSENGER_GROUP_SIZE: int = 8
+const COMPANY_TRIP_SCRIPT = preload("res://scripts/company_bus_trip.gd")
 
 var _selected_route: int = 0
 var _route_button: Button
@@ -850,9 +851,6 @@ func _buy_company_bus() -> void:
 	_refresh_company_panel()
 
 func _dispatch_company_driver() -> void:
-	if _company_trip_active:
-		_company_status_label.text = "A company driver is already completing a route."
-		return
 	if _company_funds < 35:
 		_company_status_label.text = "Your company needs OMR 35 available for trip costs."
 		return
@@ -873,19 +871,35 @@ func _dispatch_company_driver() -> void:
 		_company_status_label.text = "No available company bus. Purchase a bus first."
 		return
 	_company_funds -= 35
-	_company_trip_driver_index = driver_index
-	_company_trip_bus_index = bus_index
 	_company_drivers[driver_index]["status"] = "ON ROUTE"
 	_company_drivers[driver_index]["route"] = ROUTE_NAMES[_company_selected_route]
 	_company_drivers[driver_index]["bus"] = str(_company_fleet[bus_index].get("name", "Company Bus"))
 	_company_fleet[bus_index]["status"] = "ON ROUTE"
+	var trip := COMPANY_TRIP_SCRIPT.new()
+	trip.name = "CompanyTrip_%03d" % (bus_index + 1)
+	trip.trip_completed.connect(_on_company_trip_completed)
+	trip.configure(FLEET_SCENES[3], _company_ai_bus_start, Vector3(-2.0, 0.15, ROUTE_TARGETS[_company_selected_route].z), ROUTE_NAMES[_company_selected_route], driver_index, bus_index)
+	add_child(trip)
 	_company_trip_active = true
-	_spawn_company_ai_bus()
-	var route_distance: float = absf(_company_ai_bus_destination.z - _company_ai_bus_start.z)
-	# Watchdog only: the trip completes on actual return-to-depot arrival.
-	_company_trip_timer.wait_time = (route_distance * 2.0 / _company_ai_bus_speed) + 30.0
-	_company_trip_timer.start()
-	_company_status_label.text = "%s dispatched in %s on %s. You can keep driving." % [_company_drivers[driver_index]["name"], _company_fleet[bus_index]["name"], ROUTE_NAMES[_company_selected_route]]
+	_company_status_label.text = "%s dispatched in %s on %s. Other available drivers and buses can now be dispatched too." % [_company_drivers[driver_index]["name"], _company_fleet[bus_index]["name"], ROUTE_NAMES[_company_selected_route]]
+	_refresh_company_panel()
+	_save_progress()
+
+func _on_company_trip_completed(driver_index: int, bus_index: int) -> void:
+	if driver_index >= 0 and driver_index < _company_drivers.size():
+		_company_drivers[driver_index]["status"] = "AVAILABLE"
+		_company_drivers[driver_index]["route"] = "UNASSIGNED"
+		_company_drivers[driver_index]["bus"] = "NO BUS"
+	if bus_index >= 0 and bus_index < _company_fleet.size():
+		_company_fleet[bus_index]["status"] = "AVAILABLE"
+	_company_completed_trips += 1
+	_company_funds += 85
+	_company_trip_active = false
+	for driver in _company_drivers:
+		if str(driver.get("status", "AVAILABLE")) == "ON ROUTE":
+			_company_trip_active = true
+			break
+	_company_status_label.text = "Company trip completed. Net company profit: OMR 50. Fleet and staff updated."
 	_refresh_company_panel()
 	_save_progress()
 
