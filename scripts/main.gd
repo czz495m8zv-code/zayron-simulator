@@ -32,6 +32,9 @@ var _restart_button: Button
 var _traffic_vehicles: Array[Node3D] = []
 var _traffic_vehicle_speeds: Array[float] = []
 var _traffic_current_speeds: Array[float] = []
+var _traffic_signal_lamps: Array[MeshInstance3D] = []
+var _traffic_signal_materials: Array[StandardMaterial3D] = []
+var _traffic_signal_clock: float = 0.0
 const TRAFFIC_LOOP_LENGTH: float = 142.0
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
@@ -140,6 +143,7 @@ func _ready() -> void:
 	_mission_target = _passenger_pickup_target
 	_build_environment()
 	_build_oman_test_road()
+	_build_test_intersection()
 	_build_oman_roadside_vegetation()
 	_build_roadside_signs()
 	_build_traffic_vehicle()
@@ -175,6 +179,13 @@ func _process(delta: float) -> void:
 			# Keep every respawn inside the same 142 m loop and preserve the
 			# original traffic order; offsets outside the loop caused phase overlap.
 			traffic_vehicle.position.z = -118.0 + float(traffic_index) * 46.0
+	_traffic_signal_clock = fposmod(_traffic_signal_clock + delta, 14.0)
+	var active_signal := 0 if _traffic_signal_clock < 8.0 else (1 if _traffic_signal_clock < 10.0 else 2)
+	for lamp_index in range(_traffic_signal_lamps.size()):
+		var lamp_material := _traffic_signal_materials[lamp_index]
+		var lamp_on := lamp_index % 3 == active_signal
+		lamp_material.emission_energy_multiplier = 1.8 if lamp_on else 0.08
+		_traffic_signal_lamps[lamp_index].visible = true
 	_forklift_animation_time += delta
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
@@ -612,6 +623,39 @@ func _build_roadside_signs() -> void:
 		speed_text.modulate = Color(0.08, 0.08, 0.08)
 		speed_text.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		add_child(speed_text)
+
+
+func _build_test_intersection() -> void:
+	# Short access road creates a visible T-junction beside the test highway.
+	var junction_road := _make_box("OmanJunctionAccessRoad", Vector3(20.0, 0.12, 8.0), Vector3(10.5, 0.035, -48.0), Color(0.12, 0.13, 0.14))
+	add_child(junction_road)
+	var junction_surface := _make_box("JunctionAsphaltSurface", Vector3(20.0, 0.025, 8.0), Vector3(10.5, 0.105, -48.0), Color(0.29, 0.30, 0.31))
+	add_child(junction_surface)
+	for pole_index in range(2):
+		var side := -1.0 if pole_index == 0 else 1.0
+		var pole_x := side * 5.7
+		var pole_z := -43.2
+		var pole := _make_box("TrafficSignalPole_%d" % pole_index, Vector3(0.18, 4.0, 0.18), Vector3(pole_x, 2.0, pole_z), Color(0.20, 0.22, 0.23))
+		add_child(pole)
+		var head := _make_box("TrafficSignalHead_%d" % pole_index, Vector3(0.62, 1.85, 0.48), Vector3(pole_x, 4.05, pole_z), Color(0.035, 0.04, 0.045))
+		add_child(head)
+		for lamp_index in range(3):
+			var lamp := MeshInstance3D.new()
+			lamp.name = "TrafficSignalLamp_%d_%d" % [pole_index, lamp_index]
+			var sphere := SphereMesh.new()
+			sphere.radius = 0.19
+			sphere.height = 0.38
+			lamp.mesh = sphere
+			lamp.position = Vector3(pole_x, 4.62 - float(lamp_index) * 0.57, pole_z + 0.26)
+			var material := StandardMaterial3D.new()
+			material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			material.emission_enabled = true
+			material.emission = [Color(0.95, 0.035, 0.025), Color(1.0, 0.55, 0.02), Color(0.03, 0.85, 0.12)][lamp_index]
+			material.emission_energy_multiplier = 0.08
+			lamp.material_override = material
+			add_child(lamp)
+			_traffic_signal_lamps.append(lamp)
+			_traffic_signal_materials.append(material)
 
 func _build_traffic_vehicle() -> void:
 	var traffic_colors: Array[Color] = [Color(0.72, 0.12, 0.08), Color(0.12, 0.32, 0.72), Color(0.78, 0.78, 0.72)]
