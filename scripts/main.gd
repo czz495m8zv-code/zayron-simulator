@@ -40,6 +40,8 @@ var _side_road_traffic_speed: float = 0.0
 var _junction_pedestrian: Node3D
 var _junction_pedestrian_crossing: bool = false
 var _junction_pedestrian_clock: float = 3.0
+var _junction_pedestrian_walk_time: float = 0.0
+var _junction_pedestrian_legs: Array[Node3D] = []
 const TRAFFIC_LOOP_LENGTH: float = 142.0
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
@@ -808,20 +810,32 @@ func _build_traffic_vehicle() -> void:
 	add_child(_junction_pedestrian)
 	_junction_pedestrian.add_child(_make_box("PedestrianTorso", Vector3(0.48, 0.82, 0.28), Vector3(0.0, 1.05, 0.0), Color(0.12, 0.38, 0.72)))
 	_junction_pedestrian.add_child(_make_box("PedestrianHead", Vector3(0.34, 0.34, 0.34), Vector3(0.0, 1.66, 0.0), Color(0.72, 0.52, 0.38)))
-	_junction_pedestrian.add_child(_make_box("PedestrianLeftLeg", Vector3(0.16, 0.55, 0.18), Vector3(-0.13, 0.38, 0.0), Color(0.12, 0.12, 0.15)))
-	_junction_pedestrian.add_child(_make_box("PedestrianRightLeg", Vector3(0.16, 0.55, 0.18), Vector3(0.13, 0.38, 0.0), Color(0.12, 0.12, 0.15)))
+	for leg_side in [-1.0, 1.0]:
+		var leg_pivot := Node3D.new()
+		leg_pivot.name = "PedestrianLegPivot_%s" % str(leg_side)
+		leg_pivot.position = Vector3(leg_side * 0.13, 0.65, 0.0)
+		_junction_pedestrian.add_child(leg_pivot)
+		var leg_mesh := _make_box("PedestrianLeg", Vector3(0.16, 0.55, 0.18), Vector3(0.0, -0.27, 0.0), Color(0.12, 0.12, 0.15))
+		leg_pivot.add_child(leg_mesh)
+		_junction_pedestrian_legs.append(leg_pivot)
 
 
 func _update_junction_pedestrian(delta: float) -> void:
 	if not is_instance_valid(_junction_pedestrian):
 		return
+	_junction_pedestrian_walk_time += delta
 	if _junction_pedestrian_crossing:
 		_junction_pedestrian.position.z += 1.35 * delta
+		for leg_index in range(_junction_pedestrian_legs.size()):
+			var leg_swing := sin(_junction_pedestrian_walk_time * 8.0 + float(leg_index) * PI) * 0.34
+			_junction_pedestrian_legs[leg_index].rotation.x = leg_swing
 		if _junction_pedestrian.position.z >= -43.3:
 			_junction_pedestrian_crossing = false
 			_junction_pedestrian.position.z = -43.3
 			_junction_pedestrian_clock = 7.0
 	else:
+		for leg in _junction_pedestrian_legs:
+			leg.rotation.x = move_toward(leg.rotation.x, 0.0, delta * 2.5)
 		_junction_pedestrian_clock -= delta
 		if _junction_pedestrian_clock <= 0.0:
 			_junction_pedestrian_crossing = true
