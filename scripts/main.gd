@@ -777,7 +777,11 @@ func _update_side_road_traffic(delta: float) -> void:
 		return
 	var main_road_has_priority := _traffic_signal_clock < 8.0
 	var target_speed := 0.0
-	if not main_road_has_priority and _side_road_traffic_vehicle.position.x > -5.5:
+	if main_road_has_priority and _side_road_traffic_vehicle.position.x > 2.8:
+		# Approach slowly, then wait just behind the give-way markings.
+		target_speed = 3.8
+	elif not main_road_has_priority and _side_road_traffic_vehicle.position.x > -5.5:
+		# Cross only after the main-road signal changes to red/amber.
 		target_speed = 5.2
 	_side_road_traffic_speed = move_toward(_side_road_traffic_speed, target_speed, 3.8 * delta)
 	_side_road_traffic_vehicle.position.x -= _side_road_traffic_speed * delta
