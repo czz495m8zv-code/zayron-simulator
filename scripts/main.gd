@@ -29,8 +29,10 @@ var _cash_label: Label
 var _restart_button: Button
 var _traffic_car: Node3D
 var _traffic_speed: float = 7.5
+const SAVE_PATH := "user://zayron_progress.cfg"
 
 func _ready() -> void:
+	_load_progress()
 	_build_environment()
 	_build_oman_test_road()
 	_build_roadside_signs()
@@ -250,7 +252,7 @@ func _build_mission_hud() -> void:
 	add_child(layer)
 	_cash_label = Label.new()
 	_cash_label.name = "CashBalance"
-	_cash_label.text = "WALLET  |  OMR %d" % _cash_balance
+	_cash_label.text = "WALLET  |  OMR %d  |  DELIVERIES %d" % [_cash_balance, _delivery_count]
 	_cash_label.position = Vector2(24.0, 94.0)
 	_cash_label.add_theme_font_size_override("font_size", 20)
 	_cash_label.add_theme_color_override("font_color", Color(0.55, 0.95, 0.72))
@@ -293,6 +295,25 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 	_delivery_count += 1
 	_cash_balance += 25
 	if is_instance_valid(_cash_label):
-		_cash_label.text = "WALLET  |  OMR %d" % _cash_balance
+		_cash_label.text = "WALLET  |  OMR %d  |  DELIVERIES %d" % [_cash_balance, _delivery_count]
+	_save_progress()
 	if is_instance_valid(_mission_label):
 		_mission_label.text = "DELIVERY %d COMPLETE  |  +25 OMR" % _delivery_count
+
+
+func _load_progress() -> void:
+	var progress := ConfigFile.new()
+	if progress.load(SAVE_PATH) != OK:
+		return
+	_delivery_count = int(progress.get_value("career", "deliveries", 0))
+	_cash_balance = int(progress.get_value("career", "wallet_omr", 0))
+	_selected_vehicle = clampi(int(progress.get_value("career", "selected_vehicle", 0)), 0, FLEET_SCENES.size() - 1)
+
+func _save_progress() -> void:
+	var progress := ConfigFile.new()
+	progress.set_value("career", "deliveries", _delivery_count)
+	progress.set_value("career", "wallet_omr", _cash_balance)
+	progress.set_value("career", "selected_vehicle", _selected_vehicle)
+	var save_error := progress.save(SAVE_PATH)
+	if save_error != OK:
+		push_warning("Could not save Zayron Simulator progress. Error: %s" % save_error)
