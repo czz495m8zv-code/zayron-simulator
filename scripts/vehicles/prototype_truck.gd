@@ -25,6 +25,10 @@ var _gear_label: Label
 var _exterior_camera: Camera3D
 var _close_camera: Camera3D
 var _cockpit_camera: Camera3D
+var _rear_camera: Camera3D
+var _camera_before_rear: Camera3D
+var _rear_camera_active := false
+var _rear_camera_button: Button
 var _camera_button: Button
 var _camera_mode: int = 0
 var _headlights_on: bool = true
@@ -315,7 +319,17 @@ func _build_camera() -> void:
 	_cockpit_camera.fov = 76.0
 	add_child(_cockpit_camera)
 
+	_rear_camera = Camera3D.new()
+	_rear_camera.name = "RearViewCamera"
+	_rear_camera.position = Vector3(0.0, 2.55, 2.48)
+	_rear_camera.rotation_degrees = Vector3(-9.0, 180.0, 0.0)
+	_rear_camera.current = false
+	_rear_camera.fov = 82.0
+	add_child(_rear_camera)
+
 func _toggle_camera() -> void:
+	if _rear_camera_active:
+		_toggle_rear_camera()
 	_camera_mode = (_camera_mode + 1) % 3
 	match _camera_mode:
 		0:
@@ -416,6 +430,7 @@ func _build_mobile_controls() -> void:
 	_add_hold_button(ui, "R", false, -112.0, -224.0, -12.0, -136.0, "reverse")
 	_add_camera_button(ui)
 	_add_headlight_button(ui)
+	_add_action_button(ui, "REAR CAM", -180.0, 456.0, "rear_camera")
 	_add_action_button(ui, "HORN", -210.0, 180.0, "horn")
 	_add_action_button(ui, "LEFT", -132.0, 180.0, "left")
 	_add_action_button(ui, "HAZARD", -54.0, 180.0, "hazard")
@@ -514,6 +529,8 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			_set_gear("N")
 		"gear_d":
 			_set_gear("D")
+		"rear_camera":
+			_toggle_rear_camera(button)
 		"engine":
 			_engine_running = not _engine_running
 			button.text = "ENGINE: ON" if _engine_running else "ENGINE: OFF"
@@ -578,6 +595,23 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 				payload.visible = payload.visible or _boot_open
 			button.text = "BOOT: OPEN" if _boot_open else "BOOT"
 	_update_indicator_lights()
+
+func _toggle_rear_camera(button: Button = null) -> void:
+	if not is_instance_valid(_rear_camera):
+		return
+	_rear_camera_active = not _rear_camera_active
+	if _rear_camera_active:
+		_camera_before_rear = get_viewport().get_camera_3d()
+		_rear_camera.make_current()
+		if is_instance_valid(button):
+			button.text = "REAR CAM: ON"
+	else:
+		if is_instance_valid(_camera_before_rear):
+			_camera_before_rear.make_current()
+		else:
+			_exterior_camera.make_current()
+		if is_instance_valid(button):
+			button.text = "REAR CAM"
 
 func _initialize_trailer_system() -> void:
 	if not supports_trailer:
