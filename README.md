@@ -363,3 +363,9 @@ The three prototype highway cars now use a lightweight same-lane following model
 ### Junction pedestrian crossing markings
 - Added a six-stripe zebra crossing across the side-road mouth, with raised kerb-edge guides.
 - The crossing is currently visual road infrastructure only; pedestrian AI, crossing signals and vehicle yielding to pedestrians are not implemented yet.
+
+
+### Junction pedestrian crossing behaviour
+- Added a simple procedural pedestrian who waits at the kerb, walks across the marked zebra crossing, and repeats after a short interval.
+- Side-road AI traffic yields while the pedestrian occupies the crossing zone; main-road AI traffic pauses near the junction during the crossing.
+- This is a single scripted pedestrian prototype with position-based yielding, not pedestrian pathfinding, collision physics, pedestrian signals, or a crowd system.
