@@ -39,12 +39,14 @@ var _side_road_traffic_vehicle: Node3D
 var _side_road_traffic_speed: float = 0.0
 var _junction_pedestrian: Node3D
 var _junction_pedestrian_crossing: bool = false
+var _junction_pedestrian_phase_consumed: bool = false
 var _junction_pedestrian_clock: float = 3.0
 var _junction_pedestrian_walk_time: float = 0.0
 var _junction_pedestrian_legs: Array[Node3D] = []
 var _pedestrian_signal_materials: Array[StandardMaterial3D] = []
 var _pedestrian_wait_label: Label3D
 var _pedestrian_walk_label: Label3D
+var _pedestrian_countdown_label: Label3D
 const TRAFFIC_LOOP_LENGTH: float = 142.0
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
@@ -222,6 +224,9 @@ func _process(delta: float) -> void:
 		_pedestrian_wait_label.visible = not pedestrian_walk_allowed
 	if is_instance_valid(_pedestrian_walk_label):
 		_pedestrian_walk_label.visible = pedestrian_walk_allowed
+	if is_instance_valid(_pedestrian_countdown_label):
+		var seconds_to_change := 16.0 - _traffic_signal_clock if pedestrian_walk_allowed else 10.0 - _traffic_signal_clock
+		_pedestrian_countdown_label.text = "%02d" % maxi(0, ceili(seconds_to_change))
 	_forklift_animation_time += delta
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
@@ -797,6 +802,14 @@ func _build_test_intersection() -> void:
 	_pedestrian_walk_label.modulate = Color(0.18, 1.0, 0.3)
 	_pedestrian_walk_label.visible = false
 	add_child(_pedestrian_walk_label)
+	_pedestrian_countdown_label = Label3D.new()
+	_pedestrian_countdown_label.name = "PedestrianSignalCountdown"
+	_pedestrian_countdown_label.text = "10"
+	_pedestrian_countdown_label.font_size = 24
+	_pedestrian_countdown_label.pixel_size = 0.005
+	_pedestrian_countdown_label.position = Vector3(8.0, 2.25, -43.15)
+	_pedestrian_countdown_label.modulate = Color(0.92, 0.94, 0.98)
+	add_child(_pedestrian_countdown_label)
 
 func _build_traffic_vehicle() -> void:
 	var traffic_colors: Array[Color] = [Color(0.72, 0.12, 0.08), Color(0.12, 0.32, 0.72), Color(0.78, 0.78, 0.72)]
@@ -882,10 +895,13 @@ func _update_junction_pedestrian(delta: float) -> void:
 	else:
 		for leg in _junction_pedestrian_legs:
 			leg.rotation.x = move_toward(leg.rotation.x, 0.0, delta * 2.5)
-		# Pedestrians receive the crossing phase only while the main-road signal is red.
-		_junction_pedestrian_clock = 0.0
-		if _traffic_signal_clock >= 10.0:
+		# Trigger once per red phase; otherwise the pedestrian would restart
+		# crossing immediately after reaching the far kerb in the same cycle.
+		if _traffic_signal_clock < 10.0:
+			_junction_pedestrian_phase_consumed = false
+		if _traffic_signal_clock >= 10.0 and not _junction_pedestrian_phase_consumed:
 			_junction_pedestrian_crossing = true
+			_junction_pedestrian_phase_consumed = true
 
 
 func _update_side_road_traffic(delta: float) -> void:
