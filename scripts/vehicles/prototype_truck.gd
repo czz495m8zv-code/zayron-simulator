@@ -9,6 +9,7 @@ extends CharacterBody3D
 @export var steering_response: float = 3.5
 @export var lateral_grip: float = 12.0
 @export var supports_passenger_doors: bool = false
+@export var supports_trailer: bool = false
 
 var _speed: float = 0.0
 var _throttle_input: float = 0.0
@@ -55,6 +56,12 @@ var _boot_open := false
 var _engine_running := true
 var _gear_mode := "D"
 var _engine_button: Button
+var _trailer_assembly: Node3D
+var _trailer_attached := false
+var _trailer_legs_down := false
+var _trailer_home_transform := Transform3D.IDENTITY
+var _trailer_button: Button
+var _landing_legs_button: Button
 @export var cockpit_camera_position: Vector3 = Vector3(0.0, 2.45, -1.35)
 var _engine_playback: AudioStreamGeneratorPlayback
 var _engine_phase: float = 0.0
@@ -62,6 +69,7 @@ const ENGINE_SAMPLE_RATE: float = 22050.0
 
 func _ready() -> void:
 	_build_truck()
+	_initialize_trailer_system()
 	_build_camera()
 	_build_vehicle_lights()
 	_build_extra_vehicle_controls()
@@ -425,6 +433,9 @@ func _build_mobile_controls() -> void:
 	_add_action_button(ui, "N", -4.0, 364.0, "gear_n")
 	_add_action_button(ui, "D", 74.0, 364.0, "gear_d")
 	_add_action_button(ui, "ENGINE", -72.0, 410.0, "engine")
+	if supports_trailer:
+		_add_action_button(ui, "TRAILER", 16.0, 410.0, "trailer")
+		_add_action_button(ui, "LANDING LEGS", 124.0, 410.0, "trailer_legs")
 	if supports_passenger_doors:
 		_add_action_button(ui, "PASSENGER DOOR", -90.0, 456.0, "passenger_door")
 
@@ -506,6 +517,10 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			if not _engine_running:
 				_throttle_input = 0.0
 				_reverse_input = 0.0
+		"trailer":
+			_toggle_trailer_coupling(button)
+		"trailer_legs":
+			_toggle_trailer_legs(button)
 		"left":
 			_left_indicator_on = not _left_indicator_on
 			if _left_indicator_on:
@@ -558,6 +573,62 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 				payload.visible = payload.visible or _boot_open
 			button.text = "BOOT: OPEN" if _boot_open else "BOOT"
 	_update_indicator_lights()
+
+func _initialize_trailer_system() -> void:
+	if not supports_trailer:
+		return
+	_trailer_assembly = get_node_or_null("TrailerAssembly") as Node3D
+	if is_instance_valid(_trailer_assembly):
+		_trailer_attached = true
+		_trailer_home_transform = _trailer_assembly.transform
+
+func _toggle_trailer_coupling(button: Button) -> void:
+	if not is_instance_valid(_trailer_assembly):
+		return
+	if absf(_speed) > 0.15 or not _handbrake_on:
+		button.text = "STOP + PARK FIRST"
+		return
+	if _trailer_attached:
+		if not _trailer_legs_down:
+			button.text = "LOWER LEGS FIRST"
+			return
+		_trailer_assembly.reparent(get_parent(), true)
+		_trailer_attached = false
+		button.text = "COUPLED: NO"
+	else:
+		if global_position.distance_to(_trailer_assembly.global_position) > 14.0:
+			button.text = "TRAILER TOO FAR"
+			return
+		_trailer_assembly.reparent(self, false)
+		_trailer_assembly.transform = _trailer_home_transform
+		_trailer_attached = true
+		_trailer_legs_down = false
+		_set_landing_leg_positions()
+		button.text = "TRAILER: ATTACHED"
+
+func _toggle_trailer_legs(button: Button) -> void:
+	if not is_instance_valid(_trailer_assembly):
+		return
+	if _trailer_attached and not _trailer_legs_down:
+		if absf(_speed) > 0.15 or not _handbrake_on:
+			button.text = "STOP + PARK FIRST"
+			return
+		_trailer_legs_down = true
+	elif not _trailer_attached:
+		_trailer_legs_down = not _trailer_legs_down
+	else:
+		_trailer_legs_down = false
+	_set_landing_leg_positions()
+	button.text = "LEGS: DOWN" if _trailer_legs_down else "LANDING LEGS"
+
+func _set_landing_leg_positions() -> void:
+	if not is_instance_valid(_trailer_assembly):
+		return
+	for child in _trailer_assembly.get_children():
+		if child is Node3D and String(child.name).begins_with("LandingLeg_"):
+			child.position.y = 0.02 if _trailer_legs_down else 0.24
+		elif child is Node3D and String(child.name).begins_with("LandingFoot_"):
+			child.position.y = -0.30 if _trailer_legs_down else -0.08
 
 func _set_gear(next_gear: String) -> void:
 	if absf(_speed) > 0.28:
