@@ -966,7 +966,7 @@ func _on_company_trip_completed(driver_index: int, bus_index: int) -> void:
 	_company_funds += 85
 	_company_trip_active = false
 	for driver in _company_drivers:
-		if str(driver.get("status", "AVAILABLE")) in ["ON ROUTE", "SCHEDULED"]
+		if str(driver.get("status", "AVAILABLE")) in ["ON ROUTE", "SCHEDULED"]:
 			_company_trip_active = true
 			break
 	_company_status_label.text = "Company trip completed. Net company profit: OMR 50. Fleet and staff updated."
