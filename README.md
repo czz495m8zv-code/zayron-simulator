@@ -398,3 +398,8 @@ The three prototype highway cars now use a lightweight same-lane following model
 ### Vehicle traffic-signal countdown displays
 - Both roadside three-aspect traffic signals now display a numeric countdown to the end of the active green, amber, or red phase.
 - The countdown is driven by the same 16-second junction signal clock used by traffic and player stop-line logic.
+
+
+### Pedestrian WALK clearance warning
+- During the final two seconds of the pedestrian signal's red-traffic interval, the green WALK lamp and WALK text flash at a steady 0.8-second cycle.
+- The numeric countdown remains visible so pedestrians receive a clear indication that the phase is ending.
