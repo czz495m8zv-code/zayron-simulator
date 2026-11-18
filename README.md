@@ -106,3 +106,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - This is a gameplay reminder only; no crash restraint or occupant injury simulation is implemented yet.
 
 - Left/right turn indicators now automatically cancel after five seconds; hazard lights remain active until manually switched off.
+
+
+### Passenger pickup stop visuals
+- Passenger jobs now show a group of eight simple procedural passenger figures waiting beside the pickup stop.
+- The group follows the selected route's pickup location and disappears from the stop when the boarding checkpoint is accepted.
+- These are visual placeholders; individual walking-to-door, boarding animations, seat assignment, passenger comfort and alighting sequences remain future work.
