@@ -52,6 +52,9 @@ var _passenger_status_label: Label
 var _cargo_status_label: Label
 var _cargo_pickup_done: bool = false
 var _cargo_depot: Node3D
+var _forklift_carriage: Node3D
+var _forklift_beacon: OmniLight3D
+var _forklift_animation_time: float = 0.0
 
 func _ready() -> void:
 	_load_progress()
@@ -80,6 +83,11 @@ func _process(delta: float) -> void:
 	if _passenger_mode:
 		stage_name = "PICKUP STOP" if not _passenger_pickup_done else "PASSENGER DROP-OFF"
 	_mission_label.text = "%s  |  %s: %d m" % [ROUTE_NAMES[_selected_route], stage_name, int(distance)]
+	if is_instance_valid(_forklift_carriage):
+		_forklift_animation_time += delta
+		_forklift_carriage.position.y = 0.48 + (sin(_forklift_animation_time * 1.35) + 1.0) * 0.22
+	if is_instance_valid(_forklift_beacon):
+		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
 
 func _spawn_vehicle() -> void:
 	_mission_complete = false
@@ -342,10 +350,16 @@ func _build_depot_forklift() -> void:
 	var mast_rail_right := _make_box("ForkliftMastRailRight", Vector3(0.12, 2.1, 0.14), Vector3(0.48, 1.38, -0.93), dark_metal)
 	forklift.add_child(mast_rail_left)
 	forklift.add_child(mast_rail_right)
-	var fork_left := _make_box("ForkliftForkLeft", Vector3(0.16, 0.12, 1.35), Vector3(-0.36, 0.34, -1.55), Color(0.65, 0.68, 0.7))
-	var fork_right := _make_box("ForkliftForkRight", Vector3(0.16, 0.12, 1.35), Vector3(0.36, 0.34, -1.55), Color(0.65, 0.68, 0.7))
-	forklift.add_child(fork_left)
-	forklift.add_child(fork_right)
+	_forklift_carriage = Node3D.new()
+	_forklift_carriage.name = "ForkliftMovingCarriage"
+	_forklift_carriage.position = Vector3(0.0, 0.48, -0.93)
+	forklift.add_child(_forklift_carriage)
+	var carriage_bar := _make_box("ForkliftCarriageBar", Vector3(1.05, 0.16, 0.16), Vector3(0.0, 0.0, 0.0), dark_metal)
+	_forklift_carriage.add_child(carriage_bar)
+	var fork_left := _make_box("ForkliftForkLeft", Vector3(0.16, 0.12, 1.35), Vector3(-0.36, -0.12, -0.62), Color(0.65, 0.68, 0.7))
+	var fork_right := _make_box("ForkliftForkRight", Vector3(0.16, 0.12, 1.35), Vector3(0.36, -0.12, -0.62), Color(0.65, 0.68, 0.7))
+	_forklift_carriage.add_child(fork_left)
+	_forklift_carriage.add_child(fork_right)
 	for x in [-0.68, 0.68]:
 		for z in [-0.58, 0.62]:
 			var wheel := MeshInstance3D.new()
@@ -366,6 +380,27 @@ func _build_depot_forklift() -> void:
 		forklift.add_child(guard_post)
 	var guard_roof := _make_box("ForkliftOverheadGuardRoof", Vector3(1.45, 0.12, 1.45), Vector3(0.0, 2.3, 0.28), dark_metal)
 	forklift.add_child(guard_roof)
+	var beacon := MeshInstance3D.new()
+	beacon.name = "ForkliftAmberBeacon"
+	var beacon_mesh := CylinderMesh.new()
+	beacon_mesh.top_radius = 0.13
+	beacon_mesh.bottom_radius = 0.13
+	beacon_mesh.height = 0.2
+	beacon.mesh = beacon_mesh
+	beacon.position = Vector3(0.0, 2.48, 0.28)
+	var beacon_material := StandardMaterial3D.new()
+	beacon_material.albedo_color = Color(1.0, 0.48, 0.04)
+	beacon_material.emission_enabled = true
+	beacon_material.emission = Color(1.0, 0.32, 0.015)
+	beacon.material_override = beacon_material
+	forklift.add_child(beacon)
+	_forklift_beacon = OmniLight3D.new()
+	_forklift_beacon.name = "ForkliftBeaconLight"
+	_forklift_beacon.light_color = Color(1.0, 0.42, 0.06)
+	_forklift_beacon.light_energy = 0.8
+	_forklift_beacon.omni_range = 3.5
+	_forklift_beacon.position = Vector3(0.0, 2.5, 0.28)
+	forklift.add_child(_forklift_beacon)
 
 func _build_mission() -> void:
 	_checkpoint_area = Area3D.new()
