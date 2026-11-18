@@ -23,6 +23,7 @@ var _vehicle_fuel_levels: Array[float] = [100.0, 100.0, 100.0, 100.0, 100.0, 100
 var _selected_vehicle: int = 0
 var _vehicle_button: Button
 var _mission_label: Label
+var _junction_status_label: Label
 var _mission_complete: bool = false
 var _mission_target := Vector3(0.0, 0.0, -82.0)
 var _delivery_count: int = 0
@@ -213,6 +214,26 @@ func _process(delta: float) -> void:
 	_update_junction_pedestrian(delta)
 	_update_side_road_traffic(delta)
 	_update_player_signal_rule()
+	if is_instance_valid(_junction_status_label):
+		var junction_phase_name := "MAIN ROAD GREEN"
+		var junction_phase_end := 8.0
+		if _traffic_signal_clock >= 8.0 and _traffic_signal_clock < 10.0:
+			junction_phase_name = "MAIN ROAD AMBER"
+			junction_phase_end = 10.0
+		elif _traffic_signal_clock >= 10.0 and _traffic_signal_clock < 16.0:
+			junction_phase_name = "MAIN ROAD RED  |  PEDESTRIAN WALK"
+			junction_phase_end = 16.0
+		elif _traffic_signal_clock >= 16.0 and _traffic_signal_clock < 18.0:
+			junction_phase_name = "ALL-RED CLEARANCE"
+			junction_phase_end = 18.0
+		elif _traffic_signal_clock >= 18.0 and _traffic_signal_clock < 24.0:
+			junction_phase_name = "SIDE-ROAD CROSSING"
+			junction_phase_end = 24.0
+		elif _traffic_signal_clock >= 24.0:
+			junction_phase_name = "ALL-RED CLEARANCE"
+			junction_phase_end = 26.0
+		var junction_seconds_left := maxi(0, ceili(junction_phase_end - _traffic_signal_clock))
+		_junction_status_label.text = "%s  |  %02d s" % [junction_phase_name, junction_seconds_left]
 	var active_signal := 2 if _traffic_signal_clock < 8.0 else (1 if _traffic_signal_clock < 10.0 else 0)
 	for lamp_index in range(_traffic_signal_lamps.size()):
 		var lamp_material := _traffic_signal_materials[lamp_index]
@@ -1676,6 +1697,17 @@ func _build_mission_hud() -> void:
 	_mission_label.add_theme_font_size_override("font_size", 18)
 	_mission_label.add_theme_color_override("font_color", Color.WHITE)
 	layer.add_child(_mission_label)
+
+	_junction_status_label = Label.new()
+	_junction_status_label.name = "JunctionPhaseStatus"
+	_junction_status_label.anchor_left = 0.05
+	_junction_status_label.anchor_right = 0.95
+	_junction_status_label.offset_top = 112.0
+	_junction_status_label.offset_bottom = 138.0
+	_junction_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_junction_status_label.add_theme_font_size_override("font_size", 14)
+	_junction_status_label.add_theme_color_override("font_color", Color(1.0, 0.84, 0.42))
+	layer.add_child(_junction_status_label)
 
 	_restart_button = Button.new()
 	_restart_button.name = "RestartDelivery"
