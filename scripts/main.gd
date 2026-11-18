@@ -90,6 +90,8 @@ var _company_ai_bus_destination := Vector3(-2.0, 0.15, -82.0)
 var _company_ai_bus_speed: float = 7.0
 var _company_ai_bus_current_speed: float = 0.0
 var _company_ai_bus_acceleration: float = 2.8
+var _company_ai_route_points: Array[Vector3] = []
+var _company_ai_waypoint_index: int = 0
 
 func _ready() -> void:
 	_load_progress()
@@ -901,6 +903,15 @@ func _spawn_company_ai_bus() -> void:
 	_company_ai_bus_stop_time = 0.0
 	_company_ai_bus_current_speed = 0.0
 	_company_ai_bus_destination = Vector3(-2.0, 0.15, ROUTE_TARGETS[_company_selected_route].z)
+	# Follow a sequence of road-centre waypoints instead of cutting directly to the endpoint.
+	_company_ai_route_points = [
+		_company_ai_bus_start,
+		Vector3(-2.0, 0.15, lerpf(_company_ai_bus_start.z, _company_ai_bus_destination.z, 0.25)),
+		Vector3(-2.0, 0.15, lerpf(_company_ai_bus_start.z, _company_ai_bus_destination.z, 0.5)),
+		Vector3(-2.0, 0.15, lerpf(_company_ai_bus_start.z, _company_ai_bus_destination.z, 0.75)),
+		_company_ai_bus_destination
+	]
+	_company_ai_waypoint_index = 1
 	var route_marker := Label3D.new()
 	route_marker.name = "CompanyBusRouteMarker"
 	route_marker.text = "COMPANY SERVICE"
@@ -931,29 +942,40 @@ func _move_company_bus_toward(target: Vector3, delta: float) -> bool:
 	return _company_ai_bus.position.distance_to(target) <= 0.12
 
 
+func _advance_company_ai_waypoint() -> bool:
+	_company_ai_waypoint_index += 1
+	return _company_ai_waypoint_index >= _company_ai_route_points.size()
+
+
 func _update_company_ai_bus(delta: float) -> void:
 	if not _company_trip_active or not is_instance_valid(_company_ai_bus):
 		return
 
 	if _company_ai_bus_phase == 0:
-		if _move_company_bus_toward(_company_ai_bus_destination, delta):
-			_company_ai_bus_phase = 1
-			_company_ai_bus_stop_time = 3.0
-			_company_ai_bus_current_speed = 0.0
-			if is_instance_valid(_company_status_label):
-				_company_status_label.text = "Company bus reached %s and is waiting at the stop." % ROUTE_NAMES[_company_selected_route].split(" -> ")[1]
+		var outbound_target: Vector3 = _company_ai_route_points[_company_ai_waypoint_index]
+		if _move_company_bus_toward(outbound_target, delta):
+			if _advance_company_ai_waypoint():
+				_company_ai_bus_phase = 1
+				_company_ai_bus_stop_time = 3.0
+				_company_ai_bus_current_speed = 0.0
+				if is_instance_valid(_company_status_label):
+					_company_status_label.text = "Company bus reached %s and is waiting at the stop." % ROUTE_NAMES[_company_selected_route].split(" -> ")[1]
 	elif _company_ai_bus_phase == 1:
 		_company_ai_bus_current_speed = move_toward(_company_ai_bus_current_speed, 0.0, _company_ai_bus_acceleration * delta)
 		_company_ai_bus_stop_time -= delta
 		if _company_ai_bus_stop_time <= 0.0:
 			_company_ai_bus_phase = 2
+			_company_ai_route_points.reverse()
+			_company_ai_waypoint_index = 1
 			if is_instance_valid(_company_status_label):
 				_company_status_label.text = "Company bus leaving the stop and returning to depot."
 	elif _company_ai_bus_phase == 2:
-		if _move_company_bus_toward(_company_ai_bus_start, delta):
-			if is_instance_valid(_company_trip_timer):
-				_company_trip_timer.stop()
-			_on_company_driver_trip_completed()
+		var return_target: Vector3 = _company_ai_route_points[_company_ai_waypoint_index]
+		if _move_company_bus_toward(return_target, delta):
+			if _advance_company_ai_waypoint():
+				if is_instance_valid(_company_trip_timer):
+					_company_trip_timer.stop()
+				_on_company_driver_trip_completed()
 
 
 func _on_company_driver_trip_completed() -> void:
