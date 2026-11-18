@@ -39,7 +39,8 @@ The first company-management layer is now implemented in the gameplay scene:
 - Hire a driver for the prototype cost of OMR 80.
 - Purchase an additional company bus for the prototype cost of OMR 450.
 - Select a company dispatch route independently of the player's personal driving route.
-- Configure and save a separate route for each company bus from the fleet-management panel.
+- Configure and save a separate route and preferred hired driver for each company bus from the fleet-management panel; use AUTO ASSIGN to select the first available driver.
+- A bus with a specifically assigned driver will not dispatch if that driver is busy; select another driver or AUTO ASSIGN.
 - Choose immediate, 10-second or 30-second departure scheduling for each dispatch; scheduled buses and their assigned drivers are reserved until departure.
 - Dispatch an available hired driver with an available company bus; the roster marks both ON ROUTE while the player continues driving.
 - Return the assigned driver and bus to AVAILABLE when the timed trip completes.
