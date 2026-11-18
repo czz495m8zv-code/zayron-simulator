@@ -59,6 +59,8 @@ var _depot_crate_home_positions: Array[Vector3] = []
 var _forklift_carriage: Node3D
 var _forklift_beacon: OmniLight3D
 var _forklift_animation_time: float = 0.0
+var _forklift_lift_level: float = 0.48
+var _forklift_lift_label: Label
 var _pause_button: Button
 var _pause_overlay: Control
 var _audio_slider: HSlider
@@ -130,9 +132,7 @@ func _process(delta: float) -> void:
 		_traffic_car.position.z += _traffic_speed * delta
 		if _traffic_car.position.z > 24.0:
 			_traffic_car.position.z = -118.0
-	if is_instance_valid(_forklift_carriage):
-		_forklift_animation_time += delta
-		_forklift_carriage.position.y = 0.48 + (sin(_forklift_animation_time * 1.35) + 1.0) * 0.22
+	_forklift_animation_time += delta
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
 	_update_company_ai_bus(delta)
@@ -546,7 +546,7 @@ func _build_depot_forklift() -> void:
 	forklift.add_child(mast_rail_right)
 	_forklift_carriage = Node3D.new()
 	_forklift_carriage.name = "ForkliftMovingCarriage"
-	_forklift_carriage.position = Vector3(0.0, 0.48, -0.93)
+	_forklift_carriage.position = Vector3(0.0, _forklift_lift_level, -0.93)
 	forklift.add_child(_forklift_carriage)
 	var carriage_bar := _make_box("ForkliftCarriageBar", Vector3(1.05, 0.16, 0.16), Vector3(0.0, 0.0, 0.0), dark_metal)
 	_forklift_carriage.add_child(carriage_bar)
@@ -595,6 +595,25 @@ func _build_depot_forklift() -> void:
 	_forklift_beacon.omni_range = 3.5
 	_forklift_beacon.position = Vector3(0.0, 2.5, 0.28)
 	forklift.add_child(_forklift_beacon)
+
+func _raise_forklift_forks() -> void:
+	_set_forklift_lift_level(_forklift_lift_level + 0.18)
+
+
+func _lower_forklift_forks() -> void:
+	_set_forklift_lift_level(_forklift_lift_level - 0.18)
+
+
+func _set_forklift_lift_level(value: float) -> void:
+	_forklift_lift_level = clampf(value, 0.18, 1.72)
+	if is_instance_valid(_forklift_carriage):
+		var tween := create_tween()
+		tween.set_trans(Tween.TRANS_QUAD)
+		tween.set_ease(Tween.EASE_IN_OUT)
+		tween.tween_property(_forklift_carriage, "position:y", _forklift_lift_level, 0.22)
+	if is_instance_valid(_forklift_lift_label):
+		_forklift_lift_label.text = "FORK HEIGHT: %.2f m" % _forklift_lift_level
+
 
 func _build_passenger_waiting_group() -> void:
 	_passenger_waiting_group = Node3D.new()
@@ -733,6 +752,37 @@ func _build_mission_hud() -> void:
 	_cargo_status_label.add_theme_color_override("font_color", Color(1.0, 0.83, 0.58))
 	_cargo_status_label.visible = not _passenger_mode
 	layer.add_child(_cargo_status_label)
+
+	var forklift_panel := VBoxContainer.new()
+	forklift_panel.name = "ForkliftLiftControls"
+	forklift_panel.anchor_left = 1.0
+	forklift_panel.anchor_top = 1.0
+	forklift_panel.anchor_right = 1.0
+	forklift_panel.anchor_bottom = 1.0
+	forklift_panel.offset_left = -190.0
+	forklift_panel.offset_top = -220.0
+	forklift_panel.offset_right = -20.0
+	forklift_panel.offset_bottom = -24.0
+	forklift_panel.add_theme_constant_override("separation", 6)
+	layer.add_child(forklift_panel)
+	var forklift_title := Label.new()
+	forklift_title.text = "DEPOT FORKLIFT"
+	forklift_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	forklift_panel.add_child(forklift_title)
+	_forklift_lift_label = Label.new()
+	_forklift_lift_label.text = "FORK HEIGHT: 0.48 m"
+	_forklift_lift_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	forklift_panel.add_child(_forklift_lift_label)
+	var lift_up_button := Button.new()
+	lift_up_button.text = "FORKS UP  +"
+	lift_up_button.custom_minimum_size.y = 48
+	lift_up_button.pressed.connect(_raise_forklift_forks)
+	forklift_panel.add_child(lift_up_button)
+	var lift_down_button := Button.new()
+	lift_down_button.text = "FORKS DOWN  -"
+	lift_down_button.custom_minimum_size.y = 48
+	lift_down_button.pressed.connect(_lower_forklift_forks)
+	forklift_panel.add_child(lift_down_button)
 
 	_mission_label = Label.new()
 	_mission_label.name = "MissionStatus"
