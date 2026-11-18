@@ -812,6 +812,10 @@ func _build_passenger_door_controls() -> void:
 func can_board_passengers() -> bool:
 	return supports_passenger_doors and _passenger_doors_open and _handbrake_on and absf(_speed) < 0.25
 
+
+func can_handle_cargo() -> bool:
+	return _handbrake_on and absf(_speed) < 0.25
+
 func _adjust_seat(amount: float) -> void:
 	_seat_adjustment = clampf(_seat_adjustment + amount, -0.24, 0.24)
 	if is_instance_valid(_cockpit_camera):
