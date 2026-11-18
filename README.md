@@ -322,3 +322,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Extended the stop bar across the full highway carriageway so it is visible from both the centre player lane and the traffic lane.
 - Added a low-speed stop hold for AI traffic at the line during red/amber.
 - Player braking assist now continues holding the vehicle if it reaches or slightly passes the stop-line coordinate while the signal remains red/amber, rather than releasing immediately after crossing the coordinate.
+
+
+### Side-road give-way markings and signage
+- Added a dashed centre marking along the side access road.
+- Added a give-way bar and painted triangular yield markings at the junction mouth.
+- Added a roadside GIVE WAY sign for vehicles approaching from the side access road.
+- These markings are visual guidance only; side-road cross-traffic and yield enforcement are not simulated yet.
