@@ -193,3 +193,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - The original road checkpoint no longer grants cargo automatically; it directs the player to complete the warehouse loading process first.
 - Starting a new vehicle/mission restores pallet visibility, original pallet positions, crate visibility and empty staging-bay occupancy.
 - This remains a scripted transfer and payload visual/state update. It does not yet model a loading dock leveller, forklift-to-truck physical handoff, straps, weight distribution, or cargo physics.
+
+### Cargo strap securing
+- Loaded cargo now starts unsecured. A CARGO STRAPS / SECURE CARGO control appears on the vehicle touch panel while a payload is present.
+- Securing the load reveals the strap and buckle visuals and updates the instrument status. Forward and reverse drive input remain blocked until the cargo is secured; braking and steering remain available.
+- Clearing the cargo payload hides the strap control and resets the securing state. This is a gameplay safety interlock and visual representation, not a physics-based tensioning or load-shift simulation.
