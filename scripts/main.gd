@@ -1116,8 +1116,8 @@ func _refresh_company_panel() -> void:
 		for bus in _company_fleet:
 			if str(bus.get("status", "AVAILABLE")) == "AVAILABLE":
 				has_available_bus = true
-		_company_dispatch_button.disabled = _company_trip_active or not has_available_driver or not has_available_bus or _company_funds < 35
-		_company_dispatch_button.text = "DRIVER EN ROUTE..." if _company_trip_active else "ASSIGN DRIVER & SEND TO WORK"
+		_company_dispatch_button.disabled = not has_available_driver or not has_available_bus or _company_funds < 35
+		_company_dispatch_button.text = "DISPATCH ANOTHER BUS" if _company_trip_active else "ASSIGN DRIVER & SEND TO WORK"
 
 func _restart_delivery() -> void:
 	_set_paused(false)
