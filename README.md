@@ -169,3 +169,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - The cargo status reports the number of crates on the carried pallet. Starting a cargo mission returns a carried pallet and its crates to their depot home positions before the truck-loading visual sequence begins.
 - Crate loading/unloading animations now use world-space positions so the grouped crate objects can animate correctly while parented to a pallet assembly.
 - This is still a scripted attachment interaction, not collision-accurate fork insertion, pallet-jack/forklift physics, load-centre calculations, or realistic hydraulic tilt.
+
+
+### Forklift fork tilt controls
+- Added TILT BACK and TILT FORWARD controls for the moving fork carriage. Tilt is clamped to a small ±0.18-radian range and shown on the depot control panel. A pallet attached to the carriage follows its tilt.
+- This is a visual scripted tilt feature; it does not yet simulate hydraulic cylinders, load-centre stability, pallet slip, or real forklift safety physics.
