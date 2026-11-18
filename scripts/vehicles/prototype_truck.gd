@@ -59,6 +59,8 @@ var _door_open := false
 var _door_hinge: Node3D
 var _passenger_door_hinge: Node3D
 var _passenger_doors_open := false
+var _visible_passenger_count := 0
+const PASSENGER_SEAT_CAPACITY := 10
 var _horn_playback: AudioStreamGeneratorPlayback
 var _horn_frames_left := 0
 var _horn_phase := 0.0
@@ -235,6 +237,8 @@ func _physics_process(delta: float) -> void:
 			status_parts.append("RIGHT SIGNAL")
 		if supports_trailer and _trailer_legs_down:
 			status_parts.append("TRAILER LEGS DOWN")
+		if supports_passenger_doors and _visible_passenger_count > 0:
+			status_parts.append("PASSENGERS %d/%d" % [_visible_passenger_count, PASSENGER_SEAT_CAPACITY])
 		if _cargo_loaded:
 			status_parts.append("CARGO SECURED" if _cargo_secured else "SECURE CARGO BEFORE DRIVING")
 		_vehicle_status_label.text = "  |  ".join(status_parts) if not status_parts.is_empty() else "SYSTEMS NORMAL"
@@ -1040,10 +1044,11 @@ func _add_cockpit_steering_wheel(location: Vector3) -> void:
 
 
 func set_visible_passenger_manifest(passenger_count: int) -> void:
+	_visible_passenger_count = clampi(passenger_count, 0, PASSENGER_SEAT_CAPACITY)
 	var old_manifest := get_node_or_null("PassengerManifest")
 	if is_instance_valid(old_manifest):
 		old_manifest.queue_free()
-	if passenger_count <= 0:
+	if _visible_passenger_count <= 0:
 		return
 	var manifest := Node3D.new()
 	manifest.name = "PassengerManifest"
@@ -1052,7 +1057,7 @@ func set_visible_passenger_manifest(passenger_count: int) -> void:
 		Color(0.12, 0.32, 0.62), Color(0.62, 0.18, 0.12),
 		Color(0.16, 0.46, 0.28), Color(0.58, 0.42, 0.18)
 	]
-	for passenger_index in range(mini(passenger_count, 10)):
+	for passenger_index in range(_visible_passenger_count):
 		var seat_row := int(passenger_index / 2)
 		var seat_side := -0.66 if passenger_index % 2 == 0 else 0.66
 		var seat_z := -2.65 + float(seat_row) * 1.38
