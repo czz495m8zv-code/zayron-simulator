@@ -43,7 +43,8 @@
 - [x] Create an initial original desert-road environment
 - [ ] Add detailed road markings, signs, terrain, buildings and landmarks
 - [x] Add a first delivery checkpoint objective and HUD
-- [ ] Add a full delivery / passenger mission loop with rewards and route selection
+- [x] Add a repeatable delivery restart control and a simple OMR reward counter (source implemented; runtime verification pending)
+- [ ] Expand the starter delivery loop with multiple routes, cargo types, route selection and passenger missions
 - [ ] Add traffic and road rules
 - [ ] Verify all third-party asset licenses
 
