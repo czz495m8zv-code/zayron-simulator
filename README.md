@@ -38,3 +38,16 @@ The repository is created. The next milestone is establishing the Godot project 
 ## Important scope
 
 This is an original game project. It will not copy proprietary game assets, maps, code, or branding. Third-party assets and map data must be checked for license and attribution requirements before use.
+
+
+## Current vehicle fleet
+
+The current source includes six selectable vehicle prototypes:
+- Starter truck
+- Premium blue semi-truck with enclosed trailer
+- Royal red semi-truck with enclosed trailer
+- Oman city bus
+- Luxury coach with panoramic passenger windows and metallic trim
+- VIP silver coach
+
+Use the in-game **NEXT** button to cycle through the fleet. These are original procedural Godot models intended as an early playable fleet; they are not final photorealistic vehicle assets and still require on-device testing and visual refinement.
