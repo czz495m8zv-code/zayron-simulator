@@ -4,6 +4,7 @@ extends "res://scripts/vehicles/prototype_truck.gd"
 @export var accent_paint: Color = Color(0.78, 0.62, 0.32)
 
 func _build_truck() -> void:
+	cockpit_camera_position = Vector3(0.0, 2.35, -4.15)
 	var shell := BoxShape3D.new()
 	shell.size = Vector3(2.55, 3.0, 10.0)
 	var collision := CollisionShape3D.new()
@@ -33,6 +34,7 @@ func _build_truck() -> void:
 	_add_box("DriverDashboard", Vector3(2.0, 0.32, 0.72), Vector3(0.0, 1.85, -4.05), Color(0.035, 0.045, 0.06))
 	_add_box("DashboardDisplay", Vector3(0.55, 0.22, 0.035), Vector3(0.0, 2.08, -4.18), Color(0.08, 0.62, 0.78))
 	_add_box("SteeringColumn", Vector3(0.12, 0.48, 0.12), Vector3(-0.62, 2.0, -3.85), Color(0.12, 0.13, 0.14))
+	_add_cockpit_steering_wheel(Vector3(-0.62, 2.15, -4.05))
 	for row in range(5):
 		for seat_side in [-0.58, 0.58]:
 			var seat_z := -2.6 + float(row) * 1.35
