@@ -52,7 +52,8 @@
 - [x] Add a two-stage bus passenger mission with a pickup checkpoint followed by destination drop-off and an eight-passenger manifest HUD (source implemented; runtime verification pending)
 - [x] Add two-stage truck cargo missions: load selected goods at a pickup checkpoint, then deliver them at the route destination (source implemented; runtime verification pending)
 - [x] Add a first Oman cargo loading depot with warehouse, canopy, loading bay, pallets and staged crates (source implemented; runtime verification pending)
-- [ ] Add animated forklifts/loading props, visible vehicle cargo payloads, passenger models/boarding animations and route-specific depot gameplay
+- [x] Add a first static procedural forklift prop to the Oman cargo depot (source implemented; runtime verification pending)
+- [ ] Add animated forklift/loading interactions, visible vehicle cargo payloads, passenger models/boarding animations and route-specific depot gameplay
 - [ ] Add interactive traffic with collision avoidance, traffic signals and road rules
 - [ ] Verify all third-party asset licenses
 
