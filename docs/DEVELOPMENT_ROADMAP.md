@@ -70,6 +70,7 @@
 - [x] Add a first bus prototype scene and model built from procedural meshes
 - [x] Add luxury coach and VIP silver coach models
 - [x] Add premium blue and royal red semi-truck models
+- [x] Add shared enclosed-trailer underframe, tandem axle beams, rear double doors, locking bars, rear lamps and amber side markers to both semi-truck variants (source implemented; runtime verification pending)
 - [x] Expand in-game fleet selector to six vehicles
 - [ ] Replace procedural fleet models with optimized production-quality art assets
 - [ ] Add depots, routes, cargo, passengers and progression
