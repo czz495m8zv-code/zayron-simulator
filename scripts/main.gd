@@ -144,6 +144,7 @@ func _ready() -> void:
 	_build_mission()
 	_build_passenger_waiting_group()
 	_build_cargo_depot()
+	_build_roadside_fuel_station()
 	_spawn_vehicle()
 	_build_vehicle_selector()
 	_build_mission_hud()
@@ -710,21 +711,64 @@ func _build_depot_fuel_station() -> void:
 	station.add_child(label)
 
 
+func _build_roadside_fuel_station() -> void:
+	var station := Node3D.new()
+	station.name = "MuscatNizwaHighwayFuelStation"
+	station.position = Vector3(-11.5, 0.0, -55.0)
+	add_child(station)
+	station.add_child(_make_box("FuelStationAccessLane", Vector3(8.0, 0.1, 12.0), Vector3(3.5, 0.04, 0.0), Color(0.22, 0.24, 0.25)))
+	station.add_child(_make_box("FuelStationForecourt", Vector3(10.0, 0.14, 10.0), Vector3.ZERO, Color(0.38, 0.4, 0.39)))
+	station.add_child(_make_box("HighwayFuelCanopy", Vector3(7.0, 0.24, 5.5), Vector3(0.0, 3.5, 0.0), Color(0.05, 0.3, 0.42)))
+	for x in [-3.0, 3.0]:
+		for z in [-2.2, 2.2]:
+			station.add_child(_make_box("HighwayCanopyPillar", Vector3(0.18, 3.45, 0.18), Vector3(x, 1.72, z), Color(0.78, 0.8, 0.78)))
+	for pump_index in range(2):
+		var pump_x := -1.7 + float(pump_index) * 3.4
+		station.add_child(_make_box("HighwayFuelDispenser", Vector3(0.72, 1.55, 0.68), Vector3(pump_x, 0.9, 0.0), Color(0.9, 0.91, 0.86)))
+		station.add_child(_make_box("HighwayFuelScreen", Vector3(0.48, 0.3, 0.04), Vector3(pump_x, 1.15, -0.36), Color(0.02, 0.12, 0.15)))
+	var sign := Label3D.new()
+	sign.name = "HighwayFuelStationSign"
+	sign.text = "OMAN FUEL  |  24H"
+	sign.position = Vector3(0.0, 4.0, -3.5)
+	sign.font_size = 28
+	sign.pixel_size = 0.012
+	sign.modulate = Color(0.76, 0.96, 1.0)
+	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	station.add_child(sign)
+	var price_board := Label3D.new()
+	price_board.name = "FuelPriceBoard"
+	price_board.text = "DIESEL  /  PETROL"
+	price_board.position = Vector3(0.0, 2.0, 4.8)
+	price_board.font_size = 18
+	price_board.pixel_size = 0.01
+	price_board.modulate = Color(1.0, 0.88, 0.45)
+	price_board.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	station.add_child(price_board)
+
+
+func _is_near_refuel_station() -> bool:
+	if not is_instance_valid(_active_vehicle):
+		return false
+	var vehicle_position := _active_vehicle.global_position
+	if is_instance_valid(_cargo_depot):
+		var depot_station := _cargo_depot.to_global(Vector3(-9.0, 0.0, 5.2))
+		if Vector2(vehicle_position.x - depot_station.x, vehicle_position.z - depot_station.z).length() <= 6.0:
+			return true
+	var roadside_station := Vector3(-11.5, 0.0, -55.0)
+	return Vector2(vehicle_position.x - roadside_station.x, vehicle_position.z - roadside_station.z).length() <= 7.0
+
+
 func _update_refuel_station_access() -> void:
-	if not is_instance_valid(_active_vehicle) or not is_instance_valid(_cargo_depot):
+	if not is_instance_valid(_active_vehicle):
 		return
-	var station_position := _cargo_depot.to_global(Vector3(-9.0, 0.0, 5.2))
-	var distance := Vector2(_active_vehicle.global_position.x - station_position.x, _active_vehicle.global_position.z - station_position.z).length()
 	if _active_vehicle.has_method("set_refuel_station_available"):
-		_active_vehicle.set_refuel_station_available(distance <= 6.0, _cash_balance)
+		_active_vehicle.set_refuel_station_available(_is_near_refuel_station(), _cash_balance)
 
 
 func _on_vehicle_refuel_requested(cost_omr: int) -> void:
-	if not is_instance_valid(_active_vehicle) or not is_instance_valid(_cargo_depot):
+	if not is_instance_valid(_active_vehicle):
 		return
-	var station_position := _cargo_depot.to_global(Vector3(-9.0, 0.0, 5.2))
-	var distance := Vector2(_active_vehicle.global_position.x - station_position.x, _active_vehicle.global_position.z - station_position.z).length()
-	if distance > 6.0 or not _active_vehicle.has_method("can_handle_cargo") or not _active_vehicle.can_handle_cargo():
+	if not _is_near_refuel_station() or not _active_vehicle.has_method("can_handle_cargo") or not _active_vehicle.can_handle_cargo():
 		return
 	if cost_omr <= 0 or _cash_balance < cost_omr:
 		return
