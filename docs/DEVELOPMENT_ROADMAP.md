@@ -11,12 +11,14 @@
 
 ## Milestones
 
+> Build status is based on source and automated CI checks. A successful headless import/export does not prove gameplay, controls, frame rate, or compatibility on a physical Android device.
+
 ### 0 — Foundation
 - [x] Create GitHub repository
 - [x] Define project identity and initial technical direction
 - [x] Install Godot 4 on the Android development phone (user-confirmed)
 - [x] Create and commit the starter Godot project
-- [ ] Add a repeatable Android export setup
+- [x] Add an Android arm64 debug export preset and GitHub Actions APK build workflow (CI result pending; physical-device verification still required)
 
 ### 1 — First drivable prototype
 - [x] Create a simple test scene and Oman-inspired desert road
