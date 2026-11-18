@@ -67,6 +67,50 @@ func _build_truck() -> void:
 			add_child(wheel)
 
 	_add_cockpit_steering_wheel(Vector3(-0.62, 1.95, -3.85))
+	# Passenger cabin: paired seats leave a central aisle for boarding.
+	var seat_fabric := StandardMaterial3D.new()
+	seat_fabric.albedo_color = Color(0.055, 0.19, 0.29)
+	seat_fabric.roughness = 0.72
+	var seat_trim := StandardMaterial3D.new()
+	seat_trim.albedo_color = Color(0.68, 0.62, 0.48)
+	for row in range(5):
+		for seat_side in [-0.66, 0.66]:
+			var seat_z := -2.65 + float(row) * 1.38
+			var cushion := MeshInstance3D.new()
+			cushion.name = "PassengerSeatCushion_%d_%s" % [row, seat_side]
+			var cushion_mesh := BoxMesh.new()
+			cushion_mesh.size = Vector3(0.48, 0.16, 0.52)
+			cushion.mesh = cushion_mesh
+			cushion.position = Vector3(seat_side, 1.15, seat_z)
+			cushion.material_override = seat_fabric
+			add_child(cushion)
+			var back := MeshInstance3D.new()
+			back.name = "PassengerSeatBack_%d_%s" % [row, seat_side]
+			var back_mesh := BoxMesh.new()
+			back_mesh.size = Vector3(0.48, 0.7, 0.14)
+			back.mesh = back_mesh
+			back.position = Vector3(seat_side, 1.56, seat_z + 0.18)
+			back.material_override = seat_fabric
+			add_child(back)
+			var grab_rail := MeshInstance3D.new()
+			grab_rail.name = "SeatGrabRail_%d_%s" % [row, seat_side]
+			var rail_mesh := BoxMesh.new()
+			rail_mesh.size = Vector3(0.035, 0.42, 0.035)
+			grab_rail.mesh = rail_mesh
+			grab_rail.position = Vector3(seat_side + (0.27 if seat_side < 0.0 else -0.27), 1.65, seat_z + 0.05)
+			grab_rail.material_override = seat_trim
+			add_child(grab_rail)
+	var aisle := MeshInstance3D.new()
+	aisle.name = "PassengerCentralAisle"
+	var aisle_mesh := BoxMesh.new()
+	aisle_mesh.size = Vector3(0.42, 0.035, 7.2)
+	aisle.mesh = aisle_mesh
+	aisle.position = Vector3(0.0, 0.64, 0.0)
+	var aisle_material := StandardMaterial3D.new()
+	aisle_material.albedo_color = Color(0.18, 0.2, 0.22)
+	aisle.material_override = aisle_material
+	add_child(aisle)
+
 
 	var destination_sign := MeshInstance3D.new()
 	var sign_box := BoxMesh.new()
