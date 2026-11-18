@@ -1995,8 +1995,7 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 				_mission_label.text = "STOP THE BUS AND OPEN PASSENGER DOORS TO BOARD"
 			return
 		_passenger_pickup_done = true
-		if is_instance_valid(_passenger_waiting_group):
-			_passenger_waiting_group.visible = false
+		_animate_passenger_boarding()
 		if is_instance_valid(_passenger_status_label):
 			_passenger_status_label.text = "PASSENGERS ON BOARD: %d" % PASSENGER_GROUP_SIZE
 		_mission_target = ROUTE_TARGETS[_selected_route]
@@ -2044,12 +2043,49 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 			_mission_label.text = "%s COMPLETE  |  %s  |  +%d OMR" % [ROUTE_NAMES[_selected_route], CARGO_NAMES[_selected_cargo], CARGO_REWARDS[_selected_cargo]]
 
 
+func _animate_passenger_boarding() -> void:
+	if not is_instance_valid(_passenger_waiting_group) or not is_instance_valid(_active_vehicle):
+		return
+	_passenger_waiting_group.visible = true
+	var passenger_index := 0
+	for person in _passenger_waiting_group.get_children():
+		if not person is Node3D:
+			continue
+		var target := _active_vehicle.global_position + Vector3(-1.8 + float(passenger_index % 2) * 0.55, 0.0, 1.4 + float(passenger_index / 2) * 0.22)
+		var tween := create_tween()
+		tween.set_trans(Tween.TRANS_QUAD)
+		tween.set_ease(Tween.EASE_IN_OUT)
+		tween.tween_property(person, "global_position", target, 0.65 + float(passenger_index % 3) * 0.12)
+		tween.tween_callback(func(): person.visible = false)
+		passenger_index += 1
+
+
+func _animate_passenger_alighting() -> void:
+	if not is_instance_valid(_passenger_waiting_group) or not is_instance_valid(_active_vehicle):
+		return
+	_passenger_waiting_group.global_position = _active_vehicle.global_position + Vector3(4.0, 0.0, 0.0)
+	_passenger_waiting_group.visible = true
+	var passenger_index := 0
+	for person in _passenger_waiting_group.get_children():
+		if not person is Node3D:
+			continue
+		person.visible = true
+		person.global_position = _active_vehicle.global_position + Vector3(1.8, 0.0, 1.1 + float(passenger_index) * 0.12)
+		var target := _passenger_waiting_group.global_position + Vector3(float(passenger_index % 2) * 0.72, 0.0, float(passenger_index / 2) * 0.82)
+		var tween := create_tween()
+		tween.set_trans(Tween.TRANS_QUAD)
+		tween.set_ease(Tween.EASE_OUT)
+		tween.tween_property(person, "global_position", target, 0.8 + float(passenger_index % 3) * 0.1)
+		passenger_index += 1
+
+
 func _complete_passenger_dropoff() -> void:
 	if _mission_complete or not _passenger_mode or not _passenger_pickup_done:
 		return
 	if not is_instance_valid(_active_vehicle) or not _active_vehicle.has_method("can_board_passengers") or not _active_vehicle.can_board_passengers():
 		return
 	_mission_complete = true
+	_animate_passenger_alighting()
 	if is_instance_valid(_passenger_status_label):
 		_passenger_status_label.text = "PASSENGERS DELIVERED: %d" % PASSENGER_GROUP_SIZE
 	_delivery_count += 1
