@@ -408,6 +408,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - The driving HUD reports normal road position, lane-departure warning, and road-edge warning based on the player's lateral position on the current prototype highway.
 - The warning is visual only; it does not steer the vehicle, apply braking, or represent a full lane-marking/collision detection system.
 
+### Junction approach guidance
+- The driving HUD now shows approximate distance to the prototype junction stop line while approaching, with guidance for green, stop/prepare-to-stop phases, and crossing side-road traffic.
+- This is limited to the single test intersection and uses prototype world coordinates; it is not a complete traffic-law system or a guarantee that the junction is safe to enter.
+
 ### Pedestrian proximity awareness
 - The driving HUD warns when the animated junction pedestrian is crossing close to the player's vehicle and returns to a clear status when the hazard is no longer nearby.
 - This is a proximity warning for the current prototype crossing only; it is not certified collision avoidance and does not guarantee that a collision will be prevented.
