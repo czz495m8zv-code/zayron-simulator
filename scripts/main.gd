@@ -43,6 +43,8 @@ var _junction_pedestrian_clock: float = 3.0
 var _junction_pedestrian_walk_time: float = 0.0
 var _junction_pedestrian_legs: Array[Node3D] = []
 var _pedestrian_signal_materials: Array[StandardMaterial3D] = []
+var _pedestrian_wait_label: Label3D
+var _pedestrian_walk_label: Label3D
 const TRAFFIC_LOOP_LENGTH: float = 142.0
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
@@ -216,6 +218,10 @@ func _process(delta: float) -> void:
 	var pedestrian_walk_allowed := _traffic_signal_clock >= 10.0
 	for pedestrian_index in range(_pedestrian_signal_materials.size()):
 		_pedestrian_signal_materials[pedestrian_index].emission_energy_multiplier = 1.8 if (pedestrian_index == 1) == pedestrian_walk_allowed else 0.08
+	if is_instance_valid(_pedestrian_wait_label):
+		_pedestrian_wait_label.visible = not pedestrian_walk_allowed
+	if is_instance_valid(_pedestrian_walk_label):
+		_pedestrian_walk_label.visible = pedestrian_walk_allowed
 	_forklift_animation_time += delta
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
@@ -774,6 +780,23 @@ func _build_test_intersection() -> void:
 		pedestrian_lamp.material_override = pedestrian_material
 		add_child(pedestrian_lamp)
 		_pedestrian_signal_materials.append(pedestrian_material)
+	_pedestrian_wait_label = Label3D.new()
+	_pedestrian_wait_label.name = "PedestrianWaitText"
+	_pedestrian_wait_label.text = "WAIT"
+	_pedestrian_wait_label.font_size = 28
+	_pedestrian_wait_label.pixel_size = 0.006
+	_pedestrian_wait_label.position = Vector3(8.0, 3.55, -43.15)
+	_pedestrian_wait_label.modulate = Color(1.0, 0.22, 0.18)
+	add_child(_pedestrian_wait_label)
+	_pedestrian_walk_label = Label3D.new()
+	_pedestrian_walk_label.name = "PedestrianWalkText"
+	_pedestrian_walk_label.text = "WALK"
+	_pedestrian_walk_label.font_size = 28
+	_pedestrian_walk_label.pixel_size = 0.006
+	_pedestrian_walk_label.position = Vector3(8.0, 3.55, -43.15)
+	_pedestrian_walk_label.modulate = Color(0.18, 1.0, 0.3)
+	_pedestrian_walk_label.visible = false
+	add_child(_pedestrian_walk_label)
 
 func _build_traffic_vehicle() -> void:
 	var traffic_colors: Array[Color] = [Color(0.72, 0.12, 0.08), Color(0.12, 0.32, 0.72), Color(0.78, 0.78, 0.72)]
