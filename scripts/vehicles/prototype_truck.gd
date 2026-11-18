@@ -115,9 +115,10 @@ func _build_engine_audio() -> void:
 	_engine_playback = player.get_stream_playback() as AudioStreamGeneratorPlayback
 
 func _physics_process(delta: float) -> void:
-	var throttle := _throttle_input if _engine_running and _gear_mode == "D" else 0.0
+	var trailer_ready := not (supports_trailer and _trailer_attached and _trailer_legs_down)
+	var throttle := _throttle_input if _engine_running and _gear_mode == "D" and trailer_ready else 0.0
 	var brake := _brake_input
-	var reverse := _reverse_input if _engine_running and _gear_mode == "R" else 0.0
+	var reverse := _reverse_input if _engine_running and _gear_mode == "R" and trailer_ready else 0.0
 	var steering := _steering_input
 
 	if not OS.has_feature("android"):
@@ -644,7 +645,7 @@ func _set_landing_leg_positions() -> void:
 		if child is Node3D and String(child.name).begins_with("LandingLeg_"):
 			child.position.y = 0.02 if _trailer_legs_down else 0.24
 		elif child is Node3D and String(child.name).begins_with("LandingFoot_"):
-			child.position.y = -0.30 if _trailer_legs_down else -0.08
+			child.position.y = -0.12 if _trailer_legs_down else -0.08
 
 func _set_gear(next_gear: String) -> void:
 	if absf(_speed) > 0.28:
