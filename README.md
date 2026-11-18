@@ -404,6 +404,11 @@ The three prototype highway cars now use a lightweight same-lane following model
 - During the final two seconds of the pedestrian signal's red-traffic interval, the green WALK lamp and WALK text flash at a steady 0.8-second cycle.
 - The numeric countdown remains visible so pedestrians receive a clear indication that the phase is ending.
 
+### Refuelling safety interlock
+- Refuelling is available only at the depot or roadside fuel station, while fully stopped with the parking brake engaged.
+- The engine must also be switched off. The refuel control stays disabled while the engine is running and displays an engine-off reminder.
+- Fuel level and wallet balance remain part of the saved career state.
+
 ### Junction stop-line clearance safety
 - Main-road AI traffic and the player driving-assist brake only apply a red/amber stop when the vehicle is still before the stop line.
 - A vehicle that legally entered the junction on green is no longer commanded to stop merely because the signal changes while it is clearing the conflict area.
