@@ -48,6 +48,7 @@ var _pedestrian_signal_materials: Array[StandardMaterial3D] = []
 var _pedestrian_wait_label: Label3D
 var _pedestrian_walk_label: Label3D
 var _pedestrian_countdown_label: Label3D
+var _pedestrian_signal_flash_clock: float = 0.0
 const TRAFFIC_LOOP_LENGTH: float = 142.0
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
@@ -223,12 +224,17 @@ func _process(delta: float) -> void:
 	for countdown_label in _traffic_signal_countdown_labels:
 		countdown_label.text = "%02d" % signal_seconds_left
 	var pedestrian_walk_allowed := _traffic_signal_clock >= 10.0
+	# Flash WALK during the final two seconds as a clearance warning before WAIT.
+	_pedestrian_signal_flash_clock += delta
+	var pedestrian_clearance_warning := pedestrian_walk_allowed and _traffic_signal_clock >= 14.0
+	var pedestrian_walk_lit := pedestrian_walk_allowed and (not pedestrian_clearance_warning or fposmod(_pedestrian_signal_flash_clock, 0.8) < 0.4)
 	for pedestrian_index in range(_pedestrian_signal_materials.size()):
-		_pedestrian_signal_materials[pedestrian_index].emission_energy_multiplier = 1.8 if (pedestrian_index == 1) == pedestrian_walk_allowed else 0.08
+		var lamp_active := pedestrian_walk_lit if pedestrian_index == 1 else not pedestrian_walk_allowed
+		_pedestrian_signal_materials[pedestrian_index].emission_energy_multiplier = 1.8 if lamp_active else 0.08
 	if is_instance_valid(_pedestrian_wait_label):
 		_pedestrian_wait_label.visible = not pedestrian_walk_allowed
 	if is_instance_valid(_pedestrian_walk_label):
-		_pedestrian_walk_label.visible = pedestrian_walk_allowed
+		_pedestrian_walk_label.visible = pedestrian_walk_lit
 	if is_instance_valid(_pedestrian_countdown_label):
 		var seconds_to_change := 16.0 - _traffic_signal_clock if pedestrian_walk_allowed else 10.0 - _traffic_signal_clock
 		_pedestrian_countdown_label.text = "%02d" % maxi(0, ceili(seconds_to_change))
