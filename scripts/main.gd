@@ -125,6 +125,11 @@ var _company_ai_waypoint_index: int = 0
 var _company_ai_stop_passengers: Node3D
 var _company_ai_boarded_passengers: int = 0
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
+		_save_progress()
+
+
 func _ready() -> void:
 	_load_progress()
 	_initialize_company_records()
