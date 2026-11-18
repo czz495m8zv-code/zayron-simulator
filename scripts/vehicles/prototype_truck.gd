@@ -14,6 +14,7 @@ signal refuel_requested(cost_omr: int)
 @export var supports_trailer: bool = false
 
 var _speed: float = 0.0
+var _collision_warning_timer: float = 0.0
 var _throttle_input: float = 0.0
 var _brake_input: float = 0.0
 var _traffic_signal_brake: float = 0.0
@@ -209,6 +210,20 @@ func _physics_process(delta: float) -> void:
 	lateral_velocity = lateral_velocity.move_toward(Vector3.ZERO, lateral_grip * delta)
 	velocity = forward * _speed + lateral_velocity
 	move_and_slide()
+	if _collision_warning_timer > 0.0:
+		_collision_warning_timer = maxf(0.0, _collision_warning_timer - delta)
+	# Highway traffic uses AnimatableBody3D collision bodies. On impact, apply
+	# a strong speed loss and activate hazards so the player notices the crash.
+	for collision_index in range(get_slide_collision_count()):
+		var impact := get_slide_collision(collision_index)
+		var hit_body := impact.get_collider()
+		if hit_body is AnimatableBody3D and String(hit_body.name) == "TrafficCollisionBody":
+			if absf(_speed) > 2.0:
+				_speed *= 0.22
+				_hazard_on = true
+				_collision_warning_timer = 4.0
+				_update_indicator_lights()
+			break
 	# Fuel is consumed only while the engine is running. Distance use models
 	# road load; the additional idle/load term drains fuel while stationary too.
 	if _engine_running:
@@ -241,6 +256,8 @@ func _physics_process(delta: float) -> void:
 			status_parts.append("PARK BRAKE")
 		if _traffic_signal_brake > 0.05:
 			status_parts.append("TRAFFIC SIGNAL")
+		if _collision_warning_timer > 0.0:
+			status_parts.append("COLLISION - CHECK VEHICLE")
 		if supports_passenger_doors and _passenger_doors_open:
 			status_parts.append("CLOSE PASSENGER DOORS")
 		if supports_trailer and _trailer_doors_open:
