@@ -1,6 +1,7 @@
 extends "res://scripts/vehicles/prototype_truck.gd"
 
 func _build_truck() -> void:
+	cockpit_camera_position = Vector3(0.0, 2.35, -3.8)
 	var chassis_shape := CollisionShape3D.new()
 	var chassis_box := BoxShape3D.new()
 	chassis_box.size = Vector3(2.5, 2.8, 9.0)
@@ -64,6 +65,8 @@ func _build_truck() -> void:
 			wheel.position = Vector3(side * 1.28, 0.55, z)
 			wheel.material_override = wheel_material
 			add_child(wheel)
+
+	_add_cockpit_steering_wheel(Vector3(-0.62, 1.95, -3.85))
 
 	var destination_sign := MeshInstance3D.new()
 	var sign_box := BoxMesh.new()
