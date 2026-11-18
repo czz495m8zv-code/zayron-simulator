@@ -1193,3 +1193,7 @@ func set_visible_passenger_manifest(passenger_count: int) -> void:
 		head.material_override = skin
 		occupant.add_child(head)
 
+
+
+func get_speed_kmh() -> float:
+	return absf(_speed) * 3.6
