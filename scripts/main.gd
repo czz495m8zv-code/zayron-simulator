@@ -172,7 +172,9 @@ func _process(delta: float) -> void:
 		_traffic_current_speeds[traffic_index] = move_toward(_traffic_current_speeds[traffic_index], target_speed, 3.2 * delta)
 		traffic_vehicle.position.z += _traffic_current_speeds[traffic_index] * delta
 		if traffic_vehicle.position.z > 24.0:
-			traffic_vehicle.position.z = -118.0 - float(traffic_index) * 42.0
+			# Keep every respawn inside the same 142 m loop and preserve the
+			# original traffic order; offsets outside the loop caused phase overlap.
+			traffic_vehicle.position.z = -118.0 + float(traffic_index) * 46.0
 	_forklift_animation_time += delta
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
@@ -588,6 +590,28 @@ func _build_roadside_signs() -> void:
 		sign_text.modulate = Color.WHITE
 		sign_text.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		add_child(sign_text)
+
+
+	# Prototype Oman highway speed-limit boards along the test segment.
+	for sign_index in range(3):
+		var sign_side := -1.0 if sign_index % 2 == 0 else 1.0
+		var sign_z := -28.0 - float(sign_index) * 42.0
+		var sign_x := sign_side * 6.7
+		var speed_post := _make_box("SpeedLimitPost_%02d" % sign_index, Vector3(0.14, 2.35, 0.14), Vector3(sign_x, 1.175, sign_z), Color(0.72, 0.74, 0.76))
+		add_child(speed_post)
+		var sign_back := _make_box("SpeedLimitBoard_%02d" % sign_index, Vector3(1.35, 1.35, 0.16), Vector3(sign_x, 2.45, sign_z), Color(0.82, 0.08, 0.07))
+		add_child(sign_back)
+		var sign_face := _make_box("SpeedLimitFace_%02d" % sign_index, Vector3(1.12, 1.12, 0.04), Vector3(sign_x, 2.45, sign_z + 0.105), Color(0.96, 0.95, 0.9))
+		add_child(sign_face)
+		var speed_text := Label3D.new()
+		speed_text.name = "SpeedLimitText_%02d" % sign_index
+		speed_text.text = "80\\nkm/h"
+		speed_text.position = Vector3(sign_x, 2.45, sign_z + 0.14)
+		speed_text.font_size = 38
+		speed_text.pixel_size = 0.012
+		speed_text.modulate = Color(0.08, 0.08, 0.08)
+		speed_text.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		add_child(speed_text)
 
 func _build_traffic_vehicle() -> void:
 	var traffic_colors: Array[Color] = [Color(0.72, 0.12, 0.08), Color(0.12, 0.32, 0.72), Color(0.78, 0.78, 0.72)]
