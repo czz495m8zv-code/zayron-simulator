@@ -82,3 +82,5 @@ Use the in-game **NEXT** button to cycle through the fleet and the **ROUTE** but
 ### Driving model update
 - The shared player vehicle controller now uses a simple speed-dependent torque curve, stronger low-speed acceleration, engine/rolling drag, and reduced steering authority at higher speeds.
 - This remains an arcade-style CharacterBody3D controller; it is not yet a wheel-suspension or tire-physics simulation.
+
+- Steering input now eases smoothly, and a lightweight lateral-grip approximation damps sideways momentum for more planted handling. This is still not full tire, suspension, or wheel-contact physics.
