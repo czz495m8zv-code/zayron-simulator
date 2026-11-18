@@ -4,3 +4,8 @@
 
 [node name="PrototypeBus" type="CharacterBody3D"]
 script = ExtResource("1_bus")
+acceleration = 6.8
+service_brake = 17.0
+max_forward_speed = 26.0
+max_reverse_speed = 5.0
+steering_speed = 0.9
