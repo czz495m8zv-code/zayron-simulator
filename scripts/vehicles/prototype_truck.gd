@@ -49,6 +49,9 @@ var _seat_adjustment := 0.0
 var _high_beam_on := false
 var _parking_lights_on := false
 var _boot_open := false
+var _engine_running := true
+var _gear_mode := "D"
+var _engine_button: Button
 @export var cockpit_camera_position: Vector3 = Vector3(0.0, 2.45, -1.35)
 var _engine_playback: AudioStreamGeneratorPlayback
 var _engine_phase: float = 0.0
@@ -65,7 +68,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _engine_playback != null:
 		var frames := _engine_playback.get_frames_available()
-		var frequency := 42.0 + absf(_speed) * 5.0 + _throttle_input * 24.0
+		var frequency := (42.0 + absf(_speed) * 5.0 + _throttle_input * 24.0) if _engine_running else 0.0
 		for i in range(frames):
 			var sample := sin(_engine_phase) * 0.055 + sin(_engine_phase * 2.0) * 0.018 + sin(_engine_phase * 0.5) * 0.022
 			_engine_playback.push_frame(Vector2(sample, sample))
@@ -99,9 +102,9 @@ func _build_engine_audio() -> void:
 	_engine_playback = player.get_stream_playback() as AudioStreamGeneratorPlayback
 
 func _physics_process(delta: float) -> void:
-	var throttle := _throttle_input
+	var throttle := _throttle_input if _engine_running and _gear_mode == "D" else 0.0
 	var brake := _brake_input
-	var reverse := _reverse_input
+	var reverse := _reverse_input if _engine_running and _gear_mode == "R" else 0.0
 	var steering := _steering_input
 
 	if not OS.has_feature("android"):
@@ -123,7 +126,7 @@ func _physics_process(delta: float) -> void:
 		_speed = move_toward(_speed, 0.0, service_brake * 1.8 * delta)
 	elif brake > 0.0:
 		_speed = move_toward(_speed, 0.0, service_brake * brake * delta)
-	elif reverse > 0.0 and absf(_speed) < 0.8:
+	elif reverse > 0.0 and absf(_speed) < 0.8 and not _handbrake_on:
 		_speed = move_toward(_speed, -max_reverse_speed, acceleration * 0.48 * delta)
 	elif throttle > 0.0 and _speed >= -0.1 and not _handbrake_on:
 		var torque_factor := lerpf(1.0, 0.42, speed_ratio)
@@ -154,7 +157,7 @@ func _physics_process(delta: float) -> void:
 	if is_instance_valid(_speed_label):
 		_speed_label.text = "%03d km/h" % int(absf(_speed) * 3.6)
 	if is_instance_valid(_gear_label):
-		_gear_label.text = "R" if _speed < -0.2 else ("D" if _speed > 0.2 else "N")
+		_gear_label.text = _gear_mode + ("  •  OFF" if not _engine_running else "  •  ON")
 	if is_instance_valid(_steering_wheel_mesh):
 		_steering_wheel_mesh.rotation.z = -_steering_current * 0.72
 
@@ -413,6 +416,11 @@ func _build_mobile_controls() -> void:
 	_add_action_button(ui, "PARK LIGHT", 102.0, 272.0, "parking_lights")
 	_add_action_button(ui, "BOOT", 180.0, 272.0, "boot")
 	_add_action_button(ui, "WHEEL HORN", -72.0, 318.0, "horn")
+	_add_action_button(ui, "P", -160.0, 364.0, "gear_p")
+	_add_action_button(ui, "R", -82.0, 364.0, "gear_r")
+	_add_action_button(ui, "N", -4.0, 364.0, "gear_n")
+	_add_action_button(ui, "D", 74.0, 364.0, "gear_d")
+	_add_action_button(ui, "ENGINE", -72.0, 410.0, "engine")
 
 func _build_extra_vehicle_controls() -> void:
 	var horn_stream := AudioStreamGenerator.new()
@@ -478,6 +486,20 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 		"horn":
 			_horn_frames_left = 6600
 			_horn_phase = 0.0
+		"gear_p":
+			_set_gear("P")
+		"gear_r":
+			_set_gear("R")
+		"gear_n":
+			_set_gear("N")
+		"gear_d":
+			_set_gear("D")
+		"engine":
+			_engine_running = not _engine_running
+			button.text = "ENGINE: ON" if _engine_running else "ENGINE: OFF"
+			if not _engine_running:
+				_throttle_input = 0.0
+				_reverse_input = 0.0
 		"left":
 			_left_indicator_on = not _left_indicator_on
 			if _left_indicator_on:
@@ -526,6 +548,20 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 				payload.visible = payload.visible or _boot_open
 			button.text = "BOOT: OPEN" if _boot_open else "BOOT"
 	_update_indicator_lights()
+
+func _set_gear(next_gear: String) -> void:
+	if absf(_speed) > 0.28:
+		return
+	_gear_mode = next_gear
+	if next_gear == "P":
+		_handbrake_on = true
+		_reverse_input = 0.0
+		_throttle_input = 0.0
+	elif next_gear == "N":
+		_reverse_input = 0.0
+		_throttle_input = 0.0
+	if is_instance_valid(_gear_label):
+		_gear_label.text = _gear_mode + ("  •  ON" if _engine_running else "  •  OFF")
 
 func _adjust_seat(amount: float) -> void:
 	_seat_adjustment = clampf(_seat_adjustment + amount, -0.24, 0.24)
