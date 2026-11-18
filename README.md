@@ -186,3 +186,10 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Picking a staged pallet frees its bay; mission resets also clear bay occupancy so the depot can be used again.
 - If the forklift releases a pallet outside the staging area, it is parked where released and the panel asks the player to align it with a bay.
 - Bay snapping and occupancy are scripted gameplay rules, not physical pallet collision or an automated warehouse conveyor system.
+
+### Truck-side warehouse loading
+- A marked truck loading bay has been added beside the depot, with a LOAD STAGED PALLET interaction that appears only when the player vehicle is nearby, stopped with its parking brake applied, and at least one pallet occupies a staging bay.
+- Loading consumes one staged pallet, animates its crates toward the truck bay, updates the vehicle cargo payload and advances the cargo mission to its delivery destination.
+- The original road checkpoint no longer grants cargo automatically; it directs the player to complete the warehouse loading process first.
+- Starting a new vehicle/mission restores pallet visibility, original pallet positions, crate visibility and empty staging-bay occupancy.
+- This remains a scripted transfer and payload visual/state update. It does not yet model a loading dock leveller, forklift-to-truck physical handoff, straps, weight distribution, or cargo physics.
