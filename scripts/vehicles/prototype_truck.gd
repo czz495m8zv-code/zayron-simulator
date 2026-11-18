@@ -1037,3 +1037,47 @@ func _add_cockpit_steering_wheel(location: Vector3) -> void:
 		spoke.rotation.z = TAU * float(spoke_index) / 3.0
 		spoke.material_override = wheel_material
 		add_child(spoke)
+
+
+func set_visible_passenger_manifest(passenger_count: int) -> void:
+	var old_manifest := get_node_or_null("PassengerManifest")
+	if is_instance_valid(old_manifest):
+		old_manifest.queue_free()
+	if passenger_count <= 0:
+		return
+	var manifest := Node3D.new()
+	manifest.name = "PassengerManifest"
+	add_child(manifest)
+	var shirt_colors: Array[Color] = [
+		Color(0.12, 0.32, 0.62), Color(0.62, 0.18, 0.12),
+		Color(0.16, 0.46, 0.28), Color(0.58, 0.42, 0.18)
+	]
+	for passenger_index in range(mini(passenger_count, 10)):
+		var seat_row := int(passenger_index / 2)
+		var seat_side := -0.66 if passenger_index % 2 == 0 else 0.66
+		var seat_z := -2.65 + float(seat_row) * 1.38
+		var occupant := Node3D.new()
+		occupant.name = "SeatedPassenger_%02d" % (passenger_index + 1)
+		occupant.position = Vector3(seat_side, 1.24, seat_z - 0.04)
+		manifest.add_child(occupant)
+		var torso := MeshInstance3D.new()
+		var torso_mesh := CapsuleMesh.new()
+		torso_mesh.radius = 0.16
+		torso_mesh.height = 0.58
+		torso.mesh = torso_mesh
+		torso.position.y = 0.36
+		var shirt := StandardMaterial3D.new()
+		shirt.albedo_color = shirt_colors[passenger_index % shirt_colors.size()]
+		torso.material_override = shirt
+		occupant.add_child(torso)
+		var head := MeshInstance3D.new()
+		var head_mesh := SphereMesh.new()
+		head_mesh.radius = 0.12
+		head_mesh.height = 0.24
+		head.mesh = head_mesh
+		head.position.y = 0.76
+		var skin := StandardMaterial3D.new()
+		skin.albedo_color = Color(0.66, 0.48, 0.34)
+		head.material_override = skin
+		occupant.add_child(head)
+
