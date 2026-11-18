@@ -209,9 +209,12 @@ func _physics_process(delta: float) -> void:
 	lateral_velocity = lateral_velocity.move_toward(Vector3.ZERO, lateral_grip * delta)
 	velocity = forward * _speed + lateral_velocity
 	move_and_slide()
-	# Approximate fuel use from distance travelled plus a small engine-load cost.
-	var distance_moved := absf(_speed) * delta
-	_fuel_level = maxf(0.0, _fuel_level - distance_moved * 0.0008 - throttle * delta * 0.00002)
+	# Fuel is consumed only while the engine is running. Distance use models
+	# road load; the additional idle/load term drains fuel while stationary too.
+	if _engine_running:
+		var distance_moved := absf(_speed) * delta
+		var idle_and_load_use := (0.00006 + throttle * 0.00008) * delta
+		_fuel_level = maxf(0.0, _fuel_level - distance_moved * 0.0008 - idle_and_load_use)
 
 	if is_instance_valid(_speed_label):
 		_speed_label.text = "%03d km/h" % int(absf(_speed) * 3.6)
@@ -768,6 +771,9 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			button.text = "LOAD SECURED" if _cargo_secured else "SECURE CARGO"
 			_update_cargo_strap_visuals()
 		"engine":
+			if not _engine_running and _fuel_level <= 0.0:
+				button.text = "NO FUEL - REFUEL"
+				return
 			_engine_running = not _engine_running
 			button.text = "ENGINE: ON" if _engine_running else "ENGINE: OFF"
 			if not _engine_running:
