@@ -26,6 +26,8 @@ var _rpm_label: Label
 var _vehicle_status_label: Label
 var _engine_temperature := 22.0
 var _cargo_loaded := false
+var _cargo_secured := false
+var _cargo_straps_button: Button
 var _exterior_camera: Camera3D
 var _close_camera: Camera3D
 var _cockpit_camera: Camera3D
@@ -136,9 +138,10 @@ func _build_engine_audio() -> void:
 
 func _physics_process(delta: float) -> void:
 	var trailer_ready := not (supports_trailer and _trailer_attached and _trailer_legs_down)
-	var throttle := _throttle_input if _engine_running and _gear_mode == "D" and trailer_ready else 0.0
+	var cargo_ready := not _cargo_loaded or _cargo_secured
+	var throttle := _throttle_input if _engine_running and _gear_mode == "D" and trailer_ready and cargo_ready else 0.0
 	var brake := _brake_input
-	var reverse := _reverse_input if _engine_running and _gear_mode == "R" and trailer_ready else 0.0
+	var reverse := _reverse_input if _engine_running and _gear_mode == "R" and trailer_ready and cargo_ready else 0.0
 	var steering := _steering_input
 
 	if not OS.has_feature("android"):
@@ -224,7 +227,7 @@ func _physics_process(delta: float) -> void:
 		if supports_trailer and _trailer_legs_down:
 			status_parts.append("TRAILER LEGS DOWN")
 		if _cargo_loaded:
-			status_parts.append("CARGO ONBOARD")
+			status_parts.append("CARGO SECURED" if _cargo_secured else "SECURE CARGO BEFORE DRIVING")
 		_vehicle_status_label.text = "  |  ".join(status_parts) if not status_parts.is_empty() else "SYSTEMS NORMAL"
 	if is_instance_valid(_steering_wheel_mesh):
 		_steering_wheel_mesh.rotation.z = -_steering_current * 0.72
@@ -289,6 +292,10 @@ func set_steering_sensitivity(value: float) -> void:
 
 func set_cargo_payload(cargo_type: int, loaded: bool) -> void:
 	_cargo_loaded = loaded
+	_cargo_secured = false
+	if is_instance_valid(_cargo_straps_button):
+		_cargo_straps_button.visible = loaded
+		_cargo_straps_button.text = "SECURE CARGO" if loaded else "NO CARGO"
 	var payload := get_node_or_null("CargoPayload") as Node3D
 	if payload == null:
 		payload = Node3D.new()
@@ -344,6 +351,16 @@ func set_cargo_payload(cargo_type: int, loaded: bool) -> void:
 				buckle.material_override = buckle_mat
 				payload.add_child(buckle)
 	payload.visible = loaded
+	_update_cargo_strap_visuals()
+
+
+func _update_cargo_strap_visuals() -> void:
+	var payload := get_node_or_null("CargoPayload") as Node3D
+	if not is_instance_valid(payload):
+		return
+	for child in payload.get_children():
+		if child is MeshInstance3D and (String(child.name).begins_with("CargoStrap_") or String(child.name).begins_with("CargoStrapBuckle_")):
+			child.visible = _cargo_loaded and _cargo_secured
 
 
 func _build_camera() -> void:
@@ -536,6 +553,22 @@ func _build_mobile_controls() -> void:
 	_add_action_button(ui, "D", 74.0, 364.0, "gear_d")
 	_add_action_button(ui, "ENGINE", -72.0, 410.0, "engine")
 	_add_action_button(ui, "SEAT BELT", 16.0, 364.0, "seatbelt")
+	_cargo_straps_button = Button.new()
+	_cargo_straps_button.name = "VehicleAction_CargoStraps"
+	_cargo_straps_button.text = "SECURE CARGO"
+	_cargo_straps_button.focus_mode = Control.FOCUS_NONE
+	_cargo_straps_button.anchor_left = 0.5
+	_cargo_straps_button.anchor_right = 0.5
+	_cargo_straps_button.offset_left = -90.0
+	_cargo_straps_button.offset_top = 548.0
+	_cargo_straps_button.offset_right = -18.0
+	_cargo_straps_button.offset_bottom = 588.0
+	_cargo_straps_button.add_theme_font_size_override("font_size", 12)
+	_cargo_straps_button.add_theme_color_override("font_color", Color.WHITE)
+	_cargo_straps_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.04, 0.10, 0.17, 0.92)))
+	_cargo_straps_button.pressed.connect(_on_vehicle_action.bind("cargo_straps", _cargo_straps_button))
+	_cargo_straps_button.visible = false
+	ui.add_child(_cargo_straps_button)
 	if supports_trailer:
 		_add_action_button(ui, "TRAILER", 16.0, 410.0, "trailer")
 		_add_action_button(ui, "LANDING LEGS", 124.0, 410.0, "trailer_legs")
@@ -620,6 +653,13 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 		"seatbelt":
 			_seatbelt_fastened = not _seatbelt_fastened
 			button.text = "BELT: FASTENED" if _seatbelt_fastened else "SEAT BELT"
+		"cargo_straps":
+			if not _cargo_loaded:
+				button.text = "NO CARGO"
+				return
+			_cargo_secured = not _cargo_secured
+			button.text = "LOAD SECURED" if _cargo_secured else "SECURE CARGO"
+			_update_cargo_strap_visuals()
 		"engine":
 			_engine_running = not _engine_running
 			button.text = "ENGINE: ON" if _engine_running else "ENGINE: OFF"
