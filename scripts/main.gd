@@ -1093,6 +1093,24 @@ func _load_progress() -> void:
 	_company_bus_count = maxi(1, int(progress.get_value("company", "buses", _company_bus_count)))
 	_company_driver_count = maxi(0, int(progress.get_value("company", "drivers", _company_driver_count)))
 	_company_completed_trips = maxi(0, int(progress.get_value("company", "completed_trips", _company_completed_trips)))
+	var saved_fleet: Variant = progress.get_value("company", "fleet", [])
+	if saved_fleet is Array:
+		for bus_entry in saved_fleet:
+			if bus_entry is Dictionary:
+				_company_fleet.append(bus_entry.duplicate(true))
+	var saved_drivers: Variant = progress.get_value("company", "driver_roster", [])
+	if saved_drivers is Array:
+		for driver_entry in saved_drivers:
+			if driver_entry is Dictionary:
+				_company_drivers.append(driver_entry.duplicate(true))
+	if _company_fleet.is_empty():
+		for bus_index in range(_company_bus_count):
+			_company_fleet.append({"name": "Company Bus %03d" % (bus_index + 1), "type": "INTERCITY COACH", "status": "AVAILABLE"})
+	if _company_drivers.is_empty():
+		for driver_index in range(_company_driver_count):
+			_company_drivers.append({"name": "Driver %03d" % (driver_index + 1), "status": "AVAILABLE", "route": "UNASSIGNED", "bus": "NO BUS"})
+	_company_bus_count = _company_fleet.size()
+	_company_driver_count = _company_drivers.size()
 	_steering_sensitivity = clampf(float(progress.get_value("settings", "steering_sensitivity", 1.0)), 0.5, 1.8)
 	_master_volume = clampf(float(progress.get_value("settings", "master_volume", 1.0)), 0.0, 1.0)
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(_master_volume, 0.001)))
@@ -1112,6 +1130,8 @@ func _save_progress() -> void:
 	progress.set_value("company", "buses", _company_bus_count)
 	progress.set_value("company", "drivers", _company_driver_count)
 	progress.set_value("company", "completed_trips", _company_completed_trips)
+	progress.set_value("company", "fleet", _company_fleet)
+	progress.set_value("company", "driver_roster", _company_drivers)
 	progress.set_value("settings", "steering_sensitivity", _steering_sensitivity)
 	progress.set_value("settings", "master_volume", _master_volume)
 	var save_error := progress.save(SAVE_PATH)
