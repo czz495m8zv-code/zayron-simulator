@@ -690,9 +690,11 @@ func set_refuel_station_available(available: bool, wallet_omr: int) -> void:
 		return
 	var cost := get_refuel_cost_omr()
 	var can_pay := wallet_omr >= cost
-	_refuel_button.disabled = not available or not can_pay or cost <= 0
+	_refuel_button.disabled = not available or _engine_running or not can_pay or cost <= 0
 	if not available:
 		_refuel_button.text = "FUEL STATION ONLY"
+	elif _engine_running:
+		_refuel_button.text = "ENGINE OFF TO REFUEL"
 	elif cost <= 0:
 		_refuel_button.text = "TANK FULL"
 	elif not can_pay:
@@ -733,6 +735,9 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 				return
 			if absf(_speed) > 0.15 or not _handbrake_on:
 				button.text = "STOP + PARK FIRST"
+				return
+			if _engine_running:
+				button.text = "ENGINE OFF TO REFUEL"
 				return
 			var refuel_cost := get_refuel_cost_omr()
 			if refuel_cost <= 0:
