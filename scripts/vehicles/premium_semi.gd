@@ -33,6 +33,27 @@ func _build_truck() -> void:
 	_add_box("RightHeadlamp", Vector3(0.42, 0.22, 0.08), Vector3(0.82, 1.0, -3.2), Color(0.92, 0.95, 1.0))
 	_add_box("TrailerSideStripeLeft", Vector3(0.035, 0.12, 8.2), Vector3(-1.29, 1.0, 5.9), trim_paint)
 	_add_box("TrailerSideStripeRight", Vector3(0.035, 0.12, 8.2), Vector3(1.29, 1.0, 5.9), trim_paint)
+	# Reinforced trailer underframe and tandem-axle cross members.
+	for side in [-1.0, 1.0]:
+		_add_box("TrailerFrameRail_%s" % side, Vector3(0.18, 0.28, 8.15), Vector3(side * 0.88, 0.38, 5.9), Color(0.12, 0.14, 0.16))
+	for z in [7.55, 8.55]:
+		_add_box("TrailerAxleBeam_%s" % z, Vector3(2.05, 0.18, 0.22), Vector3(0.0, 0.43, z), Color(0.16, 0.18, 0.2))
+	# Rear double doors, hinges, locking bars and lower impact protection.
+	_add_box("RearDoorLeft", Vector3(1.22, 3.42, 0.075), Vector3(-0.63, 2.35, 10.13), trailer_paint)
+	_add_box("RearDoorRight", Vector3(1.22, 3.42, 0.075), Vector3(0.63, 2.35, 10.13), trailer_paint)
+	for side in [-1.0, 1.0]:
+		_add_box("RearDoorHingeTop_%s" % side, Vector3(0.09, 0.22, 0.12), Vector3(side * 1.19, 3.75, 10.19), trim_paint)
+		_add_box("RearDoorHingeBottom_%s" % side, Vector3(0.09, 0.22, 0.12), Vector3(side * 1.19, 0.95, 10.19), trim_paint)
+		_add_box("RearDoorLockBar_%s" % side, Vector3(0.055, 2.9, 0.09), Vector3(side * 0.72, 2.35, 10.2), Color(0.22, 0.25, 0.28))
+		_add_box("RearDoorHandle_%s" % side, Vector3(0.16, 0.12, 0.12), Vector3(side * 0.72, 2.3, 10.27), trim_paint)
+		_add_box("RearTailLamp_%s" % side, Vector3(0.38, 0.48, 0.12), Vector3(side * 0.92, 0.82, 10.2), Color(0.78, 0.035, 0.025))
+		_add_box("RearReverseLamp_%s" % side, Vector3(0.22, 0.18, 0.12), Vector3(side * 0.92, 1.17, 10.2), Color(0.88, 0.9, 0.82))
+	_add_box("RearBumper", Vector3(2.62, 0.2, 0.22), Vector3(0.0, 0.48, 10.18), Color(0.2, 0.22, 0.24))
+	_add_box("RearTopHeader", Vector3(2.55, 0.16, 0.12), Vector3(0.0, 4.12, 10.16), trim_paint)
+	# Small amber side markers make the trailer outline easier to read.
+	for side in [-1.0, 1.0]:
+		for z in [2.6, 5.0, 7.4, 9.2]:
+			_add_box("TrailerSideMarker_%s_%s" % [side, z], Vector3(0.07, 0.16, 0.24), Vector3(side * 1.31, 1.25, z), Color(0.95, 0.48, 0.06))
 
 func _add_box(label: String, dimensions: Vector3, location: Vector3, tint: Color) -> void:
 	var part := MeshInstance3D.new()
