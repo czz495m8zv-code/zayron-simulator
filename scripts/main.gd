@@ -564,8 +564,8 @@ func _build_mission_hud() -> void:
 	_mission_label.anchor_right = 0.5
 	_mission_label.offset_left = -190.0
 	_mission_label.offset_right = 190.0
-	_mission_label.offset_top = 22.0
-	_mission_label.offset_bottom = 58.0
+	_mission_label.offset_top = 76.0
+	_mission_label.offset_bottom = 112.0
 	_mission_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_mission_label.add_theme_font_size_override("font_size", 18)
 	_mission_label.add_theme_color_override("font_color", Color.WHITE)
