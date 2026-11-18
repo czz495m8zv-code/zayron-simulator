@@ -130,3 +130,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Company-service passengers now form a staggered two-column queue, walk through a short approach path toward the bus entrance, and disappear as a visual boarding effect.
 - A boarding manifest updates from 0/8 to 8/8 as each passenger's animation finishes.
 - This remains a lightweight visual effect; it does not yet place passenger characters on interior seats or simulate individual door collision, navigation or alighting.
+
+
+### Cargo loading and unloading safety
+- Cargo pickup and delivery now require the player vehicle to be fully stopped and the parking brake engaged.
+- If the vehicle enters a cargo checkpoint while moving or without the parking brake, the mission waits and displays an instruction; it can complete once the player stops and parks within the checkpoint area.
+- This is a gameplay safety interlock. Physical forklift-to-truck transfer, pallet placement, cargo straps operated by the player, and loading animations remain planned.
