@@ -404,6 +404,12 @@ The three prototype highway cars now use a lightweight same-lane following model
 - During the final two seconds of the pedestrian signal's red-traffic interval, the green WALK lamp and WALK text flash at a steady 0.8-second cycle.
 - The numeric countdown remains visible so pedestrians receive a clear indication that the phase is ending.
 
+### Live junction phase status on the driving HUD
+- Added a compact status line below the mission objective showing the active junction phase and seconds remaining.
+- The HUD distinguishes main-road green/amber, pedestrian WALK while main-road traffic is red, all-red clearance, and the protected side-road crossing window.
+- The status is derived from the same 26-second signal clock that controls the roadside lamps, pedestrian signal, AI traffic and player braking assist.
+- This gives the driver an at-a-glance phase cue without relying only on distant roadside countdown boards.
+
 ### Protected multi-phase T-junction signal cycle
 - Extended the junction cycle to 26 seconds: main-road green 8 s, amber 2 s, and red 16 s.
 - Pedestrian WALK runs from second 10 to second 16, followed by an all-red clearance interval.
