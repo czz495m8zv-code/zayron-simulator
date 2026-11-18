@@ -45,12 +45,14 @@
 - [ ] Add detailed road markings, terrain, buildings and landmarks
 - [x] Add a first delivery checkpoint objective and HUD
 - [x] Add a repeatable delivery restart control and a simple OMR reward counter (source implemented; runtime verification pending)
+- [x] Save completed deliveries, in-game OMR wallet and selected vehicle locally on the device (runtime verification pending)
 - [ ] Expand the starter delivery loop with multiple routes, cargo types, route selection and passenger missions
 - [ ] Add interactive traffic with collision avoidance, traffic signals and road rules
 - [ ] Verify all third-party asset licenses
 
 ### 4 — First Android test release
 - [ ] Add graphics, audio, sensitivity and control-layout settings
+- [x] Add a GitHub Actions Godot 4 headless import and scene-launch validation workflow
 - [ ] Configure a repeatable Android APK export
 - [ ] Profile memory, frame time, loading and battery use
 - [ ] Test on real Android devices
