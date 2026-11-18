@@ -63,6 +63,7 @@ func _ready() -> void:
 	_mission_target = _passenger_pickup_target
 	_build_environment()
 	_build_oman_test_road()
+	_build_oman_roadside_vegetation()
 	_build_roadside_signs()
 	_build_traffic_vehicle()
 	_build_mission()
@@ -235,6 +236,66 @@ func _build_oman_test_road() -> void:
 		var marker := _make_box("RoadMarker_%02d" % i, Vector3(0.18, 0.8, 0.18), Vector3(side * 6.0, 0.4, 12.0 - float(i) * 11.0), Color(0.88, 0.84, 0.72))
 		add_child(marker)
 
+
+
+func _build_oman_roadside_vegetation() -> void:
+	for tree_index in range(6):
+		var side := -1.0 if tree_index % 2 == 0 else 1.0
+		var tree := Node3D.new()
+		tree.name = "OmanDatePalm_%02d" % tree_index
+		tree.position = Vector3(side * (12.0 + float(tree_index % 2) * 2.0), 0.0, 12.0 - float(tree_index) * 23.0)
+		add_child(tree)
+		var trunk := MeshInstance3D.new()
+		trunk.name = "PalmTrunk"
+		var trunk_mesh := CylinderMesh.new()
+		trunk_mesh.top_radius = 0.17
+		trunk_mesh.bottom_radius = 0.34
+		trunk_mesh.height = 4.5
+		trunk.mesh = trunk_mesh
+		trunk.position.y = 2.25
+		var trunk_material := StandardMaterial3D.new()
+		trunk_material.albedo_color = Color(0.34, 0.21, 0.12)
+		trunk.material_override = trunk_material
+		tree.add_child(trunk)
+		var leaf_material := StandardMaterial3D.new()
+		leaf_material.albedo_color = Color(0.13, 0.31, 0.16)
+		leaf_material.roughness = 0.9
+		for leaf_index in range(8):
+			var angle := TAU * float(leaf_index) / 8.0
+			var leaf := MeshInstance3D.new()
+			leaf.name = "PalmFrond_%d" % leaf_index
+			var leaf_mesh := BoxMesh.new()
+			leaf_mesh.size = Vector3(0.18, 0.12, 2.55)
+			leaf.mesh = leaf_mesh
+			leaf.position = Vector3(sin(angle) * 0.78, 4.25 - (0.12 if leaf_index % 2 == 0 else 0.0), cos(angle) * 0.78)
+			leaf.rotation.y = angle
+			leaf.rotation.x = -0.22
+			leaf.material_override = leaf_material
+			tree.add_child(leaf)
+		var crown := MeshInstance3D.new()
+		crown.name = "PalmCrown"
+		var crown_mesh := SphereMesh.new()
+		crown_mesh.radius = 0.34
+		crown_mesh.height = 0.58
+		crown.mesh = crown_mesh
+		crown.position.y = 4.12
+		crown.material_override = leaf_material
+		tree.add_child(crown)
+
+	for shrub_index in range(10):
+		var side := -1.0 if shrub_index % 2 == 0 else 1.0
+		var shrub := MeshInstance3D.new()
+		shrub.name = "DesertShrub_%02d" % shrub_index
+		var shrub_mesh := SphereMesh.new()
+		shrub_mesh.radius = 0.65
+		shrub_mesh.height = 0.72
+		shrub.mesh = shrub_mesh
+		shrub.scale = Vector3(1.3, 0.65, 0.9)
+		shrub.position = Vector3(side * (8.0 + float(shrub_index % 3)), 0.25, 8.0 - float(shrub_index) * 13.0)
+		var shrub_material := StandardMaterial3D.new()
+		shrub_material.albedo_color = Color(0.34, 0.35, 0.19)
+		shrub.material_override = shrub_material
+		add_child(shrub)
 
 func _build_roadside_signs() -> void:
 	for i in range(3):
