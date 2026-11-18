@@ -43,6 +43,7 @@ var _reverse_lamp_material: StandardMaterial3D
 var _reverse_lamp_meshes: Array[MeshInstance3D] = []
 var _headlight_button: Button
 var _handbrake_on := false
+var _seatbelt_fastened := false
 var _hazard_on := false
 var _left_indicator_on := false
 var _right_indicator_on := false
@@ -201,6 +202,8 @@ func _physics_process(delta: float) -> void:
 		var status_parts: Array[String] = []
 		if _handbrake_on:
 			status_parts.append("PARK BRAKE")
+		if absf(_speed) > 0.5 and not _seatbelt_fastened:
+			status_parts.append("SEAT BELT WARNING")
 		if _headlights_on:
 			status_parts.append("HEADLIGHTS")
 		if _hazard_on:
@@ -523,6 +526,7 @@ func _build_mobile_controls() -> void:
 	_add_action_button(ui, "N", -4.0, 364.0, "gear_n")
 	_add_action_button(ui, "D", 74.0, 364.0, "gear_d")
 	_add_action_button(ui, "ENGINE", -72.0, 410.0, "engine")
+	_add_action_button(ui, "SEAT BELT", 16.0, 364.0, "seatbelt")
 	if supports_trailer:
 		_add_action_button(ui, "TRAILER", 16.0, 410.0, "trailer")
 		_add_action_button(ui, "LANDING LEGS", 124.0, 410.0, "trailer_legs")
@@ -604,6 +608,9 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			_set_gear("D")
 		"rear_camera":
 			_toggle_rear_camera(button)
+		"seatbelt":
+			_seatbelt_fastened = not _seatbelt_fastened
+			button.text = "BELT: FASTENED" if _seatbelt_fastened else "SEAT BELT"
 		"engine":
 			_engine_running = not _engine_running
 			button.text = "ENGINE: ON" if _engine_running else "ENGINE: OFF"
