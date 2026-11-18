@@ -1955,18 +1955,8 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 			_mission_label.text = "STOP COMPLETELY AND APPLY PARK BRAKE TO LOAD OR UNLOAD CARGO"
 		return
 	if not _passenger_mode and not _cargo_pickup_done:
-		_cargo_pickup_done = true
-		_release_forklift_load_for_mission()
-		_sync_vehicle_cargo_payload()
-		if is_instance_valid(_cargo_status_label):
-			_cargo_status_label.text = "CARGO LOADED: " + CARGO_NAMES[_selected_cargo]
-		_animate_depot_cargo(true)
-		_mission_target = ROUTE_TARGETS[_selected_route]
-		if is_instance_valid(_checkpoint_area):
-			_checkpoint_area.position = _mission_target
-		_move_checkpoint_gate()
 		if is_instance_valid(_mission_label):
-			_mission_label.text = "CARGO LOADED  |  CONTINUE TO " + ROUTE_NAMES[_selected_route].split(" -> ")[1]
+			_mission_label.text = "LOAD A STAGED PALLET AT THE WAREHOUSE TRUCK BAY"
 		return
 	if _passenger_mode and _passenger_pickup_done:
 		if not _active_vehicle.has_method("can_board_passengers") or not _active_vehicle.can_board_passengers():
