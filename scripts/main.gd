@@ -730,9 +730,9 @@ func _build_company_management() -> void:
 	panel.anchor_right = 0.5
 	panel.anchor_bottom = 0.5
 	panel.offset_left = -260.0
-	panel.offset_top = -315.0
+	panel.offset_top = -365.0
 	panel.offset_right = 260.0
-	panel.offset_bottom = 315.0
+	panel.offset_bottom = 365.0
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.035, 0.075, 0.11, 1.0)
 	panel_style.border_color = Color(0.12, 0.58, 0.78, 1.0)
@@ -741,9 +741,13 @@ func _build_company_management() -> void:
 	panel.add_theme_stylebox_override("panel", panel_style)
 	_company_panel.add_child(panel)
 
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_child(scroll)
 	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 12)
-	panel.add_child(content)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 10)
+	scroll.add_child(content)
 
 	var heading := Label.new()
 	heading.text = "TRANSPORT COMPANY"
