@@ -387,3 +387,9 @@ The three prototype highway cars now use a lightweight same-lane following model
 ### Pedestrian signal text indicators
 - Added illuminated 3D WAIT and WALK text labels beside the two-aspect pedestrian signal.
 - The labels switch with the same timed crossing phase as the signal lamps and pedestrian movement.
+
+
+### Pedestrian signal countdown and cycle safety
+- Added a numeric countdown on the pedestrian signal showing seconds until the next WAIT/WALK phase.
+- Fixed the crossing state so the pedestrian crosses only once per red phase and does not restart at the far kerb before the signal changes.
+- The crossing cycle resets after the main-road signal returns to green/amber.
