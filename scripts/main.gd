@@ -141,6 +141,9 @@ func _process(delta: float) -> void:
 	if _passenger_mode:
 		stage_name = "PICKUP STOP" if not _passenger_pickup_done else "PASSENGER DROP-OFF"
 	_mission_label.text = "%s  |  %s: %d m" % [ROUTE_NAMES[_selected_route], stage_name, int(distance)]
+	# Cargo handling is only allowed while stationary with the parking brake on.
+	if not _passenger_mode and distance <= 5.0 and _active_vehicle.has_method("can_handle_cargo") and _active_vehicle.can_handle_cargo():
+		_on_checkpoint_entered(_active_vehicle)
 	# Let the driver open the passenger doors after arriving; the trigger itself
 	# may already have fired while the doors were closed, so poll safely here.
 	if _passenger_mode and _passenger_pickup_done and distance <= 5.0:
@@ -1525,6 +1528,10 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 		_move_checkpoint_gate()
 		if is_instance_valid(_mission_label):
 			_mission_label.text = "PASSENGERS ON BOARD  |  CONTINUE TO " + ROUTE_NAMES[_selected_route].split(" -> ")[1]
+		return
+	if not _passenger_mode and not _active_vehicle.has_method("can_handle_cargo") or (not _passenger_mode and not _active_vehicle.can_handle_cargo()):
+		if is_instance_valid(_mission_label):
+			_mission_label.text = "STOP COMPLETELY AND APPLY PARK BRAKE TO LOAD OR UNLOAD CARGO"
 		return
 	if not _passenger_mode and not _cargo_pickup_done:
 		_cargo_pickup_done = true
