@@ -27,6 +27,7 @@ var _junction_status_label: Label
 var _speed_limit_status_label: Label
 var _road_position_status_label: Label
 var _pedestrian_warning_label: Label
+var _stop_line_warning_label: Label
 var _mission_complete: bool = false
 var _mission_target := Vector3(0.0, 0.0, -82.0)
 var _delivery_count: int = 0
@@ -253,6 +254,23 @@ func _process(delta: float) -> void:
 		else:
 			_speed_limit_status_label.text = "SPEED LIMIT 80 km/h"
 			_speed_limit_status_label.add_theme_color_override("font_color", Color(0.68, 0.9, 0.76))
+	if is_instance_valid(_stop_line_warning_label) and is_instance_valid(_active_vehicle):
+		var stop_line_distance := _active_vehicle.global_position.z + 52.0
+		var on_approach := stop_line_distance >= 0.0 and stop_line_distance <= 35.0
+		if on_approach:
+			var side_vehicle_in_conflict := is_instance_valid(_side_road_traffic_vehicle) and _side_road_traffic_vehicle.position.x <= 5.5 and _side_road_traffic_vehicle.position.x >= -5.5
+			if side_vehicle_in_conflict:
+				_stop_line_warning_label.text = "CROSS TRAFFIC  |  STOP  |  %.0f m" % stop_line_distance
+				_stop_line_warning_label.add_theme_color_override("font_color", Color(1.0, 0.28, 0.2))
+			elif _traffic_signal_clock >= 8.0:
+				_stop_line_warning_label.text = "SIGNAL: STOP / PREPARE TO STOP  |  %.0f m" % stop_line_distance
+				_stop_line_warning_label.add_theme_color_override("font_color", Color(1.0, 0.42, 0.24))
+			else:
+				_stop_line_warning_label.text = "SIGNAL: GREEN  |  STOP LINE %.0f m" % stop_line_distance
+				_stop_line_warning_label.add_theme_color_override("font_color", Color(0.68, 0.9, 0.76))
+		else:
+			_stop_line_warning_label.text = "JUNCTION APPROACH: CLEAR"
+			_stop_line_warning_label.add_theme_color_override("font_color", Color(0.68, 0.78, 0.9))
 	if is_instance_valid(_junction_status_label):
 		var junction_phase_name := "MAIN ROAD GREEN"
 		var junction_phase_end := 8.0
@@ -1782,6 +1800,17 @@ func _build_mission_hud() -> void:
 	_pedestrian_warning_label.add_theme_font_size_override("font_size", 13)
 	_pedestrian_warning_label.add_theme_color_override("font_color", Color(0.68, 0.9, 0.76))
 	layer.add_child(_pedestrian_warning_label)
+
+	_stop_line_warning_label = Label.new()
+	_stop_line_warning_label.name = "StopLineWarning"
+	_stop_line_warning_label.anchor_left = 0.05
+	_stop_line_warning_label.anchor_right = 0.95
+	_stop_line_warning_label.offset_top = 204.0
+	_stop_line_warning_label.offset_bottom = 226.0
+	_stop_line_warning_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stop_line_warning_label.add_theme_font_size_override("font_size", 13)
+	_stop_line_warning_label.add_theme_color_override("font_color", Color(0.68, 0.78, 0.9))
+	layer.add_child(_stop_line_warning_label)
 
 	_restart_button = Button.new()
 	_restart_button.name = "RestartDelivery"
