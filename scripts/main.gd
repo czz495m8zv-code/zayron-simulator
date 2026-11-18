@@ -155,6 +155,7 @@ func _spawn_vehicle() -> void:
 		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
 	if is_instance_valid(_passenger_waiting_group):
 		_passenger_waiting_group.visible = _passenger_mode
+		_passenger_waiting_group.position.z = (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5
 	if _passenger_mode or not _cargo_pickup_done:
 		_mission_target = Vector3(0.0, 0.0, (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5)
 	else:
