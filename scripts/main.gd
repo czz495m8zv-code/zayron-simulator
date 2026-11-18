@@ -310,6 +310,53 @@ func _build_cargo_depot() -> void:
 			_cargo_depot.add_child(crate)
 	var loading_marker := _make_box("DepotLoadingMarker", Vector3(5.5, 0.025, 2.2), Vector3(0.0, 0.07, 3.1), Color(0.9, 0.65, 0.12))
 	_cargo_depot.add_child(loading_marker)
+	_build_depot_forklift()
+
+
+func _build_depot_forklift() -> void:
+	var forklift := Node3D.new()
+	forklift.name = "DepotForklift"
+	forklift.position = Vector3(2.0, 0.0, 3.2)
+	forklift.rotation.y = PI * 0.5
+	_cargo_depot.add_child(forklift)
+	var safety_yellow := Color(0.92, 0.62, 0.08)
+	var dark_metal := Color(0.12, 0.15, 0.17)
+	var chassis := _make_box("ForkliftChassis", Vector3(1.25, 0.48, 1.9), Vector3(0.0, 0.62, 0.0), safety_yellow)
+	forklift.add_child(chassis)
+	var counterweight := _make_box("ForkliftCounterweight", Vector3(1.3, 0.72, 0.58), Vector3(0.0, 0.9, 0.62), safety_yellow)
+	forklift.add_child(counterweight)
+	var seat := _make_box("ForkliftSeat", Vector3(0.58, 0.22, 0.55), Vector3(0.0, 1.05, -0.05), dark_metal)
+	forklift.add_child(seat)
+	var mast := _make_box("ForkliftMast", Vector3(0.12, 2.05, 0.18), Vector3(0.0, 1.35, -0.93), dark_metal)
+	forklift.add_child(mast)
+	var mast_rail_left := _make_box("ForkliftMastRailLeft", Vector3(0.12, 2.1, 0.14), Vector3(-0.48, 1.38, -0.93), dark_metal)
+	var mast_rail_right := _make_box("ForkliftMastRailRight", Vector3(0.12, 2.1, 0.14), Vector3(0.48, 1.38, -0.93), dark_metal)
+	forklift.add_child(mast_rail_left)
+	forklift.add_child(mast_rail_right)
+	var fork_left := _make_box("ForkliftForkLeft", Vector3(0.16, 0.12, 1.35), Vector3(-0.36, 0.34, -1.55), Color(0.65, 0.68, 0.7))
+	var fork_right := _make_box("ForkliftForkRight", Vector3(0.16, 0.12, 1.35), Vector3(0.36, 0.34, -1.55), Color(0.65, 0.68, 0.7))
+	forklift.add_child(fork_left)
+	forklift.add_child(fork_right)
+	for x in [-0.68, 0.68]:
+		for z in [-0.58, 0.62]:
+			var wheel := MeshInstance3D.new()
+			wheel.name = "ForkliftWheel"
+			var wheel_mesh := CylinderMesh.new()
+			wheel_mesh.top_radius = 0.31
+			wheel_mesh.bottom_radius = 0.31
+			wheel_mesh.height = 0.2
+			wheel.mesh = wheel_mesh
+			wheel.rotation.z = PI * 0.5
+			wheel.position = Vector3(x, 0.34, z)
+			var rubber := StandardMaterial3D.new()
+			rubber.albedo_color = Color(0.025, 0.027, 0.03)
+			wheel.material_override = rubber
+			forklift.add_child(wheel)
+	for x in [-0.62, 0.62]:
+		var guard_post := _make_box("ForkliftOverheadGuardPost", Vector3(0.1, 1.45, 0.1), Vector3(x, 1.55, 0.28), dark_metal)
+		forklift.add_child(guard_post)
+	var guard_roof := _make_box("ForkliftOverheadGuardRoof", Vector3(1.45, 0.12, 1.45), Vector3(0.0, 2.3, 0.28), dark_metal)
+	forklift.add_child(guard_roof)
 
 func _build_mission() -> void:
 	_checkpoint_area = Area3D.new()
