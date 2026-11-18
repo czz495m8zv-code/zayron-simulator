@@ -29,8 +29,8 @@ var _delivery_count: int = 0
 var _cash_balance: int = 0
 var _cash_label: Label
 var _restart_button: Button
-var _traffic_car: Node3D
-var _traffic_speed: float = 7.5
+var _traffic_vehicles: Array[Node3D] = []
+var _traffic_vehicle_speeds: Array[float] = []
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
 const ROUTE_TARGETS: Array[Vector3] = [Vector3(0.0, 0.0, -82.0), Vector3(0.0, 0.0, -48.0), Vector3(0.0, 0.0, -112.0)]
@@ -152,10 +152,13 @@ func _ready() -> void:
 	_build_company_management()
 
 func _process(delta: float) -> void:
-	if is_instance_valid(_traffic_car):
-		_traffic_car.position.z += _traffic_speed * delta
-		if _traffic_car.position.z > 24.0:
-			_traffic_car.position.z = -118.0
+	for traffic_index in range(_traffic_vehicles.size()):
+		var traffic_vehicle := _traffic_vehicles[traffic_index]
+		if not is_instance_valid(traffic_vehicle):
+			continue
+		traffic_vehicle.position.z += _traffic_vehicle_speeds[traffic_index] * delta
+		if traffic_vehicle.position.z > 24.0:
+			traffic_vehicle.position.z = -118.0 - float(traffic_index) * 42.0
 	_forklift_animation_time += delta
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
@@ -573,28 +576,33 @@ func _build_roadside_signs() -> void:
 		add_child(sign_text)
 
 func _build_traffic_vehicle() -> void:
-	_traffic_car = Node3D.new()
-	_traffic_car.name = "OppositeDirectionTraffic"
-	_traffic_car.position = Vector3(2.35, 0.0, -105.0)
-	add_child(_traffic_car)
-	var body := _make_box("TrafficSedanBody", Vector3(1.75, 0.72, 3.6), Vector3(0.0, 0.72, 0.0), Color(0.72, 0.12, 0.08))
-	_traffic_car.add_child(body)
-	var cabin := _make_box("TrafficSedanCabin", Vector3(1.48, 0.72, 1.75), Vector3(0.0, 1.38, -0.18), Color(0.12, 0.22, 0.29))
-	_traffic_car.add_child(cabin)
-	var tire_material := StandardMaterial3D.new()
-	tire_material.albedo_color = Color(0.025, 0.025, 0.03)
-	for x in [-0.9, 0.9]:
-		for z in [-1.15, 1.15]:
-			var tire := MeshInstance3D.new()
-			var tire_mesh := CylinderMesh.new()
-			tire_mesh.top_radius = 0.32
-			tire_mesh.bottom_radius = 0.32
-			tire_mesh.height = 0.18
-			tire.mesh = tire_mesh
-			tire.rotation_degrees.z = 90.0
-			tire.position = Vector3(x, 0.38, z)
-			tire.material_override = tire_material
-			_traffic_car.add_child(tire)
+	var traffic_colors: Array[Color] = [Color(0.72, 0.12, 0.08), Color(0.12, 0.32, 0.72), Color(0.78, 0.78, 0.72)]
+	var traffic_speeds: Array[float] = [7.5, 8.2, 6.8]
+	var traffic_positions: Array[float] = [-105.0, -58.0, -12.0]
+	for traffic_index in range(traffic_colors.size()):
+		var traffic_car := Node3D.new()
+		traffic_car.name = "HighwayTrafficSedan_%02d" % (traffic_index + 1)
+		traffic_car.position = Vector3(2.35, 0.0, traffic_positions[traffic_index])
+		add_child(traffic_car)
+		traffic_car.add_child(_make_box("TrafficSedanBody", Vector3(1.75, 0.72, 3.6), Vector3(0.0, 0.72, 0.0), traffic_colors[traffic_index]))
+		traffic_car.add_child(_make_box("TrafficSedanCabin", Vector3(1.48, 0.72, 1.75), Vector3(0.0, 1.38, -0.18), Color(0.12, 0.22, 0.29)))
+		for x in [-0.9, 0.9]:
+			for z in [-1.15, 1.15]:
+				var tire := MeshInstance3D.new()
+				var tire_mesh := CylinderMesh.new()
+				tire_mesh.top_radius = 0.32
+				tire_mesh.bottom_radius = 0.32
+				tire_mesh.height = 0.18
+				tire.mesh = tire_mesh
+				tire.rotation_degrees.z = 90.0
+				tire.position = Vector3(x, 0.38, z)
+				var tire_material := StandardMaterial3D.new()
+				tire_material.albedo_color = Color(0.025, 0.025, 0.03)
+				tire.material_override = tire_material
+				traffic_car.add_child(tire)
+		_traffic_vehicles.append(traffic_car)
+		_traffic_vehicle_speeds.append(traffic_speeds[traffic_index])
+
 
 func _make_box(node_name: String, dimensions: Vector3, location: Vector3, tint: Color) -> MeshInstance3D:
 	var mesh_instance := MeshInstance3D.new()
