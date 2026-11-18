@@ -46,7 +46,7 @@ The first company-management layer is now implemented in the gameplay scene:
 - Show a fleet and staff roster with each bus and driver marked AVAILABLE or ON ROUTE.
 - Dispatch reserves one available driver and one available bus; both return to AVAILABLE after the simulated trip completes.
 
-**Important prototype boundary:** the visible company bus accelerates gradually, steers smoothly toward its target, drives to the selected test-road endpoint, pauses for three seconds, turns to return, and completes the company trip only when it reaches the depot. The trip status remains visible during the stop and return. This is still scripted movement on one short test road, not lane-aware navigation, junction turning, traffic-aware AI, passenger boarding, or a real Oman map.
+**Important prototype boundary:** the visible company bus accelerates gradually, steers smoothly, follows five ordered road-centre waypoints to the selected test-road endpoint, pauses for three seconds, then follows those waypoints in reverse to return to the depot. The company trip completes on depot arrival. This is still scripted waypoint navigation along one straight short test road, not a real road graph, junction navigation, traffic-aware AI, passenger boarding, or a real Oman map.
 
 ## Android build
 
