@@ -9,6 +9,7 @@ extends CharacterBody3D
 var _speed: float = 0.0
 var _throttle_input: float = 0.0
 var _steering_input: float = 0.0
+var _speed_label: Label
 
 func _ready() -> void:
 	_build_truck()
@@ -37,6 +38,8 @@ func _physics_process(delta: float) -> void:
 
 	velocity = -global_transform.basis.z * _speed
 	move_and_slide()
+	if is_instance_valid(_speed_label):
+		_speed_label.text = "SPEED  %03d km/h" % int(absf(_speed) * 3.6)
 
 func _build_truck() -> void:
 	var body_shape := CollisionShape3D.new()
@@ -81,6 +84,14 @@ func _build_mobile_controls() -> void:
 	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(ui)
+
+	_speed_label = Label.new()
+	_speed_label.name = "SpeedDisplay"
+	_speed_label.text = "SPEED  000 km/h"
+	_speed_label.position = Vector2(24.0, 24.0)
+	_speed_label.add_theme_font_size_override("font_size", 26)
+	_speed_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	ui.add_child(_speed_label)
 
 	_add_hold_button(ui, "◀", Vector2(28.0, -118.0), Vector2(90.0, 90.0), "steer_left")
 	_add_hold_button(ui, "▶", Vector2(128.0, -118.0), Vector2(90.0, 90.0), "steer_right")
