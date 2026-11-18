@@ -4,6 +4,7 @@
 
 [node name="PremiumBlueSemi" type="CharacterBody3D"]
 script = ExtResource("1")
+supports_trailer = true
 cab_paint = Color(0.04, 0.24, 0.38, 1)
 trailer_paint = Color(0.78, 0.8, 0.82, 1)
 trim_paint = Color(0.82, 0.65, 0.28, 1)
