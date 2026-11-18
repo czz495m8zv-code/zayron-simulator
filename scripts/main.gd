@@ -61,6 +61,9 @@ var _forklift_beacon: OmniLight3D
 var _forklift_animation_time: float = 0.0
 var _forklift_lift_level: float = 0.48
 var _forklift_lift_label: Label
+var _forklift_root: Node3D
+var _forklift_held_crate: Node3D
+var _forklift_cargo_label: Label
 var _pause_button: Button
 var _pause_overlay: Control
 var _audio_slider: HSlider
@@ -525,8 +528,9 @@ func _animate_depot_cargo(loading: bool) -> void:
 
 
 func _build_depot_forklift() -> void:
-	var forklift := Node3D.new()
-	forklift.name = "DepotForklift"
+	_forklift_root = Node3D.new()
+	_forklift_root.name = "DepotForklift"
+	var forklift := _forklift_root
 	forklift.position = Vector3(2.0, 0.0, 3.2)
 	forklift.rotation.y = PI * 0.5
 	_cargo_depot.add_child(forklift)
@@ -613,6 +617,60 @@ func _set_forklift_lift_level(value: float) -> void:
 		tween.tween_property(_forklift_carriage, "position:y", _forklift_lift_level, 0.22)
 	if is_instance_valid(_forklift_lift_label):
 		_forklift_lift_label.text = "FORK HEIGHT: %.2f m" % _forklift_lift_level
+
+
+func _move_forklift_forward() -> void:
+	_move_forklift_local(Vector3(0.0, 0.0, -0.45))
+
+
+func _move_forklift_back() -> void:
+	_move_forklift_local(Vector3(0.0, 0.0, 0.45))
+
+
+func _move_forklift_left() -> void:
+	_move_forklift_local(Vector3(-0.45, 0.0, 0.0))
+
+
+func _move_forklift_right() -> void:
+	_move_forklift_local(Vector3(0.45, 0.0, 0.0))
+
+
+func _move_forklift_local(offset: Vector3) -> void:
+	if not is_instance_valid(_forklift_root):
+		return
+	_forklift_root.position += offset
+	_forklift_root.position.x = clampf(_forklift_root.position.x, -3.2, 3.5)
+	_forklift_root.position.z = clampf(_forklift_root.position.z, -0.2, 6.2)
+
+
+func _toggle_forklift_crate() -> void:
+	if is_instance_valid(_forklift_held_crate):
+		_forklift_held_crate.reparent(_cargo_depot, true)
+		_forklift_held_crate = null
+		_forklift_cargo_label.text = "LOAD: EMPTY"
+		return
+	if not is_instance_valid(_forklift_root) or not is_instance_valid(_forklift_carriage):
+		return
+	if _forklift_lift_level > 0.72:
+		_forklift_cargo_label.text = "LOWER FORKS TO GRAB"
+		return
+	var fork_tip := _forklift_root.to_global(Vector3(0.0, _forklift_lift_level - 0.12, -1.55))
+	var nearest_crate: Node3D
+	var nearest_distance := 1.6
+	for crate in _depot_crates:
+		if not is_instance_valid(crate) or not crate.visible or crate == _forklift_held_crate:
+			continue
+		var distance := crate.global_position.distance_to(fork_tip)
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_crate = crate
+	if not is_instance_valid(nearest_crate):
+		_forklift_cargo_label.text = "NO CRATE IN REACH"
+		return
+	_forklift_held_crate = nearest_crate
+	_forklift_held_crate.reparent(_forklift_carriage, true)
+	_forklift_held_crate.position = Vector3(0.0, 0.34, -0.92)
+	_forklift_cargo_label.text = "LOAD: %s" % _forklift_held_crate.name
 
 
 func _build_passenger_waiting_group() -> void:
@@ -760,7 +818,7 @@ func _build_mission_hud() -> void:
 	forklift_panel.anchor_right = 1.0
 	forklift_panel.anchor_bottom = 1.0
 	forklift_panel.offset_left = -190.0
-	forklift_panel.offset_top = -220.0
+	forklift_panel.offset_top = -390.0
 	forklift_panel.offset_right = -20.0
 	forklift_panel.offset_bottom = -24.0
 	forklift_panel.add_theme_constant_override("separation", 6)
@@ -783,6 +841,36 @@ func _build_mission_hud() -> void:
 	lift_down_button.custom_minimum_size.y = 48
 	lift_down_button.pressed.connect(_lower_forklift_forks)
 	forklift_panel.add_child(lift_down_button)
+
+	_forklift_cargo_label = Label.new()
+	_forklift_cargo_label.text = "LOAD: EMPTY"
+	_forklift_cargo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_forklift_panel.add_child(_forklift_cargo_label)
+	var forklift_forward := Button.new()
+	forklift_forward.text = "MOVE FORWARD"
+	forklift_forward.custom_minimum_size.y = 42
+	forklift_forward.pressed.connect(_move_forklift_forward)
+	forklift_panel.add_child(forklift_forward)
+	var forklift_back := Button.new()
+	forklift_back.text = "MOVE BACK"
+	forklift_back.custom_minimum_size.y = 42
+	forklift_back.pressed.connect(_move_forklift_back)
+	forklift_panel.add_child(forklift_back)
+	var forklift_left := Button.new()
+	forklift_left.text = "MOVE LEFT"
+	forklift_left.custom_minimum_size.y = 42
+	forklift_left.pressed.connect(_move_forklift_left)
+	forklift_panel.add_child(forklift_left)
+	var forklift_right := Button.new()
+	forklift_right.text = "MOVE RIGHT"
+	forklift_right.custom_minimum_size.y = 42
+	forklift_right.pressed.connect(_move_forklift_right)
+	forklift_panel.add_child(forklift_right)
+	var forklift_load_button := Button.new()
+	forklift_load_button.text = "GRAB / RELEASE CRATE"
+	forklift_load_button.custom_minimum_size.y = 48
+	forklift_load_button.pressed.connect(_toggle_forklift_crate)
+	forklift_panel.add_child(forklift_load_button)
 
 	_mission_label = Label.new()
 	_mission_label.name = "MissionStatus"
