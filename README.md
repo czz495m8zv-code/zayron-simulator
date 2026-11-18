@@ -136,3 +136,10 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Cargo pickup and delivery now require the player vehicle to be fully stopped and the parking brake engaged.
 - If the vehicle enters a cargo checkpoint while moving or without the parking brake, the mission waits and displays an instruction; it can complete once the player stops and parks within the checkpoint area.
 - This is a gameplay safety interlock. Physical forklift-to-truck transfer, pallet placement, cargo straps operated by the player, and loading animations remain planned.
+
+
+### Depot cargo transfer animation
+- The Oman depot now keeps its warehouse and forklift visible during a mission instead of hiding the entire depot after pickup.
+- Crates animate from their pallet positions toward the loading bay and disappear as a simplified loading sequence; at delivery they reappear and animate back onto the depot pallets.
+- Starting a new vehicle/mission resets the crate positions and visibility.
+- This is a visual gameplay sequence, not yet physical forklift fork contact, pallet collision, cargo mass simulation, or player-operated loading machinery.
