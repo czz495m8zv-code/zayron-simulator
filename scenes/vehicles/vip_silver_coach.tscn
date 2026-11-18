@@ -6,3 +6,8 @@
 script = ExtResource("1")
 primary_paint = Color(0.72, 0.77, 0.82, 1)
 accent_paint = Color(0.08, 0.23, 0.36, 1)
+acceleration = 6.2
+service_brake = 17.5
+max_forward_speed = 28.0
+max_reverse_speed = 5.0
+steering_speed = 0.76
