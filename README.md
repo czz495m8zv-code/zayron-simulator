@@ -375,3 +375,10 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Replaced static pedestrian legs with pivoted leg nodes and alternating swing while crossing the zebra crossing.
 - Leg motion settles back to a standing pose while the pedestrian waits at either kerb.
 - Animation is procedural and lightweight; it does not use a skeletal character rig or motion-capture animation.
+
+
+### Coordinated pedestrian signal
+- Added a two-aspect pedestrian signal beside the zebra crossing with red WAIT and green WALK lamps.
+- The pedestrian waits at the kerb until the main-road vehicle signal enters its red phase, then crosses at a faster walking pace designed to clear before the next cycle.
+- Side-road traffic continues to yield while the pedestrian occupies the crossing.
+- This is a timed prototype signal, not a standards-certified pedestrian crossing controller.
