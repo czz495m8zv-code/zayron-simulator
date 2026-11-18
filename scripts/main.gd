@@ -35,6 +35,8 @@ var _traffic_current_speeds: Array[float] = []
 var _traffic_signal_lamps: Array[MeshInstance3D] = []
 var _traffic_signal_materials: Array[StandardMaterial3D] = []
 var _traffic_signal_clock: float = 0.0
+var _side_road_traffic_vehicle: Node3D
+var _side_road_traffic_speed: float = 0.0
 const TRAFFIC_LOOP_LENGTH: float = 142.0
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
@@ -191,6 +193,7 @@ func _process(delta: float) -> void:
 			# original traffic order; offsets outside the loop caused phase overlap.
 			traffic_vehicle.position.z = -118.0 + float(traffic_index) * 46.0
 	_traffic_signal_clock = fposmod(_traffic_signal_clock + delta, 14.0)
+	_update_side_road_traffic(delta)
 	_update_player_signal_rule()
 	var active_signal := 2 if _traffic_signal_clock < 8.0 else (1 if _traffic_signal_clock < 10.0 else 0)
 	for lamp_index in range(_traffic_signal_lamps.size()):
@@ -745,6 +748,42 @@ func _build_traffic_vehicle() -> void:
 		_traffic_vehicles.append(traffic_car)
 		_traffic_vehicle_speeds.append(traffic_speeds[traffic_index])
 		_traffic_current_speeds.append(traffic_speeds[traffic_index])
+	# A side-road vehicle waits at the give-way line while main-road traffic
+	# has priority, then crosses during the red/amber phase.
+	_side_road_traffic_vehicle = Node3D.new()
+	_side_road_traffic_vehicle.name = "SideRoadGiveWaySedan"
+	_side_road_traffic_vehicle.position = Vector3(18.0, 0.0, -48.0)
+	add_child(_side_road_traffic_vehicle)
+	_side_road_traffic_vehicle.add_child(_make_box("SideRoadSedanBody", Vector3(3.6, 0.72, 1.75), Vector3(0.0, 0.72, 0.0), Color(0.82, 0.48, 0.08)))
+	_side_road_traffic_vehicle.add_child(_make_box("SideRoadSedanCabin", Vector3(1.75, 0.72, 1.48), Vector3(0.15, 1.38, 0.0), Color(0.12, 0.22, 0.29)))
+	for wheel_x in [-1.15, 1.15]:
+		for wheel_z in [-0.9, 0.9]:
+			var side_tire := MeshInstance3D.new()
+			var side_tire_mesh := CylinderMesh.new()
+			side_tire_mesh.top_radius = 0.31
+			side_tire_mesh.bottom_radius = 0.31
+			side_tire_mesh.height = 0.18
+			side_tire.mesh = side_tire_mesh
+			side_tire.rotation_degrees.x = 90.0
+			side_tire.position = Vector3(wheel_x, 0.36, wheel_z)
+			var side_tire_material := StandardMaterial3D.new()
+			side_tire_material.albedo_color = Color(0.025, 0.025, 0.03)
+			side_tire.material_override = side_tire_material
+			_side_road_traffic_vehicle.add_child(side_tire)
+
+
+func _update_side_road_traffic(delta: float) -> void:
+	if not is_instance_valid(_side_road_traffic_vehicle):
+		return
+	var main_road_has_priority := _traffic_signal_clock < 8.0
+	var target_speed := 0.0
+	if not main_road_has_priority and _side_road_traffic_vehicle.position.x > -5.5:
+		target_speed = 5.2
+	_side_road_traffic_speed = move_toward(_side_road_traffic_speed, target_speed, 3.8 * delta)
+	_side_road_traffic_vehicle.position.x -= _side_road_traffic_speed * delta
+	if _side_road_traffic_vehicle.position.x <= -5.5:
+		_side_road_traffic_vehicle.position.x = 18.0
+		_side_road_traffic_speed = 0.0
 
 
 func _make_box(node_name: String, dimensions: Vector3, location: Vector3, tint: Color) -> MeshInstance3D:
