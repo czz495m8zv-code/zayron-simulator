@@ -449,3 +449,9 @@ The three prototype highway cars now use a lightweight same-lane following model
 - Side-road vehicles wait behind the give-way line until their phase, enter only when the junction is clear, and are allowed to finish crossing once committed.
 - The main-road traffic countdown and player braking assist use the same 26-second cycle; the pedestrian countdown includes the wait until the next WALK phase.
 - This remains a single-lane scripted junction prototype, not a certified signal controller or collision-physics traffic system.
+
+### Physical highway traffic obstacles
+
+- The three moving highway sedans and the crossing side-road sedan now have `AnimatableBody3D` collision bodies with compact box shapes.
+- The player vehicle can physically contact these traffic vehicles instead of passing through visual-only meshes.
+- This is a basic obstacle/collision layer only: there is not yet vehicle damage, crash response, traffic collision avoidance, or a complete road-user physics simulation.
