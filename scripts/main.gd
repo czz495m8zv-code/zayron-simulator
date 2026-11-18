@@ -34,6 +34,7 @@ var _traffic_vehicle_speeds: Array[float] = []
 var _traffic_current_speeds: Array[float] = []
 var _traffic_signal_lamps: Array[MeshInstance3D] = []
 var _traffic_signal_materials: Array[StandardMaterial3D] = []
+var _traffic_signal_countdown_labels: Array[Label3D] = []
 var _traffic_signal_clock: float = 0.0
 var _side_road_traffic_vehicle: Node3D
 var _side_road_traffic_speed: float = 0.0
@@ -217,6 +218,10 @@ func _process(delta: float) -> void:
 		var lamp_on := lamp_index % 3 == active_signal
 		lamp_material.emission_energy_multiplier = 1.8 if lamp_on else 0.08
 		_traffic_signal_lamps[lamp_index].visible = true
+	var signal_phase_end := 8.0 if _traffic_signal_clock < 8.0 else (10.0 if _traffic_signal_clock < 10.0 else 16.0)
+	var signal_seconds_left := maxi(0, ceili(signal_phase_end - _traffic_signal_clock))
+	for countdown_label in _traffic_signal_countdown_labels:
+		countdown_label.text = "%02d" % signal_seconds_left
 	var pedestrian_walk_allowed := _traffic_signal_clock >= 10.0
 	for pedestrian_index in range(_pedestrian_signal_materials.size()):
 		_pedestrian_signal_materials[pedestrian_index].emission_energy_multiplier = 1.8 if (pedestrian_index == 1) == pedestrian_walk_allowed else 0.08
@@ -766,6 +771,15 @@ func _build_test_intersection() -> void:
 			add_child(lamp)
 			_traffic_signal_lamps.append(lamp)
 			_traffic_signal_materials.append(material)
+		var signal_countdown := Label3D.new()
+		signal_countdown.name = "TrafficSignalCountdown_%d" % pole_index
+		signal_countdown.text = "08"
+		signal_countdown.font_size = 30
+		signal_countdown.pixel_size = 0.006
+		signal_countdown.position = Vector3(pole_x, 2.75, pole_z + 0.28)
+		signal_countdown.modulate = Color(0.95, 0.96, 0.98)
+		add_child(signal_countdown)
+		_traffic_signal_countdown_labels.append(signal_countdown)
 	# Pedestrian signal faces the zebra crossing: red WAIT / green WALK.
 	var pedestrian_head := _make_box("PedestrianSignalHousing", Vector3(0.48, 0.92, 0.34), Vector3(8.0, 2.75, -43.4), Color(0.035, 0.04, 0.045))
 	add_child(pedestrian_head)
