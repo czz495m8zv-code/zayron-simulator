@@ -50,6 +50,7 @@ var _passenger_pickup_done: bool = false
 var _passenger_pickup_target := Vector3(0.0, 0.0, -37.0)
 var _checkpoint_label: Label3D
 var _passenger_status_label: Label
+var _passenger_waiting_group: Node3D
 var _cargo_status_label: Label
 var _cargo_pickup_done: bool = false
 var _cargo_depot: Node3D
@@ -114,6 +115,7 @@ func _ready() -> void:
 	_build_roadside_signs()
 	_build_traffic_vehicle()
 	_build_mission()
+	_build_passenger_waiting_group()
 	_build_cargo_depot()
 	_spawn_vehicle()
 	_build_vehicle_selector()
@@ -151,6 +153,8 @@ func _spawn_vehicle() -> void:
 		_cargo_depot.position.z = (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5
 	if is_instance_valid(_passenger_status_label):
 		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
+	if is_instance_valid(_passenger_waiting_group):
+		_passenger_waiting_group.visible = _passenger_mode
 	if _passenger_mode or not _cargo_pickup_done:
 		_mission_target = Vector3(0.0, 0.0, (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5)
 	else:
@@ -549,6 +553,40 @@ func _build_depot_forklift() -> void:
 	_forklift_beacon.omni_range = 3.5
 	_forklift_beacon.position = Vector3(0.0, 2.5, 0.28)
 	forklift.add_child(_forklift_beacon)
+
+func _build_passenger_waiting_group() -> void:
+	_passenger_waiting_group = Node3D.new()
+	_passenger_waiting_group.name = "PassengerPickupCrowd"
+	_passenger_waiting_group.visible = _passenger_mode
+	var stop_z := (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5
+	_passenger_waiting_group.position = Vector3(5.2, 0.0, stop_z)
+	add_child(_passenger_waiting_group)
+	var shirt_colors := [Color(0.12, 0.32, 0.62), Color(0.62, 0.18, 0.12), Color(0.16, 0.46, 0.28), Color(0.58, 0.42, 0.18)]
+	for i in range(PASSENGER_GROUP_SIZE):
+		var person := Node3D.new()
+		person.name = "WaitingPassenger_%02d" % (i + 1)
+		person.position = Vector3(float(i % 2) * 0.72, 0.0, float(i / 2) * 0.82)
+		_passenger_waiting_group.add_child(person)
+		var torso_node := MeshInstance3D.new()
+		var torso := CapsuleMesh.new()
+		torso.radius = 0.19
+		torso.height = 0.82
+		torso_node.mesh = torso
+		torso_node.position.y = 0.78
+		var shirt_mat := StandardMaterial3D.new()
+		shirt_mat.albedo_color = shirt_colors[i % shirt_colors.size()]
+		torso_node.material_override = shirt_mat
+		person.add_child(torso_node)
+		var head := MeshInstance3D.new()
+		var head_mesh := SphereMesh.new()
+		head_mesh.radius = 0.15
+		head_mesh.height = 0.3
+		head.mesh = head_mesh
+		head.position.y = 1.34
+		var skin := StandardMaterial3D.new()
+		skin.albedo_color = Color(0.66, 0.48, 0.34)
+		head.material_override = skin
+		person.add_child(head)
 
 func _build_mission() -> void:
 	_checkpoint_area = Area3D.new()
@@ -1471,6 +1509,8 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 				_mission_label.text = "STOP THE BUS AND OPEN PASSENGER DOORS TO BOARD"
 			return
 		_passenger_pickup_done = true
+		if is_instance_valid(_passenger_waiting_group):
+			_passenger_waiting_group.visible = false
 		if is_instance_valid(_passenger_status_label):
 			_passenger_status_label.text = "PASSENGERS ON BOARD: %d" % PASSENGER_GROUP_SIZE
 		_mission_target = ROUTE_TARGETS[_selected_route]
