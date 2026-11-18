@@ -76,6 +76,8 @@ var _company_status_label: Label
 var _company_name_edit: LineEdit
 var _company_dispatch_button: Button
 var _company_roster_label: Label
+var _company_route_option: OptionButton
+var _company_selected_route: int = 0
 var _company_fleet: Array[Dictionary] = []
 var _company_drivers: Array[Dictionary] = []
 var _company_trip_driver_index: int = -1
@@ -118,7 +120,7 @@ func _process(delta: float) -> void:
 	var stage_name := "LOAD CARGO" if not _cargo_pickup_done else "DELIVER CARGO"
 	if _passenger_mode:
 		stage_name = "PICKUP STOP" if not _passenger_pickup_done else "PASSENGER DROP-OFF"
-	_mission_label.text = "%s  |  %s: %d m" % [ROUTE_NAMES[_selected_route], stage_name, int(distance)]
+	_mission_label.text = "%s  |  %s: %d m" % [ROUTE_NAMES[_company_selected_route], stage_name, int(distance)]
 
 func _spawn_vehicle() -> void:
 	_mission_complete = false
@@ -743,6 +745,19 @@ func _build_company_management() -> void:
 	_company_summary_label.add_theme_font_size_override("font_size", 17)
 	content.add_child(_company_summary_label)
 
+	var route_label := Label.new()
+	route_label.text = "COMPANY DISPATCH ROUTE"
+	route_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	content.add_child(route_label)
+
+	_company_route_option = OptionButton.new()
+	_company_route_option.custom_minimum_size.y = 42
+	for route_name in ROUTE_NAMES:
+		_company_route_option.add_item(route_name)
+	_company_route_option.select(_company_selected_route)
+	_company_route_option.item_selected.connect(_on_company_route_selected)
+	content.add_child(_company_route_option)
+
 	_company_roster_label = Label.new()
 	_company_roster_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_company_roster_label.add_theme_font_size_override("font_size", 13)
@@ -779,6 +794,7 @@ func _build_company_management() -> void:
 	close_button.custom_minimum_size.y = 44
 	close_button.pressed.connect(_toggle_company_panel)
 	content.add_child(close_button)
+	_company_route_option.select(_company_selected_route)
 	_refresh_company_panel()
 
 func _toggle_company_panel() -> void:
@@ -787,6 +803,11 @@ func _toggle_company_panel() -> void:
 	_company_panel.visible = not _company_panel.visible
 	if _company_panel.visible:
 		_refresh_company_panel()
+
+func _on_company_route_selected(index: int) -> void:
+	_company_selected_route = clampi(index, 0, ROUTE_NAMES.size() - 1)
+	_save_progress()
+	_refresh_company_panel()
 
 func _on_company_name_submitted(value: String) -> void:
 	var cleaned := value.strip_edges()
@@ -1112,6 +1133,7 @@ func _load_progress() -> void:
 	_company_bus_count = maxi(1, int(progress.get_value("company", "buses", _company_bus_count)))
 	_company_driver_count = maxi(0, int(progress.get_value("company", "drivers", _company_driver_count)))
 	_company_completed_trips = maxi(0, int(progress.get_value("company", "completed_trips", _company_completed_trips)))
+	_company_selected_route = clampi(int(progress.get_value("company", "dispatch_route", 0)), 0, ROUTE_NAMES.size() - 1)
 	var saved_fleet: Variant = progress.get_value("company", "fleet", [])
 	if saved_fleet is Array:
 		for bus_entry in saved_fleet:
@@ -1149,6 +1171,7 @@ func _save_progress() -> void:
 	progress.set_value("company", "buses", _company_bus_count)
 	progress.set_value("company", "drivers", _company_driver_count)
 	progress.set_value("company", "completed_trips", _company_completed_trips)
+	progress.set_value("company", "dispatch_route", _company_selected_route)
 	progress.set_value("company", "fleet", _company_fleet)
 	progress.set_value("company", "driver_roster", _company_drivers)
 	progress.set_value("settings", "steering_sensitivity", _steering_sensitivity)
