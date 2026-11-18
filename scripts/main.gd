@@ -818,7 +818,7 @@ func _build_mission_hud() -> void:
 	forklift_panel.anchor_right = 1.0
 	forklift_panel.anchor_bottom = 1.0
 	forklift_panel.offset_left = -190.0
-	forklift_panel.offset_top = -390.0
+	forklift_panel.offset_top = -450.0
 	forklift_panel.offset_right = -20.0
 	forklift_panel.offset_bottom = -24.0
 	forklift_panel.add_theme_constant_override("separation", 6)
