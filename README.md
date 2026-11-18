@@ -180,3 +180,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - A carried pallet can only be set down after the forks are lowered. The pallet remains at the forklift's placement point, and the tilt returns to level.
 - Pallet crate home positions are now stored relative to their pallet assemblies, so resetting or changing routes does not rely on stale world-space coordinates.
 - These are scripted proximity/alignment checks and node attachments, not physical fork-pocket collision, hydraulic load sensing, pallet friction, or collision-aware warehouse navigation.
+
+### Marked pallet staging bays
+- The depot now has three numbered visual staging bays. When a carried pallet is released close to an unoccupied bay, it snaps into that bay and the forklift panel reports the bay number.
+- Picking a staged pallet frees its bay; mission resets also clear bay occupancy so the depot can be used again.
+- If the forklift releases a pallet outside the staging area, it is parked where released and the panel asks the player to align it with a bay.
+- Bay snapping and occupancy are scripted gameplay rules, not physical pallet collision or an automated warehouse conveyor system.
