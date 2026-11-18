@@ -175,7 +175,7 @@ func _process(delta: float) -> void:
 		var target_speed := _traffic_vehicle_speeds[traffic_index] * gap_factor
 		# The main-lane traffic stops before the junction whenever its signal
 		# is red or amber, then accelerates again after green.
-		var signal_is_green := _traffic_signal_clock >= 10.0
+		var signal_is_green := _traffic_signal_clock < 8.0
 		var stop_line_z := -52.0
 		var distance_to_stop_line := stop_line_z - traffic_vehicle.position.z
 		if not signal_is_green and distance_to_stop_line > 0.0 and distance_to_stop_line < 18.0:
@@ -189,7 +189,7 @@ func _process(delta: float) -> void:
 			traffic_vehicle.position.z = -118.0 + float(traffic_index) * 46.0
 	_traffic_signal_clock = fposmod(_traffic_signal_clock + delta, 14.0)
 	_update_player_signal_rule()
-	var active_signal := 0 if _traffic_signal_clock < 8.0 else (1 if _traffic_signal_clock < 10.0 else 2)
+	var active_signal := 2 if _traffic_signal_clock < 8.0 else (1 if _traffic_signal_clock < 10.0 else 0)
 	for lamp_index in range(_traffic_signal_lamps.size()):
 		var lamp_material := _traffic_signal_materials[lamp_index]
 		var lamp_on := lamp_index % 3 == active_signal
@@ -637,14 +637,17 @@ func _build_roadside_signs() -> void:
 func _update_player_signal_rule() -> void:
 	if not is_instance_valid(_active_vehicle) or not _active_vehicle.has_method("set_traffic_signal_brake"):
 		return
-	var signal_is_green := _traffic_signal_clock >= 10.0
-	var distance_to_stop_line := -52.0 - _active_vehicle.global_position.z
+	var signal_is_green := _traffic_signal_clock < 8.0
+	var distance_to_stop_line := _active_vehicle.global_position.z + 52.0
 	var brake_amount := 0.0
 	if not signal_is_green and distance_to_stop_line > 0.0 and distance_to_stop_line < 22.0:
-		var safe_speed := sqrt(2.0 * 5.0 * distance_to_stop_line)
-		var current_speed := float(_active_vehicle.get("_speed"))
-		if current_speed > safe_speed:
-			brake_amount = clampf((current_speed - safe_speed) / 3.0, 0.0, 1.0)
+		if distance_to_stop_line <= 1.0:
+			brake_amount = 1.0
+		else:
+			var safe_speed := sqrt(2.0 * 5.0 * distance_to_stop_line)
+			var current_speed := float(_active_vehicle.get("_speed"))
+			if current_speed > safe_speed:
+				brake_amount = clampf((current_speed - safe_speed) / 3.0, 0.0, 1.0)
 	_active_vehicle.set_traffic_signal_brake(brake_amount)
 
 
