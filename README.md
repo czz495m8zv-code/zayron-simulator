@@ -205,6 +205,11 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - At the destination, the same figures reappear beside the stopped bus and animate toward a nearby waiting area. The passenger delivery reward is then credited.
 - These are scripted exterior walk-up animations. There is not yet a true bus interior, seat assignment, collision-aware pathfinding, individual passenger AI, ticketing or realistic door-to-seat boarding.
 
+### Passenger-door driving interlock
+- Buses and coaches cannot receive forward or reverse drive input while their passenger entry door is open. Close the passenger door before moving away from a stop.
+- The vehicle status display warns CLOSE PASSENGER DOORS while the door is open. Opening the door still requires the vehicle to be stopped with the parking brake applied.
+- This is a control interlock; it does not yet simulate door pressure sensors, pneumatic mechanisms or emergency release hardware.
+
 ### Delivery-site cargo unloading
 - Reaching the cargo destination no longer completes delivery automatically. The player must stop inside the delivery area, apply the parking brake and use the UNLOAD DELIVERED CARGO interaction.
 - The unload interaction appears only within the delivery radius while the vehicle is stationary with the parking brake engaged. Successful unloading clears the vehicle payload, records the delivery and pays the selected cargo reward.
