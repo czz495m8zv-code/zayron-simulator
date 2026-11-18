@@ -38,7 +38,8 @@
 - [ ] Add recorded or licensed vehicle engine samples and transmission behaviour
 - [x] Add chase, close-follow and vehicle-positioned cockpit camera views with an on-screen cycle control (source implemented; runtime verification pending)
 - [x] Add basic steering-wheel geometry to starter truck, semi-trucks, city bus and luxury coaches (source implemented; runtime verification pending)
-- [x] Add toggleable headlight beams and front/rear lamp meshes to the shared vehicle controller (source implemented; runtime verification pending)
+- [x] Add toggleable directional headlight spotlights and front/rear lamp meshes to the shared vehicle controller (source implemented; runtime verification pending)
+- [x] Add brake-responsive rear lamp brightness (source implemented; runtime verification pending)
 - [x] Add initial luxury coach passenger-cabin and premium truck dashboard details
 - [ ] Test at multiple frame rates and device performance levels
 
@@ -63,7 +64,8 @@
 - [ ] Verify all third-party asset licenses
 
 ### 4 — First Android test release
-- [ ] Add graphics, audio, sensitivity and control-layout settings
+- [x] Add a pause overlay with resume/restart and master-volume slider (source implemented; runtime verification pending)
+- [ ] Add graphics quality, steering sensitivity and control-layout settings
 - [x] Add a GitHub Actions Godot 4 headless import and scene-launch validation workflow
 - [ ] Configure a repeatable Android APK export
 - [ ] Profile memory, frame time, loading and battery use
