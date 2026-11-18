@@ -104,3 +104,5 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - The shared player vehicle controls now include a SEAT BELT toggle.
 - The instrument status display shows a seat-belt warning while the vehicle is moving and the belt is unfastened.
 - This is a gameplay reminder only; no crash restraint or occupant injury simulation is implemented yet.
+
+- Left/right turn indicators now automatically cancel after five seconds; hazard lights remain active until manually switched off.
