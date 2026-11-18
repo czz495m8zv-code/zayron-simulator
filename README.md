@@ -118,3 +118,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - The Oman City Bus now includes ten procedural passenger seats arranged in paired rows, seat grab rails and a central aisle.
 - Luxury and VIP coaches already have their own paired passenger-seat layouts.
 - These are static cabin meshes; passengers are not yet individually assigned to seats and no seat-belt, walking or boarding animation is simulated.
+
+
+### Passenger drop-off safety
+- Passenger trips now require the bus to be stopped with its parking brake engaged and passenger doors open before the passengers are marked delivered and the fare is awarded.
+- If the bus reaches the destination with doors closed, the mission waits; opening the doors while stopped at the terminal completes the drop-off without requiring the bus to leave and re-enter the checkpoint.
+- Passenger figures remain visual pickup placeholders: this update does not yet animate individual passengers walking down the aisle, sitting, or alighting.
