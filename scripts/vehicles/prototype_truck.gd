@@ -70,7 +70,7 @@ func _process(delta: float) -> void:
 		var frames := _engine_playback.get_frames_available()
 		var frequency := (42.0 + absf(_speed) * 5.0 + _throttle_input * 24.0) if _engine_running else 0.0
 		for i in range(frames):
-			var sample := sin(_engine_phase) * 0.055 + sin(_engine_phase * 2.0) * 0.018 + sin(_engine_phase * 0.5) * 0.022
+			var sample := (sin(_engine_phase) * 0.055 + sin(_engine_phase * 2.0) * 0.018 + sin(_engine_phase * 0.5) * 0.022) if _engine_running else 0.0
 			_engine_playback.push_frame(Vector2(sample, sample))
 			_engine_phase = fmod(_engine_phase + TAU * frequency / ENGINE_SAMPLE_RATE, TAU)
 	if _horn_playback != null and _horn_frames_left > 0:
