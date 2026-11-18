@@ -188,6 +188,7 @@ func _process(delta: float) -> void:
 			# original traffic order; offsets outside the loop caused phase overlap.
 			traffic_vehicle.position.z = -118.0 + float(traffic_index) * 46.0
 	_traffic_signal_clock = fposmod(_traffic_signal_clock + delta, 14.0)
+	_update_player_signal_rule()
 	var active_signal := 0 if _traffic_signal_clock < 8.0 else (1 if _traffic_signal_clock < 10.0 else 2)
 	for lamp_index in range(_traffic_signal_lamps.size()):
 		var lamp_material := _traffic_signal_materials[lamp_index]
@@ -631,6 +632,20 @@ func _build_roadside_signs() -> void:
 		speed_text.modulate = Color(0.08, 0.08, 0.08)
 		speed_text.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		add_child(speed_text)
+
+
+func _update_player_signal_rule() -> void:
+	if not is_instance_valid(_active_vehicle) or not _active_vehicle.has_method("set_traffic_signal_brake"):
+		return
+	var signal_is_green := _traffic_signal_clock >= 10.0
+	var distance_to_stop_line := -52.0 - _active_vehicle.global_position.z
+	var brake_amount := 0.0
+	if not signal_is_green and distance_to_stop_line > 0.0 and distance_to_stop_line < 22.0:
+		var safe_speed := sqrt(2.0 * 5.0 * distance_to_stop_line)
+		var current_speed := float(_active_vehicle.get("_speed"))
+		if current_speed > safe_speed:
+			brake_amount = clampf((current_speed - safe_speed) / 3.0, 0.0, 1.0)
+	_active_vehicle.set_traffic_signal_brake(brake_amount)
 
 
 func _build_test_intersection() -> void:
