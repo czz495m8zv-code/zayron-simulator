@@ -920,6 +920,7 @@ func _build_traffic_vehicle() -> void:
 		traffic_car.name = "HighwayTrafficSedan_%02d" % (traffic_index + 1)
 		traffic_car.position = Vector3(2.35, 0.0, traffic_positions[traffic_index])
 		add_child(traffic_car)
+		_add_traffic_collision_body(traffic_car, Vector3(1.9, 1.5, 3.8))
 		traffic_car.add_child(_make_box("TrafficSedanBody", Vector3(1.75, 0.72, 3.6), Vector3(0.0, 0.72, 0.0), traffic_colors[traffic_index]))
 		traffic_car.add_child(_make_box("TrafficSedanCabin", Vector3(1.48, 0.72, 1.75), Vector3(0.0, 1.38, -0.18), Color(0.12, 0.22, 0.29)))
 		for x in [-0.9, 0.9]:
@@ -945,6 +946,7 @@ func _build_traffic_vehicle() -> void:
 	_side_road_traffic_vehicle.name = "SideRoadGiveWaySedan"
 	_side_road_traffic_vehicle.position = Vector3(18.0, 0.0, -48.0)
 	add_child(_side_road_traffic_vehicle)
+	_add_traffic_collision_body(_side_road_traffic_vehicle, Vector3(3.8, 1.5, 1.9))
 	_side_road_traffic_vehicle.add_child(_make_box("SideRoadSedanBody", Vector3(3.6, 0.72, 1.75), Vector3(0.0, 0.72, 0.0), Color(0.82, 0.48, 0.08)))
 	_side_road_traffic_vehicle.add_child(_make_box("SideRoadSedanCabin", Vector3(1.75, 0.72, 1.48), Vector3(0.15, 1.38, 0.0), Color(0.12, 0.22, 0.29)))
 	for wheel_x in [-1.15, 1.15]:
@@ -1045,6 +1047,21 @@ func _update_side_road_traffic(delta: float) -> void:
 		# Complete the full crossing and clear the west exit before recycling.
 		_side_road_traffic_vehicle.position.x = 18.0
 		_side_road_traffic_speed = 0.0
+
+
+func _add_traffic_collision_body(vehicle_root: Node3D, dimensions: Vector3) -> void:
+	# Moving physics body makes traffic a real obstacle for the player vehicle,
+	# rather than a visual-only mesh. Keep the collider slightly inside the body.
+	var traffic_body := AnimatableBody3D.new()
+	traffic_body.name = "TrafficCollisionBody"
+	traffic_body.sync_to_physics = true
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = dimensions
+	collision.shape = shape
+	collision.position.y = 0.88
+	traffic_body.add_child(collision)
+	vehicle_root.add_child(traffic_body)
 
 
 func _make_box(node_name: String, dimensions: Vector3, location: Vector3, tint: Color) -> MeshInstance3D:
