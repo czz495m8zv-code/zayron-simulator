@@ -30,6 +30,20 @@ var _headlight_lights: Array[SpotLight3D] = []
 var _headlight_meshes: Array[MeshInstance3D] = []
 var _rear_lamp_material: StandardMaterial3D
 var _headlight_button: Button
+var _handbrake_on := false
+var _hazard_on := false
+var _left_indicator_on := false
+var _right_indicator_on := false
+var _indicator_clock := 0.0
+var _indicator_visible := true
+var _indicator_lights: Array[MeshInstance3D] = []
+var _wipers_on := false
+var _wiper_arm: MeshInstance3D
+var _door_open := false
+var _door_hinge: Node3D
+var _horn_playback: AudioStreamGeneratorPlayback
+var _horn_frames_left := 0
+var _horn_phase := 0.0
 @export var cockpit_camera_position: Vector3 = Vector3(0.0, 2.45, -1.35)
 var _engine_playback: AudioStreamGeneratorPlayback
 var _engine_phase: float = 0.0
@@ -39,21 +53,33 @@ func _ready() -> void:
 	_build_truck()
 	_build_camera()
 	_build_vehicle_lights()
+	_build_extra_vehicle_controls()
 	_build_mobile_controls()
 	_build_engine_audio()
 
-func _process(_delta: float) -> void:
-	if _engine_playback == null:
-		return
-	var frames := _engine_playback.get_frames_available()
-	var frequency := 42.0 + absf(_speed) * 5.0 + _throttle_input * 24.0
-	for i in range(frames):
-		var fundamental := sin(_engine_phase) * 0.055
-		var harmonic := sin(_engine_phase * 2.0) * 0.018
-		var low_rumble := sin(_engine_phase * 0.5) * 0.022
-		var sample := fundamental + harmonic + low_rumble
-		_engine_playback.push_frame(Vector2(sample, sample))
-		_engine_phase = fmod(_engine_phase + TAU * frequency / ENGINE_SAMPLE_RATE, TAU)
+func _process(delta: float) -> void:
+	if _engine_playback != null:
+		var frames := _engine_playback.get_frames_available()
+		var frequency := 42.0 + absf(_speed) * 5.0 + _throttle_input * 24.0
+		for i in range(frames):
+			var sample := sin(_engine_phase) * 0.055 + sin(_engine_phase * 2.0) * 0.018 + sin(_engine_phase * 0.5) * 0.022
+			_engine_playback.push_frame(Vector2(sample, sample))
+			_engine_phase = fmod(_engine_phase + TAU * frequency / ENGINE_SAMPLE_RATE, TAU)
+	if _horn_playback != null and _horn_frames_left > 0:
+		var horn_frames := mini(_horn_playback.get_frames_available(), _horn_frames_left)
+		for i in range(horn_frames):
+			var sample := sin(_horn_phase) * 0.18
+			_horn_playback.push_frame(Vector2(sample, sample))
+			_horn_phase += TAU * 440.0 / ENGINE_SAMPLE_RATE
+			_horn_frames_left -= 1
+	if _left_indicator_on or _right_indicator_on or _hazard_on:
+		_indicator_clock += delta
+		if _indicator_clock >= 0.45:
+			_indicator_clock = 0.0
+			_indicator_visible = not _indicator_visible
+		_update_indicator_lights()
+	if _wipers_on and is_instance_valid(_wiper_arm):
+		_wiper_arm.rotation.z = sin(float(Time.get_ticks_msec()) / 1000.0 * 3.2) * 0.48
 
 func _build_engine_audio() -> void:
 	var generator := AudioStreamGenerator.new()
@@ -88,11 +114,13 @@ func _physics_process(delta: float) -> void:
 		_rear_lamp_material.emission_energy_multiplier = 0.8 + brake * 2.2
 
 	# A simple torque curve: strongest pull at low speed, tapering near top speed.
-	if brake > 0.0:
+	if _handbrake_on:
+		_speed = move_toward(_speed, 0.0, service_brake * 1.8 * delta)
+	elif brake > 0.0:
 		_speed = move_toward(_speed, 0.0, service_brake * brake * delta)
 	elif reverse > 0.0 and absf(_speed) < 0.8:
 		_speed = move_toward(_speed, -max_reverse_speed, acceleration * 0.48 * delta)
-	elif throttle > 0.0 and _speed >= -0.1:
+	elif throttle > 0.0 and _speed >= -0.1 and not _handbrake_on:
 		var torque_factor := lerpf(1.0, 0.42, speed_ratio)
 		_speed = move_toward(_speed, max_forward_speed, acceleration * torque_factor * throttle * delta)
 	else:
@@ -364,7 +392,109 @@ func _build_mobile_controls() -> void:
 	_add_hold_button(ui, "R", false, -112.0, -224.0, -12.0, -136.0, "reverse")
 	_add_camera_button(ui)
 	_add_headlight_button(ui)
+	_add_action_button(ui, "HORN", -210.0, 180.0, "horn")
+	_add_action_button(ui, "LEFT", -132.0, 180.0, "left")
+	_add_action_button(ui, "HAZARD", -54.0, 180.0, "hazard")
+	_add_action_button(ui, "RIGHT", 24.0, 180.0, "right")
+	_add_action_button(ui, "WIPER", 102.0, 180.0, "wiper")
+	_add_action_button(ui, "PARK", 180.0, 180.0, "park")
+	_add_action_button(ui, "DOOR", -36.0, 226.0, "door")
 
+func _build_extra_vehicle_controls() -> void:
+	var horn_stream := AudioStreamGenerator.new()
+	horn_stream.mix_rate = ENGINE_SAMPLE_RATE
+	horn_stream.buffer_length = 0.22
+	var horn_player := AudioStreamPlayer.new()
+	horn_player.name = "VehicleHorn"
+	horn_player.stream = horn_stream
+	horn_player.volume_db = -2.0
+	add_child(horn_player)
+	horn_player.play()
+	_horn_playback = horn_player.get_stream_playback() as AudioStreamGeneratorPlayback
+	var amber := StandardMaterial3D.new()
+	amber.albedo_color = Color(1.0, 0.42, 0.035)
+	amber.emission_enabled = true
+	amber.emission = Color(1.0, 0.28, 0.015)
+	for pos in [Vector3(-0.95, 1.18, -2.46), Vector3(0.95, 1.18, -2.46), Vector3(-0.95, 1.18, 2.46), Vector3(0.95, 1.18, 2.46)]:
+		var lamp := MeshInstance3D.new()
+		var lamp_mesh := BoxMesh.new()
+		lamp_mesh.size = Vector3(0.18, 0.14, 0.08)
+		lamp.mesh = lamp_mesh
+		lamp.position = pos
+		lamp.material_override = amber
+		lamp.visible = false
+		add_child(lamp)
+		_indicator_lights.append(lamp)
+	_wiper_arm = MeshInstance3D.new()
+	var wiper_mesh := BoxMesh.new()
+	wiper_mesh.size = Vector3(1.45, 0.045, 0.07)
+	_wiper_arm.mesh = wiper_mesh
+	_wiper_arm.position = Vector3(0.0, 2.0, -2.48)
+	add_child(_wiper_arm)
+	_door_hinge = Node3D.new()
+	_door_hinge.name = "InteractiveCabDoor"
+	_door_hinge.position = Vector3(1.13, 1.2, -1.15)
+	add_child(_door_hinge)
+	var door_panel := MeshInstance3D.new()
+	var door_mesh := BoxMesh.new()
+	door_mesh.size = Vector3(0.08, 1.45, 0.92)
+	door_panel.mesh = door_mesh
+	door_panel.position.z = 0.46
+	_door_hinge.add_child(door_panel)
+
+func _add_action_button(parent: Control, label: String, x: float, y: float, action: String) -> void:
+	var button := Button.new()
+	button.name = "VehicleAction_" + action
+	button.text = label
+	button.focus_mode = Control.FOCUS_NONE
+	button.anchor_left = 0.5
+	button.anchor_right = 0.5
+	button.offset_left = x
+	button.offset_top = y
+	button.offset_right = x + 72.0
+	button.offset_bottom = y + 40.0
+	button.add_theme_font_size_override("font_size", 12)
+	button.add_theme_color_override("font_color", Color.WHITE)
+	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.04, 0.10, 0.17, 0.92)))
+	button.pressed.connect(_on_vehicle_action.bind(action, button))
+	parent.add_child(button)
+
+func _on_vehicle_action(action: String, button: Button) -> void:
+	match action:
+		"horn":
+			_horn_frames_left = 6600
+			_horn_phase = 0.0
+		"left":
+			_left_indicator_on = not _left_indicator_on
+			if _left_indicator_on:
+				_right_indicator_on = false
+				_hazard_on = false
+		"right":
+			_right_indicator_on = not _right_indicator_on
+			if _right_indicator_on:
+				_left_indicator_on = false
+				_hazard_on = false
+		"hazard":
+			_hazard_on = not _hazard_on
+			if _hazard_on:
+				_left_indicator_on = false
+				_right_indicator_on = false
+		"wiper":
+			_wipers_on = not _wipers_on
+			button.text = "WIPER: ON" if _wipers_on else "WIPER"
+		"park":
+			_handbrake_on = not _handbrake_on
+			button.text = "PARK: ON" if _handbrake_on else "PARK"
+		"door":
+			_door_open = not _door_open
+			_door_hinge.rotation.y = deg_to_rad(-68.0 if _door_open else 0.0)
+			button.text = "CLOSE" if _door_open else "DOOR"
+	_update_indicator_lights()
+
+func _update_indicator_lights() -> void:
+	for i in range(_indicator_lights.size()):
+		var active := _hazard_on or (_left_indicator_on and (i == 0 or i == 2)) or (_right_indicator_on and (i == 1 or i == 3))
+		_indicator_lights[i].visible = active and _indicator_visible
 func _add_camera_button(parent: Control) -> void:
 	var button := Button.new()
 	button.name = "CameraToggle"
