@@ -37,6 +37,9 @@ var _traffic_signal_materials: Array[StandardMaterial3D] = []
 var _traffic_signal_clock: float = 0.0
 var _side_road_traffic_vehicle: Node3D
 var _side_road_traffic_speed: float = 0.0
+var _junction_pedestrian: Node3D
+var _junction_pedestrian_crossing: bool = false
+var _junction_pedestrian_clock: float = 3.0
 const TRAFFIC_LOOP_LENGTH: float = 142.0
 const SAVE_PATH := "user://zayron_progress.cfg"
 const ROUTE_NAMES: Array[String] = ["MUSCAT -> NIZWA", "NIZWA -> SUR", "SUR -> MUSCAT"]
@@ -189,6 +192,8 @@ func _process(delta: float) -> void:
 		var side_vehicle_crossing := is_instance_valid(_side_road_traffic_vehicle) and _side_road_traffic_vehicle.position.x <= 5.5 and _side_road_traffic_vehicle.position.x >= -5.5
 		if side_vehicle_crossing and absf(traffic_vehicle.position.z + 48.0) > 3.0 and absf(traffic_vehicle.position.z + 48.0) < 18.0:
 			target_speed = 0.0
+		if _junction_pedestrian_crossing and absf(traffic_vehicle.position.z + 48.0) < 8.0:
+			target_speed = 0.0
 		_traffic_current_speeds[traffic_index] = move_toward(_traffic_current_speeds[traffic_index], target_speed, 4.0 * delta)
 		traffic_vehicle.position.z += _traffic_current_speeds[traffic_index] * delta
 		if traffic_vehicle.position.z > 24.0:
@@ -196,6 +201,7 @@ func _process(delta: float) -> void:
 			# original traffic order; offsets outside the loop caused phase overlap.
 			traffic_vehicle.position.z = -118.0 + float(traffic_index) * 46.0
 	_traffic_signal_clock = fposmod(_traffic_signal_clock + delta, 16.0)
+	_update_junction_pedestrian(delta)
 	_update_side_road_traffic(delta)
 	_update_player_signal_rule()
 	var active_signal := 2 if _traffic_signal_clock < 8.0 else (1 if _traffic_signal_clock < 10.0 else 0)
@@ -794,6 +800,31 @@ func _build_traffic_vehicle() -> void:
 			side_tire_material.albedo_color = Color(0.025, 0.025, 0.03)
 			side_tire.material_override = side_tire_material
 			_side_road_traffic_vehicle.add_child(side_tire)
+	# Procedural pedestrian waits at the kerb, crosses the marked zebra crossing,
+	# then returns to the far pavement for another crossing cycle.
+	_junction_pedestrian = Node3D.new()
+	_junction_pedestrian.name = "JunctionPedestrian"
+	_junction_pedestrian.position = Vector3(7.0, 0.0, -52.7)
+	add_child(_junction_pedestrian)
+	_junction_pedestrian.add_child(_make_box("PedestrianTorso", Vector3(0.48, 0.82, 0.28), Vector3(0.0, 1.05, 0.0), Color(0.12, 0.38, 0.72)))
+	_junction_pedestrian.add_child(_make_box("PedestrianHead", Vector3(0.34, 0.34, 0.34), Vector3(0.0, 1.66, 0.0), Color(0.72, 0.52, 0.38)))
+	_junction_pedestrian.add_child(_make_box("PedestrianLeftLeg", Vector3(0.16, 0.55, 0.18), Vector3(-0.13, 0.38, 0.0), Color(0.12, 0.12, 0.15)))
+	_junction_pedestrian.add_child(_make_box("PedestrianRightLeg", Vector3(0.16, 0.55, 0.18), Vector3(0.13, 0.38, 0.0), Color(0.12, 0.12, 0.15)))
+
+
+func _update_junction_pedestrian(delta: float) -> void:
+	if not is_instance_valid(_junction_pedestrian):
+		return
+	if _junction_pedestrian_crossing:
+		_junction_pedestrian.position.z += 1.35 * delta
+		if _junction_pedestrian.position.z >= -43.3:
+			_junction_pedestrian_crossing = false
+			_junction_pedestrian.position.z = -43.3
+			_junction_pedestrian_clock = 7.0
+	else:
+		_junction_pedestrian_clock -= delta
+		if _junction_pedestrian_clock <= 0.0:
+			_junction_pedestrian_crossing = true
 
 
 func _update_side_road_traffic(delta: float) -> void:
@@ -813,7 +844,11 @@ func _update_side_road_traffic(delta: float) -> void:
 	if is_instance_valid(_active_vehicle) and absf(_active_vehicle.global_position.z + 48.0) < 4.0:
 		junction_occupied = true
 	var target_speed := 0.0
-	if main_road_has_priority and _side_road_traffic_vehicle.position.x > 2.8:
+	# Give pedestrians the marked crossing before allowing side-road cars through.
+	var pedestrian_conflict := _junction_pedestrian_crossing and _side_road_traffic_vehicle.position.x > 3.8 and _side_road_traffic_vehicle.position.x < 11.5
+	if pedestrian_conflict:
+		target_speed = 0.0
+	elif main_road_has_priority and _side_road_traffic_vehicle.position.x > 2.8:
 		# Approach slowly, then wait just behind the give-way markings.
 		target_speed = 3.8
 	elif not main_road_has_priority and _side_road_traffic_vehicle.position.x > -5.5:
