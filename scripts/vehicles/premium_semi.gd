@@ -38,6 +38,19 @@ func _build_truck() -> void:
 		_add_box("TrailerFrameRail_%s" % side, Vector3(0.18, 0.28, 8.15), Vector3(side * 0.88, 0.38, 5.9), Color(0.12, 0.14, 0.16))
 	for z in [7.55, 8.55]:
 		_add_box("TrailerAxleBeam_%s" % z, Vector3(2.05, 0.18, 0.22), Vector3(0.0, 0.43, z), Color(0.16, 0.18, 0.2))
+ 	# Tandem wheels gain visible metal hubs and simple protective mudguards.
+	for side in [-1.0, 1.0]:
+		_add_box("TandemMudguardTop_%s" % side, Vector3(0.16, 0.14, 2.18), Vector3(side * 1.42, 1.12, 8.05), Color(0.18, 0.2, 0.22))
+		_add_box("TandemMudguardFront_%s" % side, Vector3(0.16, 0.62, 0.14), Vector3(side * 1.42, 0.78, 6.98), Color(0.18, 0.2, 0.22))
+		_add_box("TandemMudguardRear_%s" % side, Vector3(0.16, 0.62, 0.14), Vector3(side * 1.42, 0.78, 9.12), Color(0.18, 0.2, 0.22))
+		for z in [7.55, 8.55]:
+			_add_wheel_hub(Vector3(side * 1.55, 0.55, z))
+		_add_box("TrailerMudflap_%s" % side, Vector3(0.12, 0.62, 0.08), Vector3(side * 1.4, 0.35, 9.35), Color(0.045, 0.05, 0.055))
+	# Retractable-looking landing legs and feet beneath the trailer nose.
+	for side in [-1.0, 1.0]:
+		_add_box("LandingLeg_%s" % side, Vector3(0.14, 0.62, 0.14), Vector3(side * 0.78, 0.24, 2.25), Color(0.3, 0.32, 0.34))
+		_add_box("LandingFoot_%s" % side, Vector3(0.42, 0.08, 0.34), Vector3(side * 0.78, -0.08, 2.25), Color(0.22, 0.24, 0.26))
+	_add_box("KingpinCouplingPlate", Vector3(1.5, 0.12, 0.72), Vector3(0.0, 0.48, 1.78), Color(0.16, 0.18, 0.2))
 	# Rear double doors, hinges, locking bars and lower impact protection.
 	_add_box("RearDoorLeft", Vector3(1.22, 3.42, 0.075), Vector3(-0.63, 2.35, 10.13), trailer_paint)
 	_add_box("RearDoorRight", Vector3(1.22, 3.42, 0.075), Vector3(0.63, 2.35, 10.13), trailer_paint)
@@ -54,6 +67,32 @@ func _build_truck() -> void:
 	for side in [-1.0, 1.0]:
 		for z in [2.6, 5.0, 7.4, 9.2]:
 			_add_box("TrailerSideMarker_%s_%s" % [side, z], Vector3(0.07, 0.16, 0.24), Vector3(side * 1.31, 1.25, z), Color(0.95, 0.48, 0.06))
+
+func _add_wheel_hub(location: Vector3) -> void:
+	var hub := MeshInstance3D.new()
+	var hub_mesh := CylinderMesh.new()
+	hub_mesh.top_radius = 0.22
+	hub_mesh.bottom_radius = 0.22
+	hub_mesh.height = 0.075
+	hub.mesh = hub_mesh
+	hub.rotation_degrees.z = 90.0
+	hub.position = location
+	var hub_material := StandardMaterial3D.new()
+	hub_material.albedo_color = Color(0.48, 0.51, 0.54)
+	hub_material.metallic = 0.78
+	hub_material.roughness = 0.3
+	hub.material_override = hub_material
+	add_child(hub)
+	var cap := MeshInstance3D.new()
+	var cap_mesh := CylinderMesh.new()
+	cap_mesh.top_radius = 0.085
+	cap_mesh.bottom_radius = 0.085
+	cap_mesh.height = 0.09
+	cap.mesh = cap_mesh
+	cap.rotation_degrees.z = 90.0
+	cap.position = location + Vector3(signf(location.x) * 0.045, 0.0, 0.0)
+	cap.material_override = hub_material
+	add_child(cap)
 
 func _add_box(label: String, dimensions: Vector3, location: Vector3, tint: Color) -> void:
 	var part := MeshInstance3D.new()
