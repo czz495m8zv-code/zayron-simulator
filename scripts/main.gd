@@ -74,6 +74,7 @@ var _depot_staging_positions: Array[Vector3] = [
 ]
 var _depot_pallet_staging_slots: Array[int] = []
 var _forklift_cargo_label: Label
+var _warehouse_load_button: Button
 var _forklift_wheel_nodes: Array[MeshInstance3D] = []
 var _pause_button: Button
 var _pause_overlay: Control
@@ -150,6 +151,7 @@ func _process(delta: float) -> void:
 	if is_instance_valid(_forklift_beacon):
 		_forklift_beacon.light_energy = 0.15 + (0.85 if sin(_forklift_animation_time * 4.0) > 0.15 else 0.0)
 	_update_company_ai_bus(delta)
+	_update_warehouse_load_prompt()
 	if not is_instance_valid(_mission_label) or _mission_complete or not is_instance_valid(_active_vehicle):
 		return
 	var distance := Vector2(_active_vehicle.global_position.x - _mission_target.x, _active_vehicle.global_position.z - _mission_target.z).length()
@@ -176,6 +178,14 @@ func _spawn_vehicle() -> void:
 	if is_instance_valid(_cargo_depot):
 		_cargo_depot.visible = not _passenger_mode
 		_cargo_depot.position.z = (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5
+		for pallet_index in range(_depot_pallets.size()):
+			var reset_pallet := _depot_pallets[pallet_index]
+			if is_instance_valid(reset_pallet):
+				reset_pallet.visible = true
+				reset_pallet.position = Vector3(-2.1, 0.18, 3.0 + float(pallet_index) * 1.8)
+		_depot_pallet_staging_slots.clear()
+		for pallet_index in range(_depot_pallets.size()):
+			_depot_pallet_staging_slots.append(-1)
 		for crate_index in range(_depot_crates.size()):
 			var depot_crate := _depot_crates[crate_index]
 			if is_instance_valid(depot_crate):
@@ -210,6 +220,67 @@ func _spawn_vehicle() -> void:
 func _apply_vehicle_settings() -> void:
 	if is_instance_valid(_active_vehicle) and _active_vehicle.has_method("set_steering_sensitivity"):
 		_active_vehicle.set_steering_sensitivity(_steering_sensitivity)
+
+func _update_warehouse_load_prompt() -> void:
+	if not is_instance_valid(_warehouse_load_button):
+		return
+	if _passenger_mode or _cargo_pickup_done or _mission_complete or not is_instance_valid(_active_vehicle) or not is_instance_valid(_cargo_depot):
+		_warehouse_load_button.visible = false
+		return
+	var near_bay := Vector2(_active_vehicle.global_position.x - _cargo_depot.global_position.x, _active_vehicle.global_position.z - _cargo_depot.global_position.z).length() <= 8.5
+	var parked := _active_vehicle.has_method("can_handle_cargo") and _active_vehicle.can_handle_cargo()
+	var has_staged_pallet := false
+	for slot_owner in _depot_pallet_staging_slots:
+		if slot_owner >= 0 and slot_owner < _depot_pallets.size() and is_instance_valid(_depot_pallets[slot_owner]) and _depot_pallets[slot_owner].visible:
+			has_staged_pallet = true
+			break
+	_warehouse_load_button.visible = near_bay and has_staged_pallet and parked
+
+
+func _load_truck_from_warehouse() -> void:
+	if _passenger_mode or _cargo_pickup_done or _mission_complete or not is_instance_valid(_active_vehicle) or not is_instance_valid(_cargo_depot):
+		return
+	if not _active_vehicle.has_method("can_handle_cargo") or not _active_vehicle.can_handle_cargo():
+		if is_instance_valid(_mission_label):
+			_mission_label.text = "STOP IN THE BAY AND APPLY PARK BRAKE"
+		return
+	var bay_distance := Vector2(_active_vehicle.global_position.x - _cargo_depot.global_position.x, _active_vehicle.global_position.z - _cargo_depot.global_position.z).length()
+	if bay_distance > 8.5:
+		if is_instance_valid(_mission_label):
+			_mission_label.text = "PARK INSIDE THE TRUCK LOADING BAY"
+		return
+	var staged_pallet_index := -1
+	for slot_owner in _depot_pallet_staging_slots:
+		if slot_owner >= 0 and slot_owner < _depot_pallets.size() and is_instance_valid(_depot_pallets[slot_owner]) and _depot_pallets[slot_owner].visible:
+			staged_pallet_index = slot_owner
+			break
+	if staged_pallet_index < 0:
+		if is_instance_valid(_mission_label):
+			_mission_label.text = "NO PALLET IN A STAGING BAY - MOVE ONE WITH THE FORKLIFT"
+		return
+	var staged_pallet := _depot_pallets[staged_pallet_index]
+	_cargo_pickup_done = true
+	_sync_vehicle_cargo_payload()
+	staged_pallet.visible = false
+	for crate in _depot_crates:
+		if is_instance_valid(crate) and crate.get_parent() == staged_pallet:
+			var tween := create_tween()
+			tween.set_trans(Tween.TRANS_QUAD)
+			tween.set_ease(Tween.EASE_IN_OUT)
+			tween.tween_property(crate, "global_position", _cargo_depot.to_global(Vector3(-5.1, 1.1, 2.7)), 0.55)
+			tween.tween_property(crate, "scale", Vector3.ZERO, 0.3)
+			tween.tween_callback(crate.hide)
+	if is_instance_valid(_cargo_status_label):
+		_cargo_status_label.text = "CARGO LOADED: " + CARGO_NAMES[_selected_cargo] + " | PALLET %02d" % (staged_pallet_index + 1)
+	_mission_target = ROUTE_TARGETS[_selected_route]
+	if is_instance_valid(_checkpoint_area):
+		_checkpoint_area.position = _mission_target
+	_move_checkpoint_gate()
+	if is_instance_valid(_mission_label):
+		_mission_label.text = "PALLET LOADED  |  CONTINUE TO " + ROUTE_NAMES[_selected_route].split(" -> ")[1]
+	if is_instance_valid(_warehouse_load_button):
+		_warehouse_load_button.visible = false
+
 
 func _sync_vehicle_cargo_payload() -> void:
 	if not is_instance_valid(_active_vehicle) or not _active_vehicle.has_method("set_cargo_payload"):
@@ -532,6 +603,20 @@ func _build_cargo_depot() -> void:
 	_depot_pallet_staging_slots.clear()
 	for pallet_index in range(_depot_pallets.size()):
 		_depot_pallet_staging_slots.append(-1)
+	var truck_bay_floor := _make_box("TruckLoadingBayFloor", Vector3(4.8, 0.035, 7.0), Vector3(-5.1, 0.065, 2.7), Color(0.24, 0.27, 0.28))
+	_cargo_depot.add_child(truck_bay_floor)
+	for bay_side in [-1.0, 1.0]:
+		var bay_line := _make_box("TruckLoadingBayLine", Vector3(0.12, 0.025, 7.0), Vector3(-5.1 + bay_side * 2.3, 0.095, 2.7), Color(0.95, 0.78, 0.18))
+		_cargo_depot.add_child(bay_line)
+	var truck_bay_label := Label3D.new()
+	truck_bay_label.name = "TruckLoadingBaySign"
+	truck_bay_label.text = "TRUCK LOADING BAY"
+	truck_bay_label.position = Vector3(-5.1, 0.18, -1.0)
+	truck_bay_label.font_size = 22
+	truck_bay_label.pixel_size = 0.01
+	truck_bay_label.modulate = Color(1.0, 0.9, 0.55)
+	truck_bay_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_cargo_depot.add_child(truck_bay_label)
 	_build_depot_forklift()
 
 
@@ -941,6 +1026,16 @@ func _build_mission_hud() -> void:
 	_cargo_status_label.add_theme_color_override("font_color", Color(1.0, 0.83, 0.58))
 	_cargo_status_label.visible = not _passenger_mode
 	layer.add_child(_cargo_status_label)
+
+	_warehouse_load_button = Button.new()
+	_warehouse_load_button.name = "WarehouseTruckLoad"
+	_warehouse_load_button.text = "LOAD STAGED PALLET"
+	_warehouse_load_button.position = Vector2(24.0, 278.0)
+	_warehouse_load_button.custom_minimum_size = Vector2(250.0, 48.0)
+	_warehouse_load_button.add_theme_font_size_override("font_size", 16)
+	_warehouse_load_button.visible = false
+	_warehouse_load_button.pressed.connect(_load_truck_from_warehouse)
+	layer.add_child(_warehouse_load_button)
 
 	var forklift_panel := VBoxContainer.new()
 	forklift_panel.name = "ForkliftLiftControls"
