@@ -354,14 +354,14 @@ func _add_headlight_button(parent: Control) -> void:
 	button.text = "LIGHTS: ON"
 	_headlight_button = button
 	button.focus_mode = Control.FOCUS_NONE
-	button.anchor_left = 1.0
-	button.anchor_right = 1.0
+	button.anchor_left = 0.5
+	button.anchor_right = 0.5
 	button.anchor_top = 0.0
 	button.anchor_bottom = 0.0
-	button.offset_left = -158.0
-	button.offset_top = 22.0
-	button.offset_right = -18.0
-	button.offset_bottom = 68.0
+	button.offset_left = -70.0
+	button.offset_top = 126.0
+	button.offset_right = 70.0
+	button.offset_bottom = 170.0
 	button.add_theme_font_size_override("font_size", 15)
 	button.add_theme_color_override("font_color", Color.WHITE)
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.04, 0.10, 0.17, 0.9)))
