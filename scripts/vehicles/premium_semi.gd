@@ -5,6 +5,7 @@ extends "res://scripts/vehicles/prototype_truck.gd"
 @export var trim_paint: Color = Color(0.82, 0.65, 0.28)
 
 func _build_truck() -> void:
+	cockpit_camera_position = Vector3(0.0, 2.55, -2.55)
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(2.55, 3.0, 7.2)
@@ -28,6 +29,7 @@ func _build_truck() -> void:
 	_add_box("Dashboard", Vector3(2.05, 0.34, 0.72), Vector3(0.0, 1.55, -2.72), Color(0.035, 0.045, 0.06))
 	_add_box("DigitalInstrumentPanel", Vector3(0.62, 0.24, 0.04), Vector3(0.0, 1.78, -2.92), Color(0.04, 0.55, 0.72))
 	_add_box("DriverSeat", Vector3(0.72, 0.9, 0.72), Vector3(-0.62, 1.35, -0.9), Color(0.09, 0.11, 0.13))
+	_add_cockpit_steering_wheel(Vector3(-0.62, 2.05, -2.65))
 	_add_box("PassengerSeat", Vector3(0.72, 0.9, 0.72), Vector3(0.62, 1.35, -0.9), Color(0.09, 0.11, 0.13))
 	_add_box("LeftHeadlamp", Vector3(0.42, 0.22, 0.08), Vector3(-0.82, 1.0, -3.2), Color(0.92, 0.95, 1.0))
 	_add_box("RightHeadlamp", Vector3(0.42, 0.22, 0.08), Vector3(0.82, 1.0, -3.2), Color(0.92, 0.95, 1.0))
