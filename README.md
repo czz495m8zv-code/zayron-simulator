@@ -224,3 +224,8 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 ### Bus cabin window openings
 - Replaced the single opaque bus body mesh with separate roof, bulkhead, lower/upper side panels and window pillars. The side windows are now open gaps rather than glass sitting over a solid wall, so the existing passenger seats, aisle and grab rails can be seen from outside.
 - The main chassis collision shape remains unchanged. This is a visual body-shell improvement; it does not yet add glass physics, a fully modelled interior, or animated passenger seat assignment.
+
+
+### Visible seated passengers
+- Passenger-mode pickup now creates a visible seated passenger group inside the active bus/coach, up to the ten available seat positions. The group is cleared after passengers alight and whenever the active vehicle is reset.
+- This is a visual seat-occupancy representation tied to the passenger mission count; individual walking paths through the door, seat reservations, passenger AI, and persistent passenger identities are not simulated yet.
