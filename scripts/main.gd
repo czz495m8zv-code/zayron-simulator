@@ -912,8 +912,6 @@ func _build_mission_hud() -> void:
 	forklift_turn_right.text = "STEER RIGHT"
 	forklift_turn_right.custom_minimum_size.y = 38
 	forklift_turn_right.pressed.connect(_turn_forklift_right)
-	forklift_turn_right.custom_minimum_size.y = 38
-	forklift_turn_right.pressed.connect(_turn_forklift_right)
 	forklift_panel.add_child(forklift_turn_right)
 	var forklift_load_button := Button.new()
 	forklift_load_button.text = "GRAB / RELEASE CRATE"
