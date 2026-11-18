@@ -1466,6 +1466,10 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 	if body != _active_vehicle or _mission_complete:
 		return
 	if _passenger_mode and not _passenger_pickup_done:
+		if _active_vehicle.has_method("can_board_passengers") and not _active_vehicle.can_board_passengers():
+			if is_instance_valid(_mission_label):
+				_mission_label.text = "STOP THE BUS AND OPEN PASSENGER DOORS TO BOARD"
+			return
 		_passenger_pickup_done = true
 		if is_instance_valid(_passenger_status_label):
 			_passenger_status_label.text = "PASSENGERS ON BOARD: %d" % PASSENGER_GROUP_SIZE
