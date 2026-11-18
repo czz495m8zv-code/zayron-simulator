@@ -64,6 +64,7 @@ var _forklift_lift_label: Label
 var _forklift_root: Node3D
 var _forklift_held_crate: Node3D
 var _forklift_cargo_label: Label
+var _forklift_wheel_nodes: Array[MeshInstance3D] = []
 var _pause_button: Button
 var _pause_overlay: Control
 var _audio_slider: HSlider
@@ -573,6 +574,7 @@ func _build_depot_forklift() -> void:
 			rubber.albedo_color = Color(0.025, 0.027, 0.03)
 			wheel.material_override = rubber
 			forklift.add_child(wheel)
+			_forklift_wheel_nodes.append(wheel)
 	for x in [-0.62, 0.62]:
 		var guard_post := _make_box("ForkliftOverheadGuardPost", Vector3(0.1, 1.45, 0.1), Vector3(x, 1.55, 0.28), dark_metal)
 		forklift.add_child(guard_post)
@@ -620,27 +622,48 @@ func _set_forklift_lift_level(value: float) -> void:
 
 
 func _move_forklift_forward() -> void:
-	_move_forklift_local(Vector3(0.0, 0.0, -0.45))
+	_move_forklift_local(Vector3(0.0, 0.0, -0.38))
 
 
 func _move_forklift_back() -> void:
-	_move_forklift_local(Vector3(0.0, 0.0, 0.45))
+	_move_forklift_local(Vector3(0.0, 0.0, 0.38))
 
 
 func _move_forklift_left() -> void:
-	_move_forklift_local(Vector3(-0.45, 0.0, 0.0))
+	_move_forklift_local(Vector3(-0.38, 0.0, 0.0))
 
 
 func _move_forklift_right() -> void:
-	_move_forklift_local(Vector3(0.45, 0.0, 0.0))
+	_move_forklift_local(Vector3(0.38, 0.0, 0.0))
+
+
+func _turn_forklift_left() -> void:
+	_rotate_forklift(0.16)
+
+
+func _turn_forklift_right() -> void:
+	_rotate_forklift(-0.16)
+
+
+func _rotate_forklift(amount: float) -> void:
+	if not is_instance_valid(_forklift_root):
+		return
+	_forklift_root.rotate_y(amount)
 
 
 func _move_forklift_local(offset: Vector3) -> void:
 	if not is_instance_valid(_forklift_root):
 		return
-	_forklift_root.position += offset
+	if is_instance_valid(_forklift_held_crate) and _forklift_lift_level > 0.82:
+		_forklift_cargo_label.text = "LOWER LOAD BEFORE DRIVING"
+		return
+	var world_offset := _forklift_root.basis * offset
+	_forklift_root.position += Vector3(world_offset.x, 0.0, world_offset.z)
 	_forklift_root.position.x = clampf(_forklift_root.position.x, -3.2, 3.5)
 	_forklift_root.position.z = clampf(_forklift_root.position.z, -0.2, 6.2)
+	for wheel in _forklift_wheel_nodes:
+		if is_instance_valid(wheel):
+			wheel.rotate_x(-offset.z * 1.8)
 
 
 func _toggle_forklift_crate() -> void:
@@ -671,6 +694,20 @@ func _toggle_forklift_crate() -> void:
 	_forklift_held_crate.reparent(_forklift_carriage, true)
 	_forklift_held_crate.position = Vector3(0.0, 0.34, -0.92)
 	_forklift_cargo_label.text = "LOAD: %s" % _forklift_held_crate.name
+
+
+func _release_forklift_load_for_mission() -> void:
+	if not is_instance_valid(_forklift_held_crate):
+		return
+	var crate_index := _depot_crates.find(_forklift_held_crate)
+	_forklift_held_crate.reparent(_cargo_depot, true)
+	if crate_index >= 0 and crate_index < _depot_crate_home_positions.size():
+		_forklift_held_crate.position = _depot_crate_home_positions[crate_index]
+	_forklift_held_crate.scale = Vector3.ONE
+	_forklift_held_crate.show()
+	_forklift_held_crate = null
+	if is_instance_valid(_forklift_cargo_label):
+		_forklift_cargo_label.text = "LOAD: EMPTY"
 
 
 func _build_passenger_waiting_group() -> void:
@@ -818,7 +855,7 @@ func _build_mission_hud() -> void:
 	forklift_panel.anchor_right = 1.0
 	forklift_panel.anchor_bottom = 1.0
 	forklift_panel.offset_left = -190.0
-	forklift_panel.offset_top = -450.0
+	forklift_panel.offset_top = -530.0
 	forklift_panel.offset_right = -20.0
 	forklift_panel.offset_bottom = -24.0
 	forklift_panel.add_theme_constant_override("separation", 6)
@@ -866,6 +903,18 @@ func _build_mission_hud() -> void:
 	forklift_right.custom_minimum_size.y = 42
 	forklift_right.pressed.connect(_move_forklift_right)
 	forklift_panel.add_child(forklift_right)
+	var forklift_turn_left := Button.new()
+	forklift_turn_left.text = "STEER LEFT"
+	forklift_turn_left.custom_minimum_size.y = 38
+	forklift_turn_left.pressed.connect(_turn_forklift_left)
+	forklift_panel.add_child(forklift_turn_left)
+	var forklift_turn_right := Button.new()
+	forklift_turn_right.text = "STEER RIGHT"
+	forklift_turn_right.custom_minimum_size.y = 38
+	forklift_turn_right.pressed.connect(_turn_forklift_right)
+	forklift_turn_right.custom_minimum_size.y = 38
+	forklift_turn_right.pressed.connect(_turn_forklift_right)
+	forklift_panel.add_child(forklift_turn_right)
 	var forklift_load_button := Button.new()
 	forklift_load_button.text = "GRAB / RELEASE CRATE"
 	forklift_load_button.custom_minimum_size.y = 48
@@ -1706,6 +1755,7 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 		return
 	if not _passenger_mode and not _cargo_pickup_done:
 		_cargo_pickup_done = true
+		_release_forklift_load_for_mission()
 		_sync_vehicle_cargo_payload()
 		if is_instance_valid(_cargo_status_label):
 			_cargo_status_label.text = "CARGO LOADED: " + CARGO_NAMES[_selected_cargo]
