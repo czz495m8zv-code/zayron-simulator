@@ -660,6 +660,35 @@ func _build_test_intersection() -> void:
 	add_child(junction_road)
 	var junction_surface := _make_box("JunctionAsphaltSurface", Vector3(20.0, 0.025, 8.0), Vector3(10.5, 0.105, -48.0), Color(0.29, 0.30, 0.31))
 	add_child(junction_surface)
+	var junction_center_dash_material := Color(0.92, 0.91, 0.84)
+	for dash_index in range(6):
+		var dash := _make_box("JunctionCentreDash_%d" % dash_index, Vector3(1.45, 0.025, 0.12), Vector3(4.0 + float(dash_index) * 2.45, 0.13, -48.0), junction_center_dash_material)
+		add_child(dash)
+	# Side-road traffic receives a clear give-way marking before joining the highway.
+	var give_way_bar := _make_box("JunctionGiveWayBar", Vector3(0.34, 0.035, 7.0), Vector3(2.1, 0.14, -48.0), Color(0.96, 0.94, 0.87))
+	add_child(give_way_bar)
+	for triangle_index in range(3):
+		var triangle_base := _make_box("GiveWayTriangleBase_%d" % triangle_index, Vector3(0.85, 0.025, 0.12), Vector3(3.15, 0.145, -50.4 + float(triangle_index) * 2.4), Color(0.96, 0.94, 0.87))
+		add_child(triangle_base)
+		var triangle_left := _make_box("GiveWayTriangleLeft_%d" % triangle_index, Vector3(0.12, 0.025, 0.62), Vector3(2.78, 0.145, -50.7 + float(triangle_index) * 2.4), Color(0.96, 0.94, 0.87))
+		triangle_left.rotation.y = deg_to_rad(-35.0)
+		add_child(triangle_left)
+		var triangle_right := _make_box("GiveWayTriangleRight_%d" % triangle_index, Vector3(0.12, 0.025, 0.62), Vector3(2.78, 0.145, -50.1 + float(triangle_index) * 2.4), Color(0.96, 0.94, 0.87))
+		triangle_right.rotation.y = deg_to_rad(35.0)
+		add_child(triangle_right)
+	var junction_sign_pole := _make_box("GiveWaySignPole", Vector3(0.12, 2.2, 0.12), Vector3(17.8, 1.1, -44.2), Color(0.22, 0.23, 0.24))
+	add_child(junction_sign_pole)
+	var junction_sign := _make_box("GiveWaySignBoard", Vector3(1.25, 0.9, 0.12), Vector3(17.8, 2.45, -44.2), Color(0.90, 0.88, 0.78))
+	add_child(junction_sign)
+	var give_way_label := Label3D.new()
+	give_way_label.name = "GiveWaySignText"
+	give_way_label.text = "GIVE WAY"
+	give_way_label.font_size = 30
+	give_way_label.pixel_size = 0.008
+	give_way_label.position = Vector3(17.8, 2.45, -44.1)
+	give_way_label.rotation_degrees.y = 180.0
+	give_way_label.modulate = Color(0.12, 0.13, 0.14)
+	add_child(give_way_label)
 	var stop_bar := _make_box("JunctionStopLine", Vector3(8.3, 0.035, 0.38), Vector3(0.0, 0.13, -52.0), Color(0.95, 0.94, 0.88))
 	add_child(stop_bar)
 	for pole_index in range(2):
