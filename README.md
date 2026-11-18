@@ -38,9 +38,11 @@ The first company-management layer is now implemented in the gameplay scene:
 - Start with a separate company account of OMR 500, one company bus and no hired drivers.
 - Hire a driver for the prototype cost of OMR 80.
 - Purchase an additional company bus for the prototype cost of OMR 450.
-- Dispatch a hired driver on the currently selected route while the player continues driving.
+- Select a company dispatch route independently of the player's personal driving route.
+- Dispatch an available hired driver with an available company bus; the roster marks both ON ROUTE while the player continues driving.
+- Return the assigned driver and bus to AVAILABLE when the timed trip completes.
 - Complete a timed background trip and receive a prototype net company return of OMR 50 after trip costs.
-- Save the company name, funds, individual bus records, individual driver records and completed company trips locally.
+- Save the company name, funds, dispatch route, individual bus records, individual driver records and completed company trips locally.
 - Show a fleet and staff roster with each bus and driver marked AVAILABLE or ON ROUTE.
 - Dispatch reserves one available driver and one available bus; both return to AVAILABLE after the simulated trip completes.
 
