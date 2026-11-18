@@ -154,3 +154,11 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - The player can lower the forks, move close to a visible depot crate and use GRAB / RELEASE CRATE to attach one crate to the fork carriage or set it back down.
 - Fork height remains player-controlled with FORKS UP and FORKS DOWN, and the selected height is shown on screen.
 - This is a first interaction prototype using bounded position steps and node attachment. It does not yet use vehicle-grade steering/drive physics, wheel rotation, collision-based fork insertion, pallet pickup, fork tilt, load stability, or realistic forklift hydraulics. Crates are handled individually rather than as a full pallet.
+
+
+### Forklift steering and safer load movement
+- The depot forklift now has STEER LEFT and STEER RIGHT controls. Forward, reverse and side-step movement follow the forklift's current facing direction, so players can turn before positioning at a crate.
+- The procedural wheel meshes rotate during forward/reverse movement as a visual cue. This is not yet a fully simulated steering axle or wheel-physics system.
+- When carrying a crate above the low travel-height threshold, movement is blocked and the HUD asks the player to lower the load first. This is a simple stability safeguard, not a calculated load-centre or tip-over model.
+- If a cargo mission starts while a crate is attached to the forklift, the crate is safely returned to its depot home position before the mission's loading animation begins.
+- Forklift movement is still bounded, button-step movement without collision physics, articulated steering geometry, hydraulic tilt, or full pallet handling.
