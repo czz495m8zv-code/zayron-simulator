@@ -5,6 +5,9 @@ extends "res://scripts/vehicles/prototype_truck.gd"
 @export var trim_paint: Color = Color(0.82, 0.65, 0.28)
 
 func _build_truck() -> void:
+	var trailer_group := Node3D.new()
+	trailer_group.name = "TrailerAssembly"
+	add_child(trailer_group)
 	cockpit_camera_position = Vector3(0.0, 2.55, -2.55)
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
@@ -70,6 +73,22 @@ func _build_truck() -> void:
 		for z in [2.6, 5.0, 7.4, 9.2]:
 			_add_box("TrailerSideMarker_%s_%s" % [side, z], Vector3(0.07, 0.16, 0.24), Vector3(side * 1.31, 1.25, z), Color(0.95, 0.48, 0.06))
 
+func _trailer_parent_for(label: String) -> Node3D:
+	var trailer_prefixes := ["Trailer", "RearDoor", "Kingpin", "Landing", "Tandem", "RearTail", "RearReverse", "RearBumper", "RearTopHeader"]
+	for prefix in trailer_prefixes:
+		if label.begins_with(prefix):
+			var assembly := get_node_or_null("TrailerAssembly") as Node3D
+			if is_instance_valid(assembly):
+				return assembly
+	return self
+
+func _trailer_parent_for_wheel(location: Vector3) -> Node3D:
+	if location.z >= 6.0:
+		var assembly := get_node_or_null("TrailerAssembly") as Node3D
+		if is_instance_valid(assembly):
+			return assembly
+	return self
+
 func _add_wheel_hub(location: Vector3) -> void:
 	var hub := MeshInstance3D.new()
 	var hub_mesh := CylinderMesh.new()
@@ -84,7 +103,7 @@ func _add_wheel_hub(location: Vector3) -> void:
 	hub_material.metallic = 0.78
 	hub_material.roughness = 0.3
 	hub.material_override = hub_material
-	add_child(hub)
+	_trailer_parent_for_wheel(location).add_child(hub)
 	var cap := MeshInstance3D.new()
 	var cap_mesh := CylinderMesh.new()
 	cap_mesh.top_radius = 0.085
@@ -94,7 +113,7 @@ func _add_wheel_hub(location: Vector3) -> void:
 	cap.rotation_degrees.z = 90.0
 	cap.position = location + Vector3(signf(location.x) * 0.045, 0.0, 0.0)
 	cap.material_override = hub_material
-	add_child(cap)
+	_trailer_parent_for_wheel(location).add_child(cap)
 
 func _add_box(label: String, dimensions: Vector3, location: Vector3, tint: Color) -> void:
 	var part := MeshInstance3D.new()
@@ -108,7 +127,7 @@ func _add_box(label: String, dimensions: Vector3, location: Vector3, tint: Color
 	material.metallic = 0.24
 	material.roughness = 0.34
 	part.material_override = material
-	add_child(part)
+	_trailer_parent_for(label).add_child(part)
 
 func _add_wheel(location: Vector3, radius: float) -> void:
 	var wheel := MeshInstance3D.new()
@@ -122,4 +141,4 @@ func _add_wheel(location: Vector3, radius: float) -> void:
 	var rubber := StandardMaterial3D.new()
 	rubber.albedo_color = Color(0.025, 0.028, 0.032)
 	wheel.material_override = rubber
-	add_child(wheel)
+	_trailer_parent_for_wheel(location).add_child(wheel)
