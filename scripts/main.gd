@@ -60,6 +60,8 @@ var _forklift_carriage: Node3D
 var _forklift_beacon: OmniLight3D
 var _forklift_animation_time: float = 0.0
 var _forklift_lift_level: float = 0.48
+var _forklift_tilt_angle: float = 0.0
+var _forklift_tilt_label: Label
 var _forklift_lift_label: Label
 var _forklift_root: Node3D
 var _forklift_held_crate: Node3D
@@ -618,6 +620,28 @@ func _lower_forklift_forks() -> void:
 	_set_forklift_lift_level(_forklift_lift_level - 0.18)
 
 
+func _tilt_forklift_back() -> void:
+	_set_forklift_tilt(_forklift_tilt_angle - 0.06)
+
+
+func _tilt_forklift_forward() -> void:
+	_set_forklift_tilt(_forklift_tilt_angle + 0.06)
+
+
+func _set_forklift_tilt(value: float) -> void:
+	_forklift_tilt_angle = clampf(value, -0.18, 0.18)
+	if is_instance_valid(_forklift_carriage):
+		var tween := create_tween()
+		tween.set_trans(Tween.TRANS_QUAD)
+		tween.set_ease(Tween.EASE_IN_OUT)
+		tween.tween_property(_forklift_carriage, "rotation:x", _forklift_tilt_angle, 0.18)
+	if is_instance_valid(_forklift_tilt_label):
+		if absf(_forklift_tilt_angle) < 0.015:
+			_forklift_tilt_label.text = "FORK TILT: LEVEL"
+		else:
+			_forklift_tilt_label.text = "FORK TILT: %s %.0f deg" % ["BACK" if _forklift_tilt_angle < 0.0 else "FORWARD", rad_to_deg(absf(_forklift_tilt_angle))]
+
+
 func _set_forklift_lift_level(value: float) -> void:
 	_forklift_lift_level = clampf(value, 0.18, 1.72)
 	if is_instance_valid(_forklift_carriage):
@@ -881,6 +905,20 @@ func _build_mission_hud() -> void:
 	_forklift_lift_label.text = "FORK HEIGHT: 0.48 m"
 	_forklift_lift_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	forklift_panel.add_child(_forklift_lift_label)
+	_forklift_tilt_label = Label.new()
+	_forklift_tilt_label.text = "FORK TILT: LEVEL"
+	_forklift_tilt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	forklift_panel.add_child(_forklift_tilt_label)
+	var tilt_back_button := Button.new()
+	tilt_back_button.text = "TILT BACK"
+	tilt_back_button.custom_minimum_size.y = 40
+	tilt_back_button.pressed.connect(_tilt_forklift_back)
+	forklift_panel.add_child(tilt_back_button)
+	var tilt_forward_button := Button.new()
+	tilt_forward_button.text = "TILT FORWARD"
+	tilt_forward_button.custom_minimum_size.y = 40
+	tilt_forward_button.pressed.connect(_tilt_forklift_forward)
+	forklift_panel.add_child(tilt_forward_button)
 	var lift_up_button := Button.new()
 	lift_up_button.text = "FORKS UP  +"
 	lift_up_button.custom_minimum_size.y = 48
