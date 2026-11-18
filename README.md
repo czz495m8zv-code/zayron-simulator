@@ -251,3 +251,10 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Added a visible diesel/petrol dispenser and canopy beside the logistics depot.
 - The vehicle REFUEL control is enabled only when the player vehicle is within 6 metres of the station, and refuelling still requires the vehicle to be stopped with the parking brake engaged.
 - Fueling is currently free; economy integration, separate diesel/petrol compatibility, fuel quantities and station network expansion remain future work.
+
+
+### Fuel economy transaction
+- Fuel is purchased at the depot station using the player's saved career wallet.
+- Refill cost is proportional to the missing fuel level at OMR 0.12 per percentage point (rounded up); the control shows the required amount and disables when the wallet cannot cover it.
+- The game rechecks station proximity, parking state and wallet balance before deducting money, then saves the updated wallet.
+- Fuel level itself is not yet persisted across vehicle resets, and fuel type/tank capacity are still simplified.
