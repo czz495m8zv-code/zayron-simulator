@@ -137,7 +137,7 @@ func _build_engine_audio() -> void:
 	_engine_playback = player.get_stream_playback() as AudioStreamGeneratorPlayback
 
 func _physics_process(delta: float) -> void:
-	var trailer_ready := not (supports_trailer and _trailer_attached and _trailer_legs_down)
+	var trailer_ready := not (supports_trailer and ((_trailer_attached and _trailer_legs_down) or _trailer_doors_open))
 	var cargo_ready := not _cargo_loaded or _cargo_secured
 	var throttle := _throttle_input if _engine_running and _gear_mode == "D" and trailer_ready and cargo_ready else 0.0
 	var brake := _brake_input
@@ -782,6 +782,9 @@ func _toggle_trailer_coupling(button: Button) -> void:
 
 func _toggle_trailer_doors(button: Button) -> void:
 	if not is_instance_valid(_trailer_assembly):
+		return
+	if absf(_speed) > 0.15 or not _handbrake_on:
+		button.text = "STOP + PARK FIRST"
 		return
 	_trailer_doors_open = not _trailer_doors_open
 	var left_door := _trailer_assembly.get_node_or_null("RearDoorLeft") as Node3D
