@@ -25,6 +25,8 @@ var _gear_label: Label
 var _rpm_label: Label
 var _vehicle_status_label: Label
 var _fuel_label: Label
+var _refuel_button: Button
+var _refuel_station_available := false
 var _fuel_level := 100.0
 var _engine_temperature := 22.0
 var _cargo_loaded := false
@@ -565,7 +567,8 @@ func _build_mobile_controls() -> void:
 	_add_hold_button(ui, "R", false, -112.0, -224.0, -12.0, -136.0, "reverse")
 	_add_camera_button(ui)
 	_add_headlight_button(ui)
-	_add_action_button(ui, "REFUEL", -36.0, 548.0, "refuel")
+	_refuel_button = _add_action_button(ui, "FUEL STATION ONLY", -36.0, 548.0, "refuel")
+	_refuel_button.disabled = true
 	_add_action_button(ui, "REAR CAM", -180.0, 456.0, "rear_camera")
 	_add_action_button(ui, "HORN", -210.0, 180.0, "horn")
 	_add_action_button(ui, "LEFT", -132.0, 180.0, "left")
@@ -652,7 +655,14 @@ func _build_extra_vehicle_controls() -> void:
 	door_panel.position.z = 0.46
 	_door_hinge.add_child(door_panel)
 
-func _add_action_button(parent: Control, label: String, x: float, y: float, action: String) -> void:
+
+func set_refuel_station_available(available: bool) -> void:
+	_refuel_station_available = available
+	if is_instance_valid(_refuel_button):
+		_refuel_button.disabled = not available
+		_refuel_button.text = "REFUEL" if available else "FUEL STATION ONLY"
+
+func _add_action_button(parent: Control, label: String, x: float, y: float, action: String) -> Button:
 	var button := Button.new()
 	button.name = "VehicleAction_" + action
 	button.text = label
@@ -668,10 +678,14 @@ func _add_action_button(parent: Control, label: String, x: float, y: float, acti
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.04, 0.10, 0.17, 0.92)))
 	button.pressed.connect(_on_vehicle_action.bind(action, button))
 	parent.add_child(button)
+	return button
 
 func _on_vehicle_action(action: String, button: Button) -> void:
 	match action:
 		"refuel":
+			if not _refuel_station_available:
+				button.text = "FUEL STATION ONLY"
+				return
 			if absf(_speed) > 0.15 or not _handbrake_on:
 				button.text = "STOP + PARK FIRST"
 				return
