@@ -174,3 +174,9 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 ### Forklift fork tilt controls
 - Added TILT BACK and TILT FORWARD controls for the moving fork carriage. Tilt is clamped to a small ±0.18-radian range and shown on the depot control panel. A pallet attached to the carriage follows its tilt.
 - This is a visual scripted tilt feature; it does not yet simulate hydraulic cylinders, load-centre stability, pallet slip, or real forklift safety physics.
+
+### Forklift pallet alignment and placement
+- Pallet pickup now checks the fork approach direction and side-to-side alignment as well as proximity; the player must line the forklift up with the pallet instead of grabbing it from any nearby angle.
+- A carried pallet can only be set down after the forks are lowered. The pallet remains at the forklift's placement point, and the tilt returns to level.
+- Pallet crate home positions are now stored relative to their pallet assemblies, so resetting or changing routes does not rely on stale world-space coordinates.
+- These are scripted proximity/alignment checks and node attachments, not physical fork-pocket collision, hydraulic load sensing, pallet friction, or collision-aware warehouse navigation.
