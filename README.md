@@ -198,3 +198,4 @@ All six player-drivable vehicle models inherit a shared touch-control layer. The
 - Loaded cargo now starts unsecured. A CARGO STRAPS / SECURE CARGO control appears on the vehicle touch panel while a payload is present.
 - Securing the load reveals the strap and buckle visuals and updates the instrument status. Forward and reverse drive input remain blocked until the cargo is secured; braking and steering remain available.
 - Clearing the cargo payload hides the strap control and resets the securing state. This is a gameplay safety interlock and visual representation, not a physics-based tensioning or load-shift simulation.
+- Trailer rear doors now require the tractor to be stopped with the parking brake applied. Forward and reverse drive input are blocked while trailer doors are open; close them before moving.
