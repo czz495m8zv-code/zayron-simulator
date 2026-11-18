@@ -75,6 +75,11 @@ var _company_summary_label: Label
 var _company_status_label: Label
 var _company_name_edit: LineEdit
 var _company_dispatch_button: Button
+var _company_roster_label: Label
+var _company_fleet: Array[Dictionary] = []
+var _company_drivers: Array[Dictionary] = []
+var _company_trip_driver_index: int = -1
+var _company_trip_bus_index: int = -1
 
 func _ready() -> void:
 	_load_progress()
@@ -719,6 +724,12 @@ func _build_company_management() -> void:
 	_company_summary_label.add_theme_font_size_override("font_size", 17)
 	content.add_child(_company_summary_label)
 
+	_company_roster_label = Label.new()
+	_company_roster_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_company_roster_label.add_theme_font_size_override("font_size", 13)
+	_company_roster_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(_company_roster_label)
+
 	_company_status_label = Label.new()
 	_company_status_label.text = "Your company is ready to operate."
 	_company_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -770,8 +781,9 @@ func _hire_company_driver() -> void:
 		_company_status_label.text = "Not enough company funds. You need OMR 80 to hire a driver."
 		return
 	_company_funds -= 80
-	_company_driver_count += 1
-	_company_status_label.text = "Driver hired. Assign a bus and send your driver to work."
+	_company_drivers.append({"name": "Driver %03d" % (_company_drivers.size() + 1), "status": "AVAILABLE", "route": "UNASSIGNED", "bus": "NO BUS"})
+	_company_driver_count = _company_drivers.size()
+	_company_status_label.text = "Driver hired. Assign an available company bus and route."
 	_save_progress()
 	_refresh_company_panel()
 
@@ -780,7 +792,8 @@ func _buy_company_bus() -> void:
 		_company_status_label.text = "Not enough company funds. You need OMR 450 for another bus."
 		return
 	_company_funds -= 450
-	_company_bus_count += 1
+	_company_fleet.append({"name": "Company Bus %03d" % (_company_fleet.size() + 1), "type": "INTERCITY COACH", "status": "AVAILABLE"})
+	_company_bus_count = _company_fleet.size()
 	_company_status_label.text = "Bus purchased and added to your company fleet."
 	_save_progress()
 	_refresh_company_panel()
@@ -789,16 +802,35 @@ func _dispatch_company_driver() -> void:
 	if _company_trip_active:
 		_company_status_label.text = "A company driver is already completing a route."
 		return
-	if _company_driver_count < 1 or _company_bus_count < 1:
-		_company_status_label.text = "You need at least one hired driver and one company bus."
-		return
 	if _company_funds < 35:
-		_company_status_label.text = "Your company needs OMR 35 available for trip fuel and driver costs."
+		_company_status_label.text = "Your company needs OMR 35 available for trip costs."
+		return
+	var driver_index := -1
+	var bus_index := -1
+	for i in range(_company_drivers.size()):
+		if str(_company_drivers[i].get("status", "AVAILABLE")) == "AVAILABLE":
+			driver_index = i
+			break
+	for i in range(_company_fleet.size()):
+		if str(_company_fleet[i].get("status", "AVAILABLE")) == "AVAILABLE":
+			bus_index = i
+			break
+	if driver_index < 0:
+		_company_status_label.text = "No available driver. Hire a driver first."
+		return
+	if bus_index < 0:
+		_company_status_label.text = "No available company bus. Purchase a bus first."
 		return
 	_company_funds -= 35
+	_company_trip_driver_index = driver_index
+	_company_trip_bus_index = bus_index
+	_company_drivers[driver_index]["status"] = "ON ROUTE"
+	_company_drivers[driver_index]["route"] = ROUTE_NAMES[_selected_route]
+	_company_drivers[driver_index]["bus"] = str(_company_fleet[bus_index].get("name", "Company Bus"))
+	_company_fleet[bus_index]["status"] = "ON ROUTE"
 	_company_trip_active = true
 	_company_trip_timer.start()
-	_company_status_label.text = "Driver dispatched on %s. You can keep driving your own vehicle." % ROUTE_NAMES[_selected_route]
+	_company_status_label.text = "%s dispatched in %s on %s. You can keep driving." % [_company_drivers[driver_index]["name"], _company_fleet[bus_index]["name"], ROUTE_NAMES[_selected_route]]
 	_refresh_company_panel()
 	_save_progress()
 
