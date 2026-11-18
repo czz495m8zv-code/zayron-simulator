@@ -51,6 +51,7 @@ var _checkpoint_label: Label3D
 var _passenger_status_label: Label
 var _cargo_status_label: Label
 var _cargo_pickup_done: bool = false
+var _cargo_depot: Node3D
 
 func _ready() -> void:
 	_load_progress()
@@ -62,6 +63,7 @@ func _ready() -> void:
 	_build_roadside_signs()
 	_build_traffic_vehicle()
 	_build_mission()
+	_build_cargo_depot()
 	_spawn_vehicle()
 	_build_vehicle_selector()
 	_build_mission_hud()
@@ -85,6 +87,8 @@ func _spawn_vehicle() -> void:
 	_cargo_pickup_done = false
 	if is_instance_valid(_cargo_status_label):
 		_cargo_status_label.text = "CARGO STATUS: WAITING FOR LOAD"
+	if is_instance_valid(_cargo_depot):
+		_cargo_depot.visible = not _passenger_mode
 	if is_instance_valid(_passenger_status_label):
 		_passenger_status_label.text = "PASSENGERS ON BOARD: 0"
 	if _passenger_mode or not _cargo_pickup_done:
@@ -267,6 +271,44 @@ func _make_box(node_name: String, dimensions: Vector3, location: Vector3, tint: 
 	material.albedo_color = tint
 	mesh_instance.material_override = material
 	return mesh_instance
+
+
+func _build_cargo_depot() -> void:
+	_cargo_depot = Node3D.new()
+	_cargo_depot.name = "OmanCargoLoadingDepot"
+	var pickup_z := (8.0 + ROUTE_TARGETS[_selected_route].z) * 0.5
+	_cargo_depot.position = Vector3(10.5, 0.0, pickup_z)
+	add_child(_cargo_depot)
+	var warehouse := _make_box("DepotWarehouse", Vector3(8.0, 5.2, 11.0), Vector3(0.0, 2.6, -7.0), Color(0.72, 0.67, 0.56))
+	_cargo_depot.add_child(warehouse)
+	var roof := _make_box("DepotRoof", Vector3(8.6, 0.28, 11.6), Vector3(0.0, 5.25, -7.0), Color(0.16, 0.22, 0.27))
+	_cargo_depot.add_child(roof)
+	var loading_door := _make_box("LoadingBayDoor", Vector3(4.2, 3.5, 0.16), Vector3(0.0, 1.95, -1.42), Color(0.12, 0.18, 0.21))
+	_cargo_depot.add_child(loading_door)
+	var sign := Label3D.new()
+	sign.name = "DepotSign"
+	sign.text = "OMAN LOGISTICS\\nCARGO LOADING"
+	sign.position = Vector3(0.0, 4.45, -1.28)
+	sign.font_size = 30
+	sign.pixel_size = 0.012
+	sign.modulate = Color(0.95, 0.9, 0.72)
+	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_cargo_depot.add_child(sign)
+	for x in [-3.3, 3.3]:
+		var pillar := _make_box("DepotCanopyPillar", Vector3(0.25, 3.5, 0.25), Vector3(x, 1.75, 2.0), Color(0.62, 0.65, 0.67))
+		_cargo_depot.add_child(pillar)
+	var canopy := _make_box("LoadingCanopy", Vector3(7.2, 0.22, 4.0), Vector3(0.0, 3.55, 2.0), Color(0.12, 0.28, 0.36))
+	_cargo_depot.add_child(canopy)
+	for pallet_index in range(3):
+		var pallet_z := 3.0 + float(pallet_index) * 1.8
+		var pallet := _make_box("CargoPallet_%d" % pallet_index, Vector3(1.55, 0.16, 1.35), Vector3(-2.1, 0.18, pallet_z), Color(0.36, 0.22, 0.12))
+		_cargo_depot.add_child(pallet)
+		for layer_index in range(2):
+			var crate_color := Color(0.62, 0.38, 0.18) if pallet_index != 1 else Color(0.25, 0.48, 0.56)
+			var crate := _make_box("CargoCrate_%d_%d" % [pallet_index, layer_index], Vector3(1.3, 0.72, 1.12), Vector3(-2.1, 0.62 + float(layer_index) * 0.74, pallet_z), crate_color)
+			_cargo_depot.add_child(crate)
+	var loading_marker := _make_box("DepotLoadingMarker", Vector3(5.5, 0.025, 2.2), Vector3(0.0, 0.07, 3.1), Color(0.9, 0.65, 0.12))
+	_cargo_depot.add_child(loading_marker)
 
 func _build_mission() -> void:
 	_checkpoint_area = Area3D.new()
@@ -454,6 +496,8 @@ func _on_checkpoint_entered(body: Node3D) -> void:
 		_cargo_pickup_done = true
 		if is_instance_valid(_cargo_status_label):
 			_cargo_status_label.text = "CARGO LOADED: " + CARGO_NAMES[_selected_cargo]
+		if is_instance_valid(_cargo_depot):
+			_cargo_depot.visible = false
 		_mission_target = ROUTE_TARGETS[_selected_route]
 		if is_instance_valid(_checkpoint_area):
 			_checkpoint_area.position = _mission_target
