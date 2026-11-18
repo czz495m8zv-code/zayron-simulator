@@ -404,6 +404,11 @@ The three prototype highway cars now use a lightweight same-lane following model
 - During the final two seconds of the pedestrian signal's red-traffic interval, the green WALK lamp and WALK text flash at a steady 0.8-second cycle.
 - The numeric countdown remains visible so pedestrians receive a clear indication that the phase is ending.
 
+### Junction stop-line clearance safety
+- Main-road AI traffic and the player driving-assist brake only apply a red/amber stop when the vehicle is still before the stop line.
+- A vehicle that legally entered the junction on green is no longer commanded to stop merely because the signal changes while it is clearing the conflict area.
+- Side-road and pedestrian conflict yielding remain active independently.
+
 ### Live junction phase status on the driving HUD
 - Added a compact status line below the mission objective showing the active junction phase and seconds remaining.
 - The HUD distinguishes main-road green/amber, pedestrian WALK while main-road traffic is red, all-red clearance, and the protected side-road crossing window.
