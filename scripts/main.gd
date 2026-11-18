@@ -193,7 +193,9 @@ func _process(delta: float) -> void:
 		var signal_is_green := _traffic_signal_clock < 8.0
 		var stop_line_z := -52.0
 		var distance_to_stop_line := stop_line_z - traffic_vehicle.position.z
-		if not signal_is_green and distance_to_stop_line < 18.0:
+		# Only brake for the stop line while still before it. Vehicles that
+		# entered legally on green must clear the junction if the phase changes.
+		if not signal_is_green and distance_to_stop_line >= 0.0 and distance_to_stop_line < 18.0:
 			if distance_to_stop_line <= 0.75:
 				target_speed = 0.0
 			elif distance_to_stop_line > 0.0:
@@ -707,7 +709,9 @@ func _update_player_signal_rule() -> void:
 	var side_vehicle_crossing := is_instance_valid(_side_road_traffic_vehicle) and _side_road_traffic_vehicle.position.x <= 5.5 and _side_road_traffic_vehicle.position.x >= -5.5
 	if side_vehicle_crossing and distance_to_stop_line > 0.0 and distance_to_stop_line < 22.0:
 		brake_amount = 1.0
-	elif not signal_is_green and distance_to_stop_line < 22.0:
+	# Do not stop the player's vehicle after it has crossed the stop line;
+	# clear the junction instead of stopping in the conflict area.
+	elif not signal_is_green and distance_to_stop_line >= 0.0 and distance_to_stop_line < 22.0:
 		if distance_to_stop_line <= 1.0:
 			brake_amount = 1.0
 		elif distance_to_stop_line > 0.0:
