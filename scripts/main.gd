@@ -189,6 +189,9 @@ func _spawn_vehicle() -> void:
 		for crate_index in range(_depot_crates.size()):
 			var depot_crate := _depot_crates[crate_index]
 			if is_instance_valid(depot_crate):
+				var home_pallet_index := int(crate_index / 2)
+				if home_pallet_index < _depot_pallets.size() and is_instance_valid(_depot_pallets[home_pallet_index]):
+					depot_crate.reparent(_depot_pallets[home_pallet_index], false)
 				depot_crate.position = _depot_crate_home_positions[crate_index]
 				depot_crate.scale = Vector3.ONE
 				depot_crate.visible = true
@@ -264,6 +267,7 @@ func _load_truck_from_warehouse() -> void:
 	staged_pallet.visible = false
 	for crate in _depot_crates:
 		if is_instance_valid(crate) and crate.get_parent() == staged_pallet:
+			crate.reparent(_cargo_depot, true)
 			var tween := create_tween()
 			tween.set_trans(Tween.TRANS_QUAD)
 			tween.set_ease(Tween.EASE_IN_OUT)
