@@ -38,7 +38,8 @@
 ### 3 — Oman vertical slice
 - [x] Create an initial original desert-road environment
 - [ ] Add detailed road markings, signs, terrain, buildings and landmarks
-- [x] Add a first delivery checkpoint objective and HUD\n- [ ] Add a full delivery / passenger mission loop with rewards and route selection
+- [x] Add a first delivery checkpoint objective and HUD
+- [ ] Add a full delivery / passenger mission loop with rewards and route selection
 - [ ] Add traffic and road rules
 - [ ] Verify all third-party asset licenses
 
@@ -50,7 +51,11 @@
 - [ ] Fix crashes and blocking gameplay issues
 
 ### 5 — Content expansion
-- [x] Add a first bus prototype scene and model built from procedural meshes\n- [ ] Add more detailed production-quality bus and truck models
+- [x] Add a first bus prototype scene and model built from procedural meshes
+- [x] Add luxury coach and VIP silver coach models
+- [x] Add premium blue and royal red semi-truck models
+- [x] Expand in-game fleet selector to six vehicles
+- [ ] Replace procedural fleet models with optimized production-quality art assets
 - [ ] Add depots, routes, cargo, passengers and progression
 - [ ] Expand the Oman map in manageable regions
 - [ ] Add GCC regions only after the Oman foundation is stable
