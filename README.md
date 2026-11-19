@@ -466,7 +466,7 @@ The three prototype highway cars now use a lightweight same-lane following model
 
 - Highway traffic impacts now add persistent damage to the currently selected player vehicle. Damage is capped at 100% and reduces available acceleration and top speed as condition worsens.
 - The dashboard reports the vehicle's damage percentage and a reduced-power warning at higher damage levels. Damage is stored separately for each of the six player vehicle choices and survives game restarts.
-- A service control is available at the depot/roadside service area. Repairs cost OMR 1 per damage point and require the vehicle to be stopped, parking brake engaged, and engine switched off. Repair cost is deducted from the player's wallet and the vehicle returns to 0% damage.
+- A service control is available at the depot/roadside service area. Repairs cost OMR 1 per damage point and require the vehicle to be stopped, parking brake engaged, and engine switched off. Repair cost is deducted from the player's wallet and the vehicle returns to 0% damage. The main-game payment handler independently rechecks the stopped, parking-brake, and engine-off conditions before charging, rather than relying only on the button's disabled state.
 - This is a simple condition-and-repair loop: it does not include component-specific faults, visible deformation, towing, insurance, or a full damage physics model.
 
 
