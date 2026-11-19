@@ -208,7 +208,7 @@ func _physics_process(delta: float) -> void:
 	elif throttle > 0.0 and _speed >= -0.1 and not _handbrake_on:
 		var torque_factor := lerpf(1.0, 0.42, speed_ratio)
 		var payload_factor := 0.78 if _cargo_loaded else 1.0
-		_speed = move_toward(_speed, max_forward_speed * damage_factor * (0.90 if _cargo_loaded else 1.0), acceleration * torque_factor * payload_factor * damage_factor * overheating_factor * throttle * delta)
+		_speed = move_toward(_speed, max_forward_speed * damage_factor * overheating_factor * (0.90 if _cargo_loaded else 1.0), acceleration * torque_factor * payload_factor * damage_factor * overheating_factor * throttle * delta)
 	else:
 		# Engine braking plus speed-dependent aerodynamic/rolling drag.
 		var drag := rolling_resistance + (absf(_speed) * absf(_speed) * 0.018)
