@@ -208,8 +208,11 @@ func _physics_process(delta: float) -> void:
 		_speed = move_toward(_speed, -max_reverse_speed, acceleration * 0.48 * delta)
 	elif throttle > 0.0 and _speed >= -0.1 and not _handbrake_on:
 		var torque_factor := lerpf(1.0, 0.42, speed_ratio)
+		# Lower gears provide stronger wheel torque; higher gears trade pull for cruising efficiency.
+		var gear_torque_factors: Array[float] = [1.0, 0.91, 0.82, 0.74, 0.66, 0.59]
+		var transmission_torque_factor := gear_torque_factors[clampi(_automatic_gear - 1, 0, gear_torque_factors.size() - 1)] if _gear_mode == "D" else 1.0
 		var payload_factor := 0.78 if _cargo_loaded else 1.0
-		_speed = move_toward(_speed, max_forward_speed * damage_factor * overheating_factor * (0.90 if _cargo_loaded else 1.0), acceleration * torque_factor * payload_factor * damage_factor * overheating_factor * throttle * delta)
+		_speed = move_toward(_speed, max_forward_speed * damage_factor * overheating_factor * (0.90 if _cargo_loaded else 1.0), acceleration * torque_factor * transmission_torque_factor * payload_factor * damage_factor * overheating_factor * throttle * delta)
 	else:
 		# Engine braking plus speed-dependent aerodynamic/rolling drag.
 		var drag := rolling_resistance + (absf(_speed) * absf(_speed) * 0.018)
@@ -294,6 +297,8 @@ func _physics_process(delta: float) -> void:
 		_engine_temperature = move_toward(_engine_temperature, 22.0, delta * 0.45)
 	if is_instance_valid(_rpm_label):
 		_rpm_label.text = "RPM  %04d    TEMP  %02d°C" % [int(clampf(rpm_value, 0.0, 3200.0)), int(_engine_temperature)]
+		var temperature_color := Color(1.0, 0.28, 0.18) if _engine_temperature >= 105.0 else (Color(1.0, 0.68, 0.22) if _engine_temperature >= 90.0 else Color(0.55, 0.9, 1.0))
+		_rpm_label.add_theme_color_override("font_color", temperature_color)
 	if is_instance_valid(_fuel_label):
 		_fuel_label.text = _fuel_display_text()
 		_fuel_label.add_theme_color_override("font_color", Color(1.0, 0.34, 0.22) if _fuel_level <= 15.0 else Color(0.55, 0.9, 1.0))
