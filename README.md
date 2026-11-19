@@ -470,6 +470,12 @@ The three prototype highway cars now use a lightweight same-lane following model
 - This is a simple condition-and-repair loop: it does not include component-specific faults, visible deformation, towing, insurance, or a full damage physics model.
 
 
+### Speed-aware traffic following
+
+- Main-lane traffic now increases its desired following gap as speed rises, so faster vehicles begin slowing earlier when approaching a slower vehicle ahead.
+- Traffic uses a stronger deceleration response than acceleration when closing a gap, helping queues form more smoothly at traffic lights and pedestrian crossings.
+- This remains a lightweight scripted traffic model on the short test road, not a full traffic simulation or autonomous-driving system.
+
 ### Collision damage persistence and repeat-impact protection
 
 - Sustained contact with a traffic collision body is now rate-limited: the vehicle receives one damage event per 1.5-second impact cooldown instead of accumulating damage every physics frame while touching the same obstacle.
