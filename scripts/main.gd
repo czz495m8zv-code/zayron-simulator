@@ -191,7 +191,10 @@ func _process(delta: float) -> void:
 			var gap := fposmod(_traffic_vehicles[other_index].position.z - traffic_vehicle.position.z, TRAFFIC_LOOP_LENGTH)
 			if gap > 0.1:
 				nearest_gap = minf(nearest_gap, gap)
-		var gap_factor := clampf((nearest_gap - 5.0) / 13.0, 0.22, 1.0)
+		# Scale the desired following distance with current speed so faster
+		# traffic begins slowing earlier instead of relying on a fixed gap.
+		var safe_following_gap := 4.5 + _traffic_current_speeds[traffic_index] * 1.25
+		var gap_factor := clampf((nearest_gap - 2.0) / maxf(safe_following_gap - 2.0, 0.1), 0.0, 1.0)
 		var target_speed := _traffic_vehicle_speeds[traffic_index] * gap_factor
 		# The main-lane traffic stops before the junction whenever its signal
 		# is red or amber, then accelerates again after green.
@@ -211,7 +214,10 @@ func _process(delta: float) -> void:
 			target_speed = 0.0
 		if _junction_pedestrian_crossing and absf(traffic_vehicle.position.z + 48.0) < 8.0:
 			target_speed = 0.0
-		_traffic_current_speeds[traffic_index] = move_toward(_traffic_current_speeds[traffic_index], target_speed, 4.0 * delta)
+		# Brake more firmly than the traffic accelerates, approximating a
+		# conservative driver response when a queue forms ahead.
+		var speed_response := 7.0 if target_speed < _traffic_current_speeds[traffic_index] else 2.5
+		_traffic_current_speeds[traffic_index] = move_toward(_traffic_current_speeds[traffic_index], target_speed, speed_response * delta)
 		traffic_vehicle.position.z += _traffic_current_speeds[traffic_index] * delta
 		if traffic_vehicle.position.z > 24.0:
 			# Keep every respawn inside the same 142 m loop and preserve the
