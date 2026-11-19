@@ -1039,6 +1039,7 @@ func _update_side_road_traffic(delta: float) -> void:
 		junction_occupied = true
 	var target_speed := 0.0
 	var vehicle_committed_to_crossing := _side_road_traffic_vehicle.position.x <= 2.8
+	var distance_to_yield_line := maxf(0.0, _side_road_traffic_vehicle.position.x - 2.8)
 	# Give pedestrians the entire WALK interval and its clearance before
 	# side-road traffic is permitted to enter the crossing.
 	var pedestrian_conflict := _junction_pedestrian_crossing and _side_road_traffic_vehicle.position.x > 3.8 and _side_road_traffic_vehicle.position.x < 11.5
@@ -1051,10 +1052,14 @@ func _update_side_road_traffic(delta: float) -> void:
 		# Enter only in the dedicated side-road window and when the junction is clear.
 		if not junction_occupied:
 			target_speed = 7.5
-	elif _traffic_signal_clock < 18.0 and _side_road_traffic_vehicle.position.x > 2.8:
-		# Approach slowly, then wait behind the give-way markings.
-		target_speed = 3.8
-	_side_road_traffic_speed = move_toward(_side_road_traffic_speed, target_speed, 3.8 * delta)
+		else:
+			# If another vehicle occupies the junction, stop smoothly at the line.
+			target_speed = minf(3.8, sqrt(2.0 * 3.0 * distance_to_yield_line))
+	else:
+		# Approach the give-way line gently and calculate a stopping speed
+		# from the remaining distance instead of braking abruptly at the marker.
+		target_speed = minf(3.8, sqrt(2.0 * 3.0 * distance_to_yield_line))
+	_side_road_traffic_speed = move_toward(_side_road_traffic_speed, target_speed, 5.0 * delta)
 	_side_road_traffic_vehicle.position.x -= _side_road_traffic_speed * delta
 	if _side_road_traffic_vehicle.position.x <= -18.0:
 		# Complete the full crossing and clear the west exit before recycling.
