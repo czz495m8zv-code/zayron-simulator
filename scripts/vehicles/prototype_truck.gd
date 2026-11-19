@@ -857,6 +857,11 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			if not _cargo_loaded:
 				button.text = "NO CARGO"
 				return
+			# Cargo straps must be handled from a stationary, parked vehicle
+			# with the engine off; never allow securing or releasing while moving.
+			if absf(_speed) > 0.15 or not _handbrake_on or _engine_running:
+				button.text = "STOP + PARK + ENGINE OFF"
+				return
 			_cargo_secured = not _cargo_secured
 			button.text = "LOAD SECURED" if _cargo_secured else "SECURE CARGO"
 			_update_cargo_strap_visuals()
