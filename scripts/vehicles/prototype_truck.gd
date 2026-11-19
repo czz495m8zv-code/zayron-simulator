@@ -26,6 +26,7 @@ var _cruise_control_on := false
 var _cruise_target_speed := 0.0
 var _automatic_gear := 1
 var _engine_rpm := 650.0
+var _road_surface_grip := 1.0
 var _brake_input: float = 0.0
 var _traffic_signal_brake: float = 0.0
 var _reverse_input: float = 0.0
@@ -246,7 +247,7 @@ func _physics_process(delta: float) -> void:
 	var braking_grip_factor := 1.0 - brake * 0.35
 	var payload_grip_factor := 0.88 if _cargo_loaded else 1.0
 	var speed_grip_factor := 1.0 + clampf(absf(_speed) / maxf(max_forward_speed, 0.1), 0.0, 1.0) * 0.2
-	var available_lateral_grip := lateral_grip * braking_grip_factor * payload_grip_factor * speed_grip_factor
+	var available_lateral_grip := lateral_grip * braking_grip_factor * payload_grip_factor * speed_grip_factor * _road_surface_grip
 	lateral_velocity = lateral_velocity.move_toward(Vector3.ZERO, available_lateral_grip * delta)
 	velocity = forward * _speed + lateral_velocity
 	move_and_slide()
@@ -398,6 +399,10 @@ func _build_truck() -> void:
 			wheel.material_override = wheel_material
 			add_child(wheel)
 
+
+func set_road_surface_grip(value: float) -> void:
+	# Main scene supplies a simple asphalt/shoulder/off-road estimate.
+	_road_surface_grip = clampf(value, 0.35, 1.0)
 
 func set_traffic_signal_brake(value: float) -> void:
 	_traffic_signal_brake = clampf(value, 0.0, 1.0)
