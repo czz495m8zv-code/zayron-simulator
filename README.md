@@ -470,6 +470,11 @@ The three prototype highway cars now use a lightweight same-lane following model
 - This is a simple condition-and-repair loop: it does not include component-specific faults, visible deformation, towing, insurance, or a full damage physics model.
 
 
+### Load- and braking-aware steering
+
+- Steering authority is now slightly reduced when cargo is loaded and under firm braking, complementing the existing speed-sensitive steering limit.
+- This is a handling approximation intended to make a loaded vehicle respond more conservatively; it is not a full vehicle dynamics or tire model.
+
 ### Cargo-aware cornering grip
 
 - The shared bus/truck controller now reduces available lateral grip while braking and when carrying a secured cargo load, approximating the reduced cornering margin of a heavy vehicle.
