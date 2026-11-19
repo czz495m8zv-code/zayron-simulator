@@ -156,8 +156,9 @@ func _physics_process(delta: float) -> void:
 	var trailer_ready := not (supports_trailer and ((_trailer_attached and _trailer_legs_down) or _trailer_doors_open))
 	var passenger_door_ready := not (supports_passenger_doors and _passenger_doors_open)
 	var cab_door_ready := not _door_open
+	var boot_ready := not _boot_open
 	var cargo_ready := not _cargo_loaded or _cargo_secured
-	var drive_ready := _engine_running and _fuel_level > 0.0 and trailer_ready and passenger_door_ready and cab_door_ready and cargo_ready
+	var drive_ready := _engine_running and _fuel_level > 0.0 and trailer_ready and passenger_door_ready and cab_door_ready and boot_ready and cargo_ready
 	var throttle := _throttle_input if drive_ready and _gear_mode == "D" else 0.0
 	var brake := maxf(_brake_input, _traffic_signal_brake)
 	var reverse := _reverse_input if drive_ready and _gear_mode == "R" else 0.0
@@ -287,6 +288,10 @@ func _physics_process(delta: float) -> void:
 			status_parts.append("ENGINE POWER REDUCED")
 		if supports_passenger_doors and _passenger_doors_open:
 			status_parts.append("CLOSE PASSENGER DOORS")
+		if _door_open:
+			status_parts.append("CLOSE CAB DOOR")
+		if _boot_open:
+			status_parts.append("CLOSE BOOT BEFORE DRIVING")
 		if supports_trailer and _trailer_doors_open:
 			status_parts.append("CLOSE TRAILER DOORS")
 		if _cargo_loaded and not _cargo_secured:
@@ -936,6 +941,9 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			_apply_parking_lights()
 			button.text = "PARK: ON" if _parking_lights_on else "PARK LIGHT"
 		"boot":
+			if not _boot_open and (absf(_speed) > 0.15 or not _handbrake_on):
+				button.text = "STOP + PARK FIRST"
+				return
 			_boot_open = not _boot_open
 			var payload := get_node_or_null("CargoPayload") as Node3D
 			if is_instance_valid(payload):
