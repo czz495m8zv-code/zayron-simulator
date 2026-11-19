@@ -209,12 +209,17 @@ func _physics_process(delta: float) -> void:
 		var steering_authority := lerpf(1.0, 0.38, speed_ratio)
 		rotate_y(-_steering_current * steering_speed * _steering_multiplier * steering_authority * delta * direction)
 
-	# Preserve a little lateral momentum, then let tire-grip approximation settle it.
-	# This creates mild body inertia without pretending to be full wheel physics.
+	# Preserve a little lateral momentum, then let a friction-budget
+	# approximation settle it. Braking and a loaded cargo body leave less
+	# grip available for cornering, especially in a heavy vehicle.
 	var forward := -global_transform.basis.z
 	var previous_horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	var lateral_velocity := previous_horizontal - forward * previous_horizontal.dot(forward)
-	lateral_velocity = lateral_velocity.move_toward(Vector3.ZERO, lateral_grip * delta)
+	var braking_grip_factor := 1.0 - brake * 0.35
+	var payload_grip_factor := 0.88 if _cargo_loaded else 1.0
+	var speed_grip_factor := 1.0 + clampf(absf(_speed) / maxf(max_forward_speed, 0.1), 0.0, 1.0) * 0.2
+	var available_lateral_grip := lateral_grip * braking_grip_factor * payload_grip_factor * speed_grip_factor
+	lateral_velocity = lateral_velocity.move_toward(Vector3.ZERO, available_lateral_grip * delta)
 	velocity = forward * _speed + lateral_velocity
 	move_and_slide()
 	if _collision_warning_timer > 0.0:
