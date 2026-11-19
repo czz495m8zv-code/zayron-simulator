@@ -565,3 +565,10 @@ Rear lamp visuals now remain present as tail lamps, brighten when the driver or 
 - The player vehicle receives a simple surface-grip estimate from its lateral position on the test road.
 - Asphalt retains full grip; the shoulder reduces grip; leaving the road reduces lateral grip further.
 - The estimate feeds the existing lateral-grip handling model. It is a prototype surface-zone approximation, not a detailed tire/material contact simulation.
+
+
+### Drivetrain response and engine temperature display
+
+- The six forward automatic ratios now apply different wheel-torque multipliers, giving lower gears stronger launch/pull and higher gears a more restrained cruising response.
+- The RPM/temperature display changes to amber as engine temperature reaches 90°C and red at the 105°C overheat threshold.
+- These are gameplay-oriented approximations, not a detailed torque-converter, gearbox, or cooling-system simulation.
