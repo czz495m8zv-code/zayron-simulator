@@ -470,6 +470,11 @@ The three prototype highway cars now use a lightweight same-lane following model
 - This is a simple condition-and-repair loop: it does not include component-specific faults, visible deformation, towing, insurance, or a full damage physics model.
 
 
+### Cargo-aware cornering grip
+
+- The shared bus/truck controller now reduces available lateral grip while braking and when carrying a secured cargo load, approximating the reduced cornering margin of a heavy vehicle.
+- The controller remains a CharacterBody3D arcade/handling approximation; it does not yet simulate tire contact patches, suspension, axle loads, or a full friction circle.
+
 ### Speed-aware traffic following
 
 - Main-lane traffic now increases its desired following gap as speed rises, so faster vehicles begin slowing earlier when approaching a slower vehicle ahead.
