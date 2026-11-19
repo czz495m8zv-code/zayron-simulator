@@ -512,3 +512,7 @@ The player vehicle requires the seat belt to be fastened before forward or rever
 ### Passenger boarding safety interlock
 
 On buses and coaches, opening the passenger entry door for boarding requires the vehicle to be stopped, the parking brake engaged, and the engine switched off. The boarding eligibility check independently enforces the same conditions, so passenger pickup cannot proceed with the engine running. Closing an already-open door remains available.
+
+### Cargo handling and boot-access interlocks
+
+Cargo loading and unloading eligibility now requires the vehicle to be fully stopped, parking brake engaged, and engine switched off. The same shared eligibility check is used by depot loading, delivery unloading, and refuelling validation. The player boot/payload access control also requires the engine to be off before opening; closing remains available. These are gameplay interlocks, not a detailed mechanical loading simulation.
