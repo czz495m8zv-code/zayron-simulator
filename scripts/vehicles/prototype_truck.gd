@@ -914,6 +914,9 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			if not _door_open and (absf(_speed) > 0.15 or not _handbrake_on):
 				button.text = "STOP + PARK FIRST"
 				return
+			if not _door_open and _engine_running:
+				button.text = "ENGINE OFF TO OPEN"
+				return
 			_door_open = not _door_open
 			_door_hinge.rotation.y = deg_to_rad(-68.0 if _door_open else 0.0)
 			button.text = "CLOSE" if _door_open else "DOOR"
@@ -1011,6 +1014,9 @@ func _toggle_trailer_doors(button: Button) -> void:
 		return
 	if absf(_speed) > 0.15 or not _handbrake_on:
 		button.text = "STOP + PARK FIRST"
+		return
+	if not _trailer_doors_open and _engine_running:
+		button.text = "ENGINE OFF TO OPEN"
 		return
 	_trailer_doors_open = not _trailer_doors_open
 	var left_door := _trailer_assembly.get_node_or_null("RearDoorLeft") as Node3D
