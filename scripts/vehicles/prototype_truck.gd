@@ -158,7 +158,7 @@ func _physics_process(delta: float) -> void:
 	var cab_door_ready := not _door_open
 	var boot_ready := not _boot_open
 	var cargo_ready := not _cargo_loaded or _cargo_secured
-	var drive_ready := _engine_running and _fuel_level > 0.0 and trailer_ready and passenger_door_ready and cab_door_ready and boot_ready and cargo_ready
+	var drive_ready := _engine_running and _fuel_level > 0.0 and _seatbelt_fastened and trailer_ready and passenger_door_ready and cab_door_ready and boot_ready and cargo_ready
 	var throttle := _throttle_input if drive_ready and _gear_mode == "D" else 0.0
 	var brake := maxf(_brake_input, _traffic_signal_brake)
 	var reverse := _reverse_input if drive_ready and _gear_mode == "R" else 0.0
