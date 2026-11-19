@@ -500,3 +500,7 @@ The three prototype highway cars now use a lightweight same-lane following model
 
 ## Traffic and junction behaviour
 - Main-road traffic progressively reduces speed when side-road traffic occupies the junction or pedestrians are crossing, using a distance-based approach-speed cap rather than an abrupt target-speed drop.
+
+
+## Cargo loading and securing
+- Cargo straps can only be secured or released while the vehicle is fully stopped, the parking brake is engaged, and the engine is off. The drive interlock continues to prevent movement while loaded cargo is unsecured.
