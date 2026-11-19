@@ -207,6 +207,10 @@ func _physics_process(delta: float) -> void:
 	if absf(_speed) > 0.2:
 		var direction := 1.0 if _speed >= 0.0 else -1.0
 		var steering_authority := lerpf(1.0, 0.38, speed_ratio)
+		# Heavy cargo and hard braking make steering response more conservative.
+		var payload_steering_factor := 0.90 if _cargo_loaded else 1.0
+		var braking_steering_factor := 1.0 - brake * 0.22
+		steering_authority *= payload_steering_factor * braking_steering_factor
 		rotate_y(-_steering_current * steering_speed * _steering_multiplier * steering_authority * delta * direction)
 
 	# Preserve a little lateral momentum, then let a friction-budget
