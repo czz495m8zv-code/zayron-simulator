@@ -468,3 +468,9 @@ The three prototype highway cars now use a lightweight same-lane following model
 - The dashboard reports the vehicle's damage percentage and a reduced-power warning at higher damage levels. Damage is stored separately for each of the six player vehicle choices and survives game restarts.
 - A service control is available at the depot/roadside service area. Repairs cost OMR 1 per damage point and require the vehicle to be stopped, parking brake engaged, and engine switched off. Repair cost is deducted from the player's wallet and the vehicle returns to 0% damage.
 - This is a simple condition-and-repair loop: it does not include component-specific faults, visible deformation, towing, insurance, or a full damage physics model.
+
+
+### Collision damage persistence and repeat-impact protection
+
+- Sustained contact with a traffic collision body is now rate-limited: the vehicle receives one damage event per 1.5-second impact cooldown instead of accumulating damage every physics frame while touching the same obstacle.
+- Each new damage event triggers an immediate career save, preserving the selected vehicle's condition if the app is paused or interrupted shortly after a crash.
