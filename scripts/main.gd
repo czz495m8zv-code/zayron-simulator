@@ -209,11 +209,18 @@ func _process(delta: float) -> void:
 			elif distance_to_stop_line > 0.0:
 				var safe_approach_speed := sqrt(2.0 * 4.0 * distance_to_stop_line)
 				target_speed = minf(target_speed, safe_approach_speed)
+		var distance_to_junction := absf(traffic_vehicle.position.z + 48.0)
 		var side_vehicle_crossing := is_instance_valid(_side_road_traffic_vehicle) and _side_road_traffic_vehicle.position.x <= 5.5 and _side_road_traffic_vehicle.position.x >= -5.5
-		if side_vehicle_crossing and absf(traffic_vehicle.position.z + 48.0) > 3.0 and absf(traffic_vehicle.position.z + 48.0) < 18.0:
-			target_speed = 0.0
-		if _junction_pedestrian_crossing and absf(traffic_vehicle.position.z + 48.0) < 8.0:
-			target_speed = 0.0
+		if side_vehicle_crossing and distance_to_junction > 3.0 and distance_to_junction < 18.0:
+			# Yield progressively to cross traffic; avoid a last-moment full stop.
+			var cross_traffic_approach_speed := sqrt(2.0 * 3.2 * maxf(distance_to_junction - 3.0, 0.0))
+			target_speed = minf(target_speed, cross_traffic_approach_speed)
+		if _junction_pedestrian_crossing and distance_to_junction < 8.0:
+			# Pedestrians have priority. Vehicles outside the crossing slow early;
+			# vehicles at its edge stop completely until the crossing clears.
+			var pedestrian_clearance_distance := maxf(distance_to_junction - 2.0, 0.0)
+			var pedestrian_approach_speed := sqrt(2.0 * 3.5 * pedestrian_clearance_distance)
+			target_speed = minf(target_speed, pedestrian_approach_speed)
 		# Brake more firmly than the traffic accelerates, approximating a
 		# conservative driver response when a queue forms ahead.
 		var speed_response := 7.0 if target_speed < _traffic_current_speeds[traffic_index] else 2.5
