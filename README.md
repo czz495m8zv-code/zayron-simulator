@@ -531,3 +531,10 @@ Rear lamp visuals now remain present as tail lamps, brighten when the driver or 
 - Restarting requires the vehicle to be stopped, the parking brake engaged, and the selector in Park or Neutral. An empty fuel tank continues to block engine start.
 - The refuelling control now stays disabled until the vehicle is stopped, parked and the engine is off; its label explains which condition is missing.
 - These are gameplay safety interlocks, not a full ignition-key, starter-motor, battery or engine-management simulation.
+
+
+### Driver cruise control
+- Added a dedicated CRUISE touch control to supported player vehicles.
+- Cruise control can be engaged only while the engine is running, fuel is available, the seat belt is fastened, Drive is selected, and speed is at least 4 m/s (about 15 km/h).
+- Engaging captures the current speed; the controller applies only the throttle needed to approach that target and never overrides braking.
+- Applying the brake, leaving Drive, or losing a required drive condition cancels cruise control. This is a lightweight speed-hold aid, not adaptive cruise control.
