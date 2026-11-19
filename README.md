@@ -496,3 +496,7 @@ The three prototype highway cars now use a lightweight same-lane following model
 
 - Sustained contact with a traffic collision body is now rate-limited: the vehicle receives one damage event per 1.5-second impact cooldown instead of accumulating damage every physics frame while touching the same obstacle.
 - Each new damage event triggers an immediate career save, preserving the selected vehicle's condition if the app is paused or interrupted shortly after a crash.
+
+
+## Traffic and junction behaviour
+- Main-road traffic progressively reduces speed when side-road traffic occupies the junction or pedestrians are crossing, using a distance-based approach-speed cap rather than an abrupt target-speed drop.
