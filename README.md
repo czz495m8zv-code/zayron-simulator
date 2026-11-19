@@ -516,3 +516,7 @@ On buses and coaches, opening the passenger entry door for boarding requires the
 ### Cargo handling and boot-access interlocks
 
 Cargo loading and unloading eligibility now requires the vehicle to be fully stopped, parking brake engaged, and engine switched off. The same shared eligibility check is used by depot loading, delivery unloading, and refuelling validation. The player boot/payload access control also requires the engine to be off before opening; closing remains available. These are gameplay interlocks, not a detailed mechanical loading simulation.
+
+### Cab and trailer-door access interlocks
+
+Opening the cab door or semi-trailer rear doors now requires the vehicle to be stopped, the parking brake engaged, and the engine switched off. Closing remains available while stationary. The existing propulsion interlock prevents driving while the cab door or trailer doors are open.
