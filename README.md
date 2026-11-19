@@ -508,3 +508,7 @@ The three prototype highway cars now use a lightweight same-lane following model
 ### Seat-belt driving interlock
 
 The player vehicle requires the seat belt to be fastened before forward or reverse drive input is accepted. The seat-belt control toggles the restraint state; unfastening it disables propulsion until it is fastened again. This is a gameplay safety interlock, not a certified occupant-restraint simulation.
+
+### Passenger boarding safety interlock
+
+On buses and coaches, opening the passenger entry door for boarding requires the vehicle to be stopped, the parking brake engaged, and the engine switched off. The boarding eligibility check independently enforces the same conditions, so passenger pickup cannot proceed with the engine running. Closing an already-open door remains available.
