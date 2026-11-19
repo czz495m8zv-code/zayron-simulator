@@ -24,6 +24,8 @@ var _repair_button: Button
 var _throttle_input: float = 0.0
 var _cruise_control_on := false
 var _cruise_target_speed := 0.0
+var _automatic_gear := 1
+var _engine_rpm := 650.0
 var _brake_input: float = 0.0
 var _traffic_signal_brake: float = 0.0
 var _reverse_input: float = 0.0
@@ -211,6 +213,16 @@ func _physics_process(delta: float) -> void:
 		var drag := rolling_resistance + (absf(_speed) * absf(_speed) * 0.018)
 		_speed = move_toward(_speed, 0.0, drag * delta)
 
+	# Automatic transmission model: speed bands select six forward ratios.
+	# It is intentionally a lightweight drivetrain approximation, not a clutch
+	# or torque-converter simulation.
+	if _gear_mode == "D":
+		_update_automatic_transmission(throttle, delta)
+	elif _engine_running:
+		_engine_rpm = move_toward(_engine_rpm, 850.0 if _gear_mode == "R" else 650.0, delta * 1800.0)
+	else:
+		_engine_rpm = move_toward(_engine_rpm, 0.0, delta * 2400.0)
+
 	# Steering input eases in and out rather than snapping instantly.
 	_steering_current = move_toward(_steering_current, steering, steering_response * delta)
 
@@ -267,15 +279,15 @@ func _physics_process(delta: float) -> void:
 	if is_instance_valid(_speed_label):
 		_speed_label.text = "%03d km/h" % int(absf(_speed) * 3.6)
 	if is_instance_valid(_gear_label):
-		_gear_label.text = _gear_mode + ("  •  OFF" if not _engine_running else "  •  ON")
-	var rpm_value := 0.0
+		var display_gear := "D%d" % _automatic_gear if _gear_mode == "D" else _gear_mode
+		_gear_label.text = display_gear + ("  •  OFF" if not _engine_running else "  •  ON")
+	var rpm_value := _engine_rpm
 	if _engine_running:
-		rpm_value = 650.0 + absf(_speed) * 48.0 + _throttle_input * 720.0
-		_engine_temperature = move_toward(_engine_temperature, 90.0, delta * (0.12 + _throttle_input * 0.24))
+		_engine_temperature = move_toward(_engine_temperature, 90.0, delta * (0.12 + throttle * 0.24))
 	else:
 		_engine_temperature = move_toward(_engine_temperature, 22.0, delta * 0.45)
 	if is_instance_valid(_rpm_label):
-		_rpm_label.text = "RPM  %04d    TEMP  %02d°C" % [int(minf(rpm_value, 2800.0)), int(_engine_temperature)]
+		_rpm_label.text = "RPM  %04d    TEMP  %02d°C" % [int(clampf(rpm_value, 0.0, 3200.0)), int(_engine_temperature)]
 	if is_instance_valid(_fuel_label):
 		_fuel_label.text = _fuel_display_text()
 		_fuel_label.add_theme_color_override("font_color", Color(1.0, 0.34, 0.22) if _fuel_level <= 15.0 else Color(0.55, 0.9, 1.0))
@@ -1086,6 +1098,30 @@ func _set_landing_leg_positions() -> void:
 			child.position.y = 0.02 if _trailer_legs_down else 0.24
 		elif child is Node3D and String(child.name).begins_with("LandingFoot_"):
 			child.position.y = -0.12 if _trailer_legs_down else -0.08
+
+func _update_automatic_transmission(throttle: float, delta: float) -> void:
+	if not _engine_running:
+		_engine_rpm = 0.0
+		return
+	var speed := absf(_speed)
+	var shift_thresholds: Array[float] = [0.0, 4.2, 7.8, 11.8, 15.8, 20.0]
+	var target_gear := 1
+	for index in range(shift_thresholds.size()):
+		if speed >= shift_thresholds[index]:
+			target_gear = index + 1
+	# Add hysteresis so the gearbox does not hunt between ratios at a boundary.
+	if target_gear > _automatic_gear and speed < shift_thresholds[target_gear - 1] + 0.8:
+		target_gear = _automatic_gear
+	elif target_gear < _automatic_gear and speed > shift_thresholds[_automatic_gear - 1] - 0.8:
+		target_gear = _automatic_gear
+	_automatic_gear = clampi(target_gear, 1, 6)
+	var gear_lower_speed := shift_thresholds[_automatic_gear - 1]
+	var gear_upper_speed := 25.0 if _automatic_gear == 6 else shift_thresholds[_automatic_gear] + 0.8
+	var ratio := clampf((speed - gear_lower_speed) / maxf(gear_upper_speed - gear_lower_speed, 0.1), 0.0, 1.0)
+	var target_rpm := 850.0 + ratio * 1750.0 + throttle * 220.0
+	if speed < 0.35:
+		target_rpm = 720.0 + throttle * 1050.0
+	_engine_rpm = move_toward(_engine_rpm, target_rpm, delta * (3200.0 if target_rpm > _engine_rpm else 2200.0))
 
 func _set_gear(next_gear: String) -> void:
 	if absf(_speed) > 0.28:
