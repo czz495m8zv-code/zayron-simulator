@@ -545,3 +545,17 @@ Rear lamp visuals now remain present as tail lamps, brighten when the driver or 
 - The cockpit cluster displays the active forward ratio (D1–D6), modeled engine RPM, and engine temperature.
 - Engine audio pitch follows modeled RPM; Reverse, Neutral, Park, and engine-off states retain separate idle/shutdown behavior.
 - This is a lightweight arcade drivetrain model. It does not yet simulate a clutch, torque converter, gear-specific torque curves, or full mechanical drivetrain physics.
+
+
+### Automatic six-speed transmission and RPM model
+- Forward Drive selects one of six simulated ratios from vehicle speed, with shift hysteresis to reduce gear hunting.
+- The cockpit cluster displays the active forward ratio (D1–D6), modeled engine RPM, and engine temperature.
+- Engine audio pitch follows modeled RPM; Reverse, Neutral, Park, and engine-off states retain separate idle/shutdown behavior.
+- This is a lightweight arcade drivetrain model, not a full mechanical drivetrain simulation.
+
+
+### Engine thermal management
+- Engine temperature now responds to throttle load and cargo load, while vehicle speed provides a simplified airflow-cooling effect.
+- Sustained high load can trigger an overheating warning at 105°C.
+- Above that threshold, acceleration and available top speed are progressively reduced to protect the engine model.
+- Switching the engine off allows it to cool toward ambient temperature. This is a gameplay thermal approximation, not a detailed radiator, coolant, oil, or fan simulation.
