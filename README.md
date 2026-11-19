@@ -454,9 +454,17 @@ The three prototype highway cars now use a lightweight same-lane following model
 
 - The three moving highway sedans and the crossing side-road sedan now have `AnimatableBody3D` collision bodies with compact box shapes.
 - The player vehicle can physically contact these traffic vehicles instead of passing through visual-only meshes.
-- This is a basic obstacle/collision layer only: there is not yet vehicle damage, crash response, traffic collision avoidance, or a complete road-user physics simulation.
+- The collision response and damage model are lightweight gameplay approximations, not a complete road-user physics simulation.
 
 ### Traffic impact response
 
 - Hitting a highway traffic collision body at driving speed sharply reduces the player's speed, activates hazard lights, and displays a temporary `COLLISION - CHECK VEHICLE` dashboard warning.
 - The impact response is a simple gameplay approximation; it does not yet model vehicle deformation, repair costs, injury, insurance, or detailed crash physics.
+
+
+### Vehicle collision damage and depot repair
+
+- Highway traffic impacts now add persistent damage to the currently selected player vehicle. Damage is capped at 100% and reduces available acceleration and top speed as condition worsens.
+- The dashboard reports the vehicle's damage percentage and a reduced-power warning at higher damage levels. Damage is stored separately for each of the six player vehicle choices and survives game restarts.
+- A service control is available at the depot/roadside service area. Repairs cost OMR 1 per damage point and require the vehicle to be stopped, parking brake engaged, and engine switched off. Repair cost is deducted from the player's wallet and the vehicle returns to 0% damage.
+- This is a simple condition-and-repair loop: it does not include component-specific faults, visible deformation, towing, insurance, or a full damage physics model.
