@@ -186,7 +186,8 @@ func _physics_process(delta: float) -> void:
 	brake = clampf(brake, 0.0, 1.0)
 	reverse = clampf(reverse, 0.0, 1.0)
 	var damage_factor := 1.0 - (float(_vehicle_damage) / 100.0) * 0.45
-	var speed_ratio := clampf(absf(_speed) / maxf(max_forward_speed * damage_factor, 0.1), 0.0, 1.0)
+	var overheating_factor := 1.0 - clampf((_engine_temperature - 105.0) / 35.0, 0.0, 1.0) * 0.35
+	var speed_ratio := clampf(absf(_speed) / maxf(max_forward_speed * damage_factor * overheating_factor, 0.1), 0.0, 1.0)
 
 	if is_instance_valid(_rear_lamp_material):
 		_rear_lamp_material.emission_energy_multiplier = 0.8 + brake * 2.2
@@ -207,7 +208,7 @@ func _physics_process(delta: float) -> void:
 	elif throttle > 0.0 and _speed >= -0.1 and not _handbrake_on:
 		var torque_factor := lerpf(1.0, 0.42, speed_ratio)
 		var payload_factor := 0.78 if _cargo_loaded else 1.0
-		_speed = move_toward(_speed, max_forward_speed * damage_factor * (0.90 if _cargo_loaded else 1.0), acceleration * torque_factor * payload_factor * damage_factor * throttle * delta)
+		_speed = move_toward(_speed, max_forward_speed * damage_factor * (0.90 if _cargo_loaded else 1.0), acceleration * torque_factor * payload_factor * damage_factor * overheating_factor * throttle * delta)
 	else:
 		# Engine braking plus speed-dependent aerodynamic/rolling drag.
 		var drag := rolling_resistance + (absf(_speed) * absf(_speed) * 0.018)
@@ -283,7 +284,11 @@ func _physics_process(delta: float) -> void:
 		_gear_label.text = display_gear + ("  •  OFF" if not _engine_running else "  •  ON")
 	var rpm_value := _engine_rpm
 	if _engine_running:
-		_engine_temperature = move_toward(_engine_temperature, 90.0, delta * (0.12 + throttle * 0.24))
+		# Simplified thermal balance: engine load and secured cargo add heat;
+		# road speed provides airflow cooling. Sustained overload can overheat.
+		var heat_gain := 0.15 + throttle * 0.78 + (0.08 if _cargo_loaded else 0.0)
+		var airflow_cooling := 0.12 + absf(_speed) * 0.012
+		_engine_temperature = clampf(_engine_temperature + (heat_gain - airflow_cooling) * delta, 22.0, 135.0)
 	else:
 		_engine_temperature = move_toward(_engine_temperature, 22.0, delta * 0.45)
 	if is_instance_valid(_rpm_label):
@@ -307,6 +312,8 @@ func _physics_process(delta: float) -> void:
 			status_parts.append("VEHICLE DAMAGE %d%%" % _vehicle_damage)
 		if _vehicle_damage >= 60:
 			status_parts.append("ENGINE POWER REDUCED")
+		if _engine_temperature >= 105.0:
+			status_parts.append("ENGINE OVERHEATING - REDUCE LOAD")
 		if supports_passenger_doors and _passenger_doors_open:
 			status_parts.append("CLOSE PASSENGER DOORS")
 		if _door_open:
