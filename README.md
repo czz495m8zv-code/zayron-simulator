@@ -470,6 +470,12 @@ The three prototype highway cars now use a lightweight same-lane following model
 - This is a simple condition-and-repair loop: it does not include component-specific faults, visible deformation, towing, insurance, or a full damage physics model.
 
 
+### Junction give-way approach
+
+- Side-road traffic now calculates a stopping speed from its remaining distance to the give-way line, rather than relying on a fixed crawl speed followed by a hard stop.
+- If the junction is occupied during its protected crossing window, the vehicle approaches the line conservatively and waits; vehicles already committed to crossing are allowed to clear.
+- This remains a small scripted traffic prototype, not a complete road-network AI system.
+
 ### Load- and braking-aware steering
 
 - Steering authority is now slightly reduced when cargo is loaded and under firm braking, complementing the existing speed-sensitive steering limit.
