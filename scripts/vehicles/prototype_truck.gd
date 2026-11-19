@@ -22,6 +22,8 @@ var _vehicle_damage := 0
 var _service_station_available := false
 var _repair_button: Button
 var _throttle_input: float = 0.0
+var _cruise_control_on := false
+var _cruise_target_speed := 0.0
 var _brake_input: float = 0.0
 var _traffic_signal_brake: float = 0.0
 var _reverse_input: float = 0.0
@@ -162,6 +164,12 @@ func _physics_process(delta: float) -> void:
 	var drive_ready := _engine_running and _fuel_level > 0.0 and _seatbelt_fastened and trailer_ready and passenger_door_ready and cab_door_ready and boot_ready and cargo_ready
 	var throttle := _throttle_input if drive_ready and _gear_mode == "D" else 0.0
 	var brake := maxf(_brake_input, _traffic_signal_brake)
+	# Cruise control maintains the captured road speed without overriding braking.
+	if _cruise_control_on and drive_ready and _gear_mode == "D" and brake <= 0.01:
+		var cruise_error := _cruise_target_speed - _speed
+		throttle = clampf(cruise_error * 0.65, 0.0, 1.0) if cruise_error > 0.25 else 0.0
+	elif brake > 0.01 or not drive_ready or _gear_mode != "D":
+		_cruise_control_on = false
 	var reverse := _reverse_input if drive_ready and _gear_mode == "R" else 0.0
 	var steering := _steering_input
 
@@ -653,6 +661,7 @@ func _build_mobile_controls() -> void:
 	_add_action_button(ui, "N", -4.0, 364.0, "gear_n")
 	_add_action_button(ui, "D", 74.0, 364.0, "gear_d")
 	_add_action_button(ui, "ENGINE", -72.0, 410.0, "engine")
+	_add_action_button(ui, "CRUISE", 24.0, 410.0, "cruise")
 	_add_action_button(ui, "SEAT BELT", 16.0, 364.0, "seatbelt")
 	_cargo_straps_button = Button.new()
 	_cargo_straps_button.name = "VehicleAction_CargoStraps"
@@ -847,6 +856,17 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 				button.text = "TANK FULL"
 				return
 			refuel_requested.emit(refuel_cost)
+		"cruise":
+			if _cruise_control_on:
+				_cruise_control_on = false
+				button.text = "CRUISE: OFF"
+			else:
+				if not drive_ready or _gear_mode != "D" or _speed < 4.0 or _brake_input > 0.01:
+					button.text = "CRUISE: DRIVE 15+ KM/H"
+					return
+				_cruise_target_speed = _speed
+				_cruise_control_on = true
+				button.text = "CRUISE: %d KM/H" % int(round(_cruise_target_speed * 3.6))
 		"horn":
 			_horn_frames_left = 6600
 			_horn_phase = 0.0
