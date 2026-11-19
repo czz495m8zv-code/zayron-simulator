@@ -1,6 +1,7 @@
 extends CharacterBody3D
 
 signal refuel_requested(cost_omr: int)
+signal repair_requested(cost_omr: int)
 
 @export var acceleration: float = 8.0
 @export var service_brake: float = 18.0
@@ -15,6 +16,9 @@ signal refuel_requested(cost_omr: int)
 
 var _speed: float = 0.0
 var _collision_warning_timer: float = 0.0
+var _vehicle_damage := 0
+var _service_station_available := false
+var _repair_button: Button
 var _throttle_input: float = 0.0
 var _brake_input: float = 0.0
 var _traffic_signal_brake: float = 0.0
@@ -166,7 +170,8 @@ func _physics_process(delta: float) -> void:
 	throttle = clampf(throttle, 0.0, 1.0)
 	brake = clampf(brake, 0.0, 1.0)
 	reverse = clampf(reverse, 0.0, 1.0)
-	var speed_ratio := clampf(absf(_speed) / maxf(max_forward_speed, 0.1), 0.0, 1.0)
+	var damage_factor := 1.0 - (float(_vehicle_damage) / 100.0) * 0.45
+	var speed_ratio := clampf(absf(_speed) / maxf(max_forward_speed * damage_factor, 0.1), 0.0, 1.0)
 
 	if is_instance_valid(_rear_lamp_material):
 		_rear_lamp_material.emission_energy_multiplier = 0.8 + brake * 2.2
@@ -187,7 +192,7 @@ func _physics_process(delta: float) -> void:
 	elif throttle > 0.0 and _speed >= -0.1 and not _handbrake_on:
 		var torque_factor := lerpf(1.0, 0.42, speed_ratio)
 		var payload_factor := 0.78 if _cargo_loaded else 1.0
-		_speed = move_toward(_speed, max_forward_speed * (0.90 if _cargo_loaded else 1.0), acceleration * torque_factor * payload_factor * throttle * delta)
+		_speed = move_toward(_speed, max_forward_speed * damage_factor * (0.90 if _cargo_loaded else 1.0), acceleration * torque_factor * payload_factor * damage_factor * throttle * delta)
 	else:
 		# Engine braking plus speed-dependent aerodynamic/rolling drag.
 		var drag := rolling_resistance + (absf(_speed) * absf(_speed) * 0.018)
@@ -220,6 +225,7 @@ func _physics_process(delta: float) -> void:
 		if hit_body is AnimatableBody3D and String(hit_body.name) == "TrafficCollisionBody":
 			if absf(_speed) > 2.0:
 				_speed *= 0.22
+				_vehicle_damage = mini(100, _vehicle_damage + maxi(8, int(absf(_speed) * 1.4)))
 				_hazard_on = true
 				_collision_warning_timer = 4.0
 				_update_indicator_lights()
@@ -258,6 +264,10 @@ func _physics_process(delta: float) -> void:
 			status_parts.append("TRAFFIC SIGNAL")
 		if _collision_warning_timer > 0.0:
 			status_parts.append("COLLISION - CHECK VEHICLE")
+		if _vehicle_damage > 0:
+			status_parts.append("VEHICLE DAMAGE %d%%" % _vehicle_damage)
+		if _vehicle_damage >= 60:
+			status_parts.append("ENGINE POWER REDUCED")
 		if supports_passenger_doors and _passenger_doors_open:
 			status_parts.append("CLOSE PASSENGER DOORS")
 		if supports_trailer and _trailer_doors_open:
@@ -598,6 +608,8 @@ func _build_mobile_controls() -> void:
 	_add_headlight_button(ui)
 	_refuel_button = _add_action_button(ui, "FUEL STATION ONLY", -36.0, 548.0, "refuel")
 	_refuel_button.disabled = true
+	_repair_button = _add_action_button(ui, "SERVICE ONLY", -36.0, 592.0, "repair")
+	_repair_button.disabled = true
 	_add_action_button(ui, "REAR CAM", -180.0, 456.0, "rear_camera")
 	_add_action_button(ui, "HORN", -210.0, 180.0, "horn")
 	_add_action_button(ui, "LEFT", -132.0, 180.0, "left")
@@ -688,6 +700,36 @@ func _build_extra_vehicle_controls() -> void:
 func get_fuel_level() -> float:
 	return _fuel_level
 
+func get_vehicle_damage() -> int:
+	return _vehicle_damage
+
+func set_vehicle_damage(value: int) -> void:
+	_vehicle_damage = clampi(value, 0, 100)
+
+func set_service_station_available(available: bool, wallet_omr: int) -> void:
+	_service_station_available = available
+	if not is_instance_valid(_repair_button):
+		return
+	var cost := _vehicle_damage
+	var safe_to_service := absf(_speed) <= 0.15 and _handbrake_on and not _engine_running
+	_repair_button.disabled = not available or not safe_to_service or cost <= 0 or wallet_omr < cost
+	if not available:
+		_repair_button.text = "SERVICE DEPOT ONLY"
+	elif not safe_to_service:
+		_repair_button.text = "STOP + PARK + ENGINE OFF"
+	elif cost <= 0:
+		_repair_button.text = "NO REPAIRS NEEDED"
+	elif wallet_omr < cost:
+		_repair_button.text = "NEED OMR %d" % cost
+	else:
+		_repair_button.text = "REPAIR OMR %d" % cost
+
+func complete_vehicle_repair() -> void:
+	_vehicle_damage = 0
+	if is_instance_valid(_repair_button):
+		_repair_button.text = "VEHICLE REPAIRED"
+		_repair_button.disabled = true
+
 
 func set_fuel_level(value: float) -> void:
 	_fuel_level = clampf(value, 0.0, 100.0)
@@ -756,6 +798,14 @@ func _add_action_button(parent: Control, label: String, x: float, y: float, acti
 
 func _on_vehicle_action(action: String, button: Button) -> void:
 	match action:
+		"repair":
+			if not _service_station_available or absf(_speed) > 0.15 or not _handbrake_on or _engine_running:
+				button.text = "STOP + PARK + ENGINE OFF"
+				return
+			if _vehicle_damage <= 0:
+				button.text = "NO REPAIRS NEEDED"
+				return
+			repair_requested.emit(_vehicle_damage)
 		"refuel":
 			if not _refuel_station_available:
 				button.text = "FUEL STATION ONLY"
