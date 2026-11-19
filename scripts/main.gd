@@ -1250,7 +1250,7 @@ func _on_active_vehicle_damage_changed(_damage_percent: int) -> void:
 func _on_vehicle_repair_requested(cost_omr: int) -> void:
 	if not is_instance_valid(_active_vehicle) or not _is_near_refuel_station():
 		return
-	if not _active_vehicle.has_method("can_handle_cargo") or not _active_vehicle.can_handle_cargo():
+	if not _active_vehicle.has_method("can_service_vehicle") or not _active_vehicle.can_service_vehicle():
 		return
 	if cost_omr <= 0 or _cash_balance < cost_omr:
 		return
