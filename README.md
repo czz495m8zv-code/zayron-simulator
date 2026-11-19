@@ -524,3 +524,10 @@ Opening the cab door or semi-trailer rear doors now requires the vehicle to be s
 ### Functional rear brake and reverse lamps
 
 Rear lamp visuals now remain present as tail lamps, brighten when the driver or traffic system applies braking, and switch on the white reverse lamps while the engine is running and reverse gear is selected. Parking-light selection sets the rear running-lamp intensity. This is a visual lighting-state simulation; it does not yet model photometric beam patterns or regulatory lamp certification.
+
+
+### Engine ignition and refuelling safety
+- Switching the engine off is blocked while the vehicle is moving; the driver must stop first.
+- Restarting requires the vehicle to be stopped, the parking brake engaged, and the selector in Park or Neutral. An empty fuel tank continues to block engine start.
+- The refuelling control now stays disabled until the vehicle is stopped, parked and the engine is off; its label explains which condition is missing.
+- These are gameplay safety interlocks, not a full ignition-key, starter-motor, battery or engine-management simulation.
