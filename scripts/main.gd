@@ -20,6 +20,7 @@ const FLEET_NAMES: Array[String] = [
 var _active_vehicle: Node3D
 var _active_vehicle_index: int = -1
 var _vehicle_fuel_levels: Array[float] = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0]
+var _vehicle_damage_levels: Array[int] = [0, 0, 0, 0, 0, 0]
 var _selected_vehicle: int = 0
 var _vehicle_button: Button
 var _mission_label: Label
@@ -387,10 +388,14 @@ func _spawn_vehicle() -> void:
 	_active_vehicle_index = _selected_vehicle
 	if _active_vehicle.has_method("set_fuel_level"):
 		_active_vehicle.set_fuel_level(_vehicle_fuel_levels[_selected_vehicle])
+	if _active_vehicle.has_method("set_vehicle_damage"):
+		_active_vehicle.set_vehicle_damage(_vehicle_damage_levels[_selected_vehicle])
 	_active_vehicle.position = Vector3(0.0, 0.15, 8.0)
 	add_child(_active_vehicle)
 	if _active_vehicle.has_signal("refuel_requested"):
 		_active_vehicle.refuel_requested.connect(_on_vehicle_refuel_requested)
+	if _active_vehicle.has_signal("repair_requested"):
+		_active_vehicle.repair_requested.connect(_on_vehicle_repair_requested)
 	_sync_vehicle_cargo_payload()
 	_apply_vehicle_settings()
 	if is_instance_valid(_vehicle_button):
@@ -1231,7 +1236,26 @@ func _update_refuel_station_access() -> void:
 		return
 	if _active_vehicle.has_method("set_refuel_station_available"):
 		_active_vehicle.set_refuel_station_available(_is_near_refuel_station(), _cash_balance)
+	if _active_vehicle.has_method("set_service_station_available"):
+		_active_vehicle.set_service_station_available(_is_near_refuel_station(), _cash_balance)
 
+
+func _on_vehicle_repair_requested(cost_omr: int) -> void:
+	if not is_instance_valid(_active_vehicle) or not _is_near_refuel_station():
+		return
+	if not _active_vehicle.has_method("can_handle_cargo") or not _active_vehicle.can_handle_cargo():
+		return
+	if cost_omr <= 0 or _cash_balance < cost_omr:
+		return
+	_cash_balance -= cost_omr
+	if _active_vehicle.has_method("complete_vehicle_repair"):
+		_active_vehicle.complete_vehicle_repair()
+	if _active_vehicle_index >= 0 and _active_vehicle_index < _vehicle_damage_levels.size():
+		_vehicle_damage_levels[_active_vehicle_index] = 0
+	if is_instance_valid(_cash_label):
+		_cash_label.text = "WALLET  |  OMR %d  |  DELIVERIES %d" % [_cash_balance, _delivery_count]
+	_save_progress()
+	_update_refuel_station_access()
 
 func _on_vehicle_refuel_requested(cost_omr: int) -> void:
 	if not is_instance_valid(_active_vehicle):
@@ -2778,6 +2802,10 @@ func _load_progress() -> void:
 			_company_drivers.append({"name": "Driver %03d" % (driver_index + 1), "status": "AVAILABLE", "route": "UNASSIGNED", "bus": "NO BUS"})
 	_company_bus_count = _company_fleet.size()
 	_company_driver_count = _company_drivers.size()
+	var saved_damage: Variant = progress.get_value("career", "vehicle_damage_levels", _vehicle_damage_levels)
+	if saved_damage is Array:
+		for damage_index in range(mini(saved_damage.size(), _vehicle_damage_levels.size())):
+			_vehicle_damage_levels[damage_index] = clampi(int(saved_damage[damage_index]), 0, 100)
 	var saved_fuel: Variant = progress.get_value("career", "vehicle_fuel_levels", _vehicle_fuel_levels)
 	if saved_fuel is Array:
 		for fuel_index in range(mini(saved_fuel.size(), _vehicle_fuel_levels.size())):
@@ -2793,6 +2821,8 @@ func _store_active_vehicle_fuel() -> void:
 		return
 	if _active_vehicle.has_method("get_fuel_level"):
 		_vehicle_fuel_levels[_active_vehicle_index] = clampf(float(_active_vehicle.get_fuel_level()), 0.0, 100.0)
+	if _active_vehicle.has_method("get_vehicle_damage"):
+		_vehicle_damage_levels[_active_vehicle_index] = clampi(int(_active_vehicle.get_vehicle_damage()), 0, 100)
 
 
 func _save_progress() -> void:
@@ -2805,6 +2835,7 @@ func _save_progress() -> void:
 	progress.set_value("career", "selected_cargo", _selected_cargo)
 	progress.set_value("career", "passenger_mode", _passenger_mode)
 	progress.set_value("career", "vehicle_fuel_levels", _vehicle_fuel_levels)
+	progress.set_value("career", "vehicle_damage_levels", _vehicle_damage_levels)
 	progress.set_value("company", "name", _company_name)
 	progress.set_value("company", "funds_omr", _company_funds)
 	progress.set_value("company", "buses", _company_bus_count)
