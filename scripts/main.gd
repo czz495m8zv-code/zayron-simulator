@@ -396,6 +396,8 @@ func _spawn_vehicle() -> void:
 		_active_vehicle.refuel_requested.connect(_on_vehicle_refuel_requested)
 	if _active_vehicle.has_signal("repair_requested"):
 		_active_vehicle.repair_requested.connect(_on_vehicle_repair_requested)
+	if _active_vehicle.has_signal("vehicle_damage_changed"):
+		_active_vehicle.vehicle_damage_changed.connect(_on_active_vehicle_damage_changed)
 	_sync_vehicle_cargo_payload()
 	_apply_vehicle_settings()
 	if is_instance_valid(_vehicle_button):
@@ -1238,6 +1240,11 @@ func _update_refuel_station_access() -> void:
 		_active_vehicle.set_refuel_station_available(_is_near_refuel_station(), _cash_balance)
 	if _active_vehicle.has_method("set_service_station_available"):
 		_active_vehicle.set_service_station_available(_is_near_refuel_station(), _cash_balance)
+
+
+func _on_active_vehicle_damage_changed(_damage_percent: int) -> void:
+	# Persist an impact immediately so an app interruption cannot discard vehicle condition.
+	_save_progress()
 
 
 func _on_vehicle_repair_requested(cost_omr: int) -> void:
