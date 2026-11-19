@@ -224,8 +224,9 @@ func _physics_process(delta: float) -> void:
 		var hit_body := impact.get_collider()
 		if hit_body is AnimatableBody3D and String(hit_body.name) == "TrafficCollisionBody":
 			if absf(_speed) > 2.0:
+				var impact_speed := absf(_speed)
 				_speed *= 0.22
-				_vehicle_damage = mini(100, _vehicle_damage + maxi(8, int(absf(_speed) * 1.4)))
+				_vehicle_damage = mini(100, _vehicle_damage + maxi(8, int(impact_speed * 1.4)))
 				_hazard_on = true
 				_collision_warning_timer = 4.0
 				_update_indicator_lights()
