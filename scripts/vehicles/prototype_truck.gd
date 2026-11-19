@@ -137,6 +137,7 @@ func _process(delta: float) -> void:
 			_indicator_clock = 0.0
 			_indicator_visible = not _indicator_visible
 		_update_indicator_lights()
+	_update_rear_lighting()
 	if _wipers_on and is_instance_valid(_wiper_arm):
 		_wiper_arm.rotation.z = sin(float(Time.get_ticks_msec()) / 1000.0 * 3.2) * 0.48
 
@@ -1111,9 +1112,20 @@ func _apply_parking_lights() -> void:
 	for lamp in _headlight_meshes:
 		if is_instance_valid(lamp):
 			lamp.visible = _headlights_on or _parking_lights_on
+	_update_rear_lighting()
+
+func _update_rear_lighting() -> void:
+	# Rear running lamps stay visible; braking increases their intensity.
+	var braking := _brake_input > 0.05 or _traffic_signal_brake > 0.05
+	if is_instance_valid(_rear_lamp_material):
+		_rear_lamp_material.emission_energy_multiplier = 3.0 if braking else (1.25 if _parking_lights_on else 0.8)
 	for tail in get_children():
 		if tail is MeshInstance3D and String(tail.name) == "RearTailLamp":
-			tail.visible = _parking_lights_on or _brake_input > 0.0
+			tail.visible = true
+	var reverse_active := _engine_running and _gear_mode == "R"
+	for lamp in _reverse_lamp_meshes:
+		if is_instance_valid(lamp):
+			lamp.visible = reverse_active
 
 func _update_indicator_lights() -> void:
 	for i in range(_indicator_lights.size()):
