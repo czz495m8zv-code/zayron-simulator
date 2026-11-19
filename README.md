@@ -520,3 +520,7 @@ Cargo loading and unloading eligibility now requires the vehicle to be fully sto
 ### Cab and trailer-door access interlocks
 
 Opening the cab door or semi-trailer rear doors now requires the vehicle to be stopped, the parking brake engaged, and the engine switched off. Closing remains available while stationary. The existing propulsion interlock prevents driving while the cab door or trailer doors are open.
+
+### Functional rear brake and reverse lamps
+
+Rear lamp visuals now remain present as tail lamps, brighten when the driver or traffic system applies braking, and switch on the white reverse lamps while the engine is running and reverse gear is selected. Parking-light selection sets the rear running-lamp intensity. This is a visual lighting-state simulation; it does not yet model photometric beam patterns or regulatory lamp certification.
