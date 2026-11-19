@@ -947,6 +947,9 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			if not _boot_open and (absf(_speed) > 0.15 or not _handbrake_on):
 				button.text = "STOP + PARK FIRST"
 				return
+			if not _boot_open and _engine_running:
+				button.text = "ENGINE OFF TO OPEN"
+				return
 			_boot_open = not _boot_open
 			var payload := get_node_or_null("CargoPayload") as Node3D
 			if is_instance_valid(payload):
@@ -1080,7 +1083,7 @@ func can_board_passengers() -> bool:
 
 
 func can_handle_cargo() -> bool:
-	return _handbrake_on and absf(_speed) < 0.25
+	return _handbrake_on and not _engine_running and absf(_speed) < 0.25
 
 
 func can_service_vehicle() -> bool:
