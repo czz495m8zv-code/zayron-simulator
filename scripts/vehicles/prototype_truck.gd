@@ -921,6 +921,9 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			if not _passenger_doors_open and (absf(_speed) > 0.15 or not _handbrake_on):
 				button.text = "STOP + PARK FIRST"
 				return
+			if not _passenger_doors_open and _engine_running:
+				button.text = "ENGINE OFF TO BOARD"
+				return
 			_passenger_doors_open = not _passenger_doors_open
 			_passenger_door_hinge.rotation.y = deg_to_rad(-82.0 if _passenger_doors_open else 0.0)
 			button.text = "CLOSE PASSENGER" if _passenger_doors_open else "PASSENGER DOOR"
@@ -1073,7 +1076,7 @@ func _build_passenger_door_controls() -> void:
 	_passenger_door_hinge.add_child(panel)
 
 func can_board_passengers() -> bool:
-	return supports_passenger_doors and _passenger_doors_open and _handbrake_on and absf(_speed) < 0.25
+	return supports_passenger_doors and _passenger_doors_open and _handbrake_on and not _engine_running and absf(_speed) < 0.25
 
 
 func can_handle_cargo() -> bool:
