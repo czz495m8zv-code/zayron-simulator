@@ -538,3 +538,10 @@ Rear lamp visuals now remain present as tail lamps, brighten when the driver or 
 - Cruise control can be engaged only while the engine is running, fuel is available, the seat belt is fastened, Drive is selected, and speed is at least 4 m/s (about 15 km/h).
 - Engaging captures the current speed; the controller applies only the throttle needed to approach that target and never overrides braking.
 - Applying the brake, leaving Drive, or losing a required drive condition cancels cruise control. This is a lightweight speed-hold aid, not adaptive cruise control.
+
+
+### Automatic six-speed transmission and RPM model
+- Forward Drive now selects one of six simulated ratios from vehicle speed, with shift hysteresis to reduce gear hunting.
+- The cockpit cluster displays the active forward ratio (D1–D6), modeled engine RPM, and engine temperature.
+- Engine audio pitch follows modeled RPM; Reverse, Neutral, Park, and engine-off states retain separate idle/shutdown behavior.
+- This is a lightweight arcade drivetrain model. It does not yet simulate a clutch, torque converter, gear-specific torque curves, or full mechanical drivetrain physics.
