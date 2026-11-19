@@ -234,6 +234,10 @@ func _process(delta: float) -> void:
 	_update_junction_pedestrian(delta)
 	_update_side_road_traffic(delta)
 	_update_player_signal_rule()
+	if is_instance_valid(_active_vehicle) and _active_vehicle.has_method("set_road_surface_grip"):
+		var surface_distance := absf(_active_vehicle.global_position.x)
+		var surface_grip := 1.0 if surface_distance < 3.0 else (0.78 if surface_distance < 4.35 else 0.48)
+		_active_vehicle.set_road_surface_grip(surface_grip)
 	if is_instance_valid(_road_position_status_label) and is_instance_valid(_active_vehicle):
 		var road_x := absf(_active_vehicle.global_position.x)
 		var on_test_highway := _active_vehicle.global_position.z <= 27.0 and _active_vehicle.global_position.z >= -123.0
