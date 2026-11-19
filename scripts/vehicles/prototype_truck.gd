@@ -155,8 +155,9 @@ func _build_engine_audio() -> void:
 func _physics_process(delta: float) -> void:
 	var trailer_ready := not (supports_trailer and ((_trailer_attached and _trailer_legs_down) or _trailer_doors_open))
 	var passenger_door_ready := not (supports_passenger_doors and _passenger_doors_open)
+	var cab_door_ready := not _door_open
 	var cargo_ready := not _cargo_loaded or _cargo_secured
-	var drive_ready := _engine_running and _fuel_level > 0.0 and trailer_ready and passenger_door_ready and cargo_ready
+	var drive_ready := _engine_running and _fuel_level > 0.0 and trailer_ready and passenger_door_ready and cab_door_ready and cargo_ready
 	var throttle := _throttle_input if drive_ready and _gear_mode == "D" else 0.0
 	var brake := maxf(_brake_input, _traffic_signal_brake)
 	var reverse := _reverse_input if drive_ready and _gear_mode == "R" else 0.0
@@ -905,6 +906,9 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 			_handbrake_on = not _handbrake_on
 			button.text = "PARK: ON" if _handbrake_on else "PARK"
 		"door":
+			if not _door_open and (absf(_speed) > 0.15 or not _handbrake_on):
+				button.text = "STOP + PARK FIRST"
+				return
 			_door_open = not _door_open
 			_door_hinge.rotation.y = deg_to_rad(-68.0 if _door_open else 0.0)
 			button.text = "CLOSE" if _door_open else "DOOR"
