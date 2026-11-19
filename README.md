@@ -559,3 +559,9 @@ Rear lamp visuals now remain present as tail lamps, brighten when the driver or 
 - Sustained high load can trigger an overheating warning at 105°C.
 - Above that threshold, acceleration and available top speed are progressively reduced to protect the engine model.
 - Switching the engine off allows it to cool toward ambient temperature. This is a gameplay thermal approximation, not a detailed radiator, coolant, oil, or fan simulation.
+
+
+### Road-surface handling
+- The player vehicle receives a simple surface-grip estimate from its lateral position on the test road.
+- Asphalt retains full grip; the shoulder reduces grip; leaving the road reduces lateral grip further.
+- The estimate feeds the existing lateral-grip handling model. It is a prototype surface-zone approximation, not a detailed tire/material contact simulation.
