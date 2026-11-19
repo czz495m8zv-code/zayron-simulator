@@ -861,7 +861,7 @@ func _on_vehicle_action(action: String, button: Button) -> void:
 				_cruise_control_on = false
 				button.text = "CRUISE: OFF"
 			else:
-				if not drive_ready or _gear_mode != "D" or _speed < 4.0 or _brake_input > 0.01:
+				if not _engine_running or _fuel_level <= 0.0 or not _seatbelt_fastened or _gear_mode != "D" or _speed < 4.0 or _brake_input > 0.01:
 					button.text = "CRUISE: DRIVE 15+ KM/H"
 					return
 				_cruise_target_speed = _speed
