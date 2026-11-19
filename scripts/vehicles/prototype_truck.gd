@@ -2,6 +2,7 @@ extends CharacterBody3D
 
 signal refuel_requested(cost_omr: int)
 signal repair_requested(cost_omr: int)
+signal vehicle_damage_changed(damage_percent: int)
 
 @export var acceleration: float = 8.0
 @export var service_brake: float = 18.0
@@ -16,6 +17,7 @@ signal repair_requested(cost_omr: int)
 
 var _speed: float = 0.0
 var _collision_warning_timer: float = 0.0
+var _collision_damage_cooldown: float = 0.0
 var _vehicle_damage := 0
 var _service_station_available := false
 var _repair_button: Button
@@ -217,16 +219,20 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	if _collision_warning_timer > 0.0:
 		_collision_warning_timer = maxf(0.0, _collision_warning_timer - delta)
+	if _collision_damage_cooldown > 0.0:
+		_collision_damage_cooldown = maxf(0.0, _collision_damage_cooldown - delta)
 	# Highway traffic uses AnimatableBody3D collision bodies. On impact, apply
 	# a strong speed loss and activate hazards so the player notices the crash.
 	for collision_index in range(get_slide_collision_count()):
 		var impact := get_slide_collision(collision_index)
 		var hit_body := impact.get_collider()
 		if hit_body is AnimatableBody3D and String(hit_body.name) == "TrafficCollisionBody":
-			if absf(_speed) > 2.0:
+			if absf(_speed) > 2.0 and _collision_damage_cooldown <= 0.0:
 				var impact_speed := absf(_speed)
 				_speed *= 0.22
 				_vehicle_damage = mini(100, _vehicle_damage + maxi(8, int(impact_speed * 1.4)))
+				_collision_damage_cooldown = 1.5
+				vehicle_damage_changed.emit(_vehicle_damage)
 				_hazard_on = true
 				_collision_warning_timer = 4.0
 				_update_indicator_lights()
